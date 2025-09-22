@@ -24,6 +24,8 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
     setReviewCount(Math.floor(Math.random() * 200) + 10);
   }, []);
 
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.location)}`;
+
   return (
     <Card className="flex h-full flex-col bg-card transition-shadow duration-300 hover:shadow-2xl">
       <CardHeader>
@@ -66,9 +68,15 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
           )}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
         <Button variant="outline" className="w-full">
-          Contactar Proveedor
+          Contactar
+        </Button>
+        <Button asChild className="w-full">
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+            <MapPin className="mr-2 h-4 w-4" />
+            Ver en Mapa
+          </a>
         </Button>
       </CardFooter>
     </Card>
