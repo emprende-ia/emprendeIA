@@ -84,7 +84,7 @@ export function MainContent() {
                           <FormControl>
                             <Textarea
                               placeholder="Ej: Quiero abrir una cafetería de especialidad en el centro de la ciudad, enfocada en productos orgánicos y un ambiente acogedor para teletrabajadores..."
-                              className="min-h-[150px] resize-y text-base"
+                              className="min-h-[150px] resize-y"
                               {...field}
                             />
                           </FormControl>
@@ -102,7 +102,7 @@ export function MainContent() {
                         <FormItem>
                           <FormLabel className="text-lg font-semibold text-foreground">2. ¿Qué tipo de insumos buscas? (Opcional)</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ej: Máquinas de espresso, café orgánico, mobiliario..." {...field} className="text-base" />
+                            <Input placeholder="Ej: Máquinas de espresso, café orgánico, mobiliario..." {...field} />
                           </FormControl>
                           <FormDescription>
                             Ayuda a la IA a afinar la búsqueda especificando productos o servicios.
