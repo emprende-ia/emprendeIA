@@ -16,6 +16,9 @@ const SuggestRelevantSuppliersInputSchema = z.object({
   businessPlan: z
     .string()
     .describe('The business plan of the entrepreneur.'),
+  businessLocation: z
+    .string()
+    .describe('The location of the business (e.g., city, country).'),
   supplierToolSelection: z
     .string()
     .optional()
@@ -56,6 +59,8 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
 
   Analyze the following business plan:
   {{businessPlan}}
+
+  The business is located in: {{businessLocation}}. Prioritize suppliers in or near this location.
 
   {% if supplierToolSelection %}
   Consider these supplier tools: {{supplierToolSelection}}

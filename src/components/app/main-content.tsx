@@ -20,6 +20,9 @@ const formSchema = z.object({
   businessPlan: z.string().min(50, {
     message: 'Tu plan de negocio debe tener al menos 50 caracteres.',
   }),
+  businessLocation: z.string().min(3, {
+    message: "Por favor, ingresa una ubicación válida.",
+  }),
   supplierToolSelection: z.string().optional(),
 });
 
@@ -34,6 +37,7 @@ export function MainContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       businessPlan: '',
+      businessLocation: '',
       supplierToolSelection: '',
     },
   });
@@ -95,12 +99,28 @@ export function MainContent() {
                         </FormItem>
                       )}
                     />
+                     <FormField
+                      control={form.control}
+                      name="businessLocation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-lg font-semibold text-foreground">2. ¿Dónde se ubica tu negocio?</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ej: Ciudad de México, Madrid, Buenos Aires..." {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Indica tu ciudad o región para encontrar proveedores cercanos a ti.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="supplierToolSelection"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-lg font-semibold text-foreground">2. ¿Qué tipo de insumos buscas? (Opcional)</FormLabel>
+                          <FormLabel className="text-lg font-semibold text-foreground">3. ¿Qué tipo de insumos buscas? (Opcional)</FormLabel>
                           <FormControl>
                             <Input placeholder="Ej: Máquinas de espresso, café orgánico, mobiliario..." {...field} />
                           </FormControl>
