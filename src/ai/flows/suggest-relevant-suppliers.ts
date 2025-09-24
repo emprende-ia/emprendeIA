@@ -55,7 +55,7 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
   name: 'suggestRelevantSuppliersPrompt',
   input: {schema: SuggestRelevantSuppliersInputSchema},
   output: {schema: SuggestRelevantSuppliersOutputSchema},
-  prompt: `You are an AI assistant designed to analyze business plans and suggest relevant suppliers.
+  prompt: `You are an AI assistant designed to analyze business plans and suggest relevant suppliers. All your output MUST be in Spanish.
 
   Analyze the following business plan:
   {{{businessPlan}}}
