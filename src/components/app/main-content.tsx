@@ -17,8 +17,8 @@ import { SupplierCard } from './supplier-card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const formSchema = z.object({
-  businessPlan: z.string().min(50, {
-    message: 'Tu plan de negocio debe tener al menos 50 caracteres.',
+  businessPlan: z.string().min(25, {
+    message: 'Tu plan de negocio debe tener al menos 25 caracteres.',
   }),
   businessLocation: z.string().min(3, {
     message: "Por favor, ingresa una ubicación válida.",
