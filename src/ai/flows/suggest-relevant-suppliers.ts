@@ -58,13 +58,13 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
   prompt: `You are an AI assistant designed to analyze business plans and suggest relevant suppliers.
 
   Analyze the following business plan:
-  {{businessPlan}}
+  {{{businessPlan}}}
 
-  The business is located in: {{businessLocation}}. Prioritize suppliers in or near this location.
+  The business is located in: {{{businessLocation}}}. Prioritize suppliers in or near this location.
 
-  {% if supplierToolSelection %}
-  Consider these supplier tools: {{supplierToolSelection}}
-  {% endif %}
+  {{#if supplierToolSelection}}
+  Consider these supplier tools: {{{supplierToolSelection}}}
+  {{/if}}
 
   Based on the business plan, suggest a list of suppliers that can help the entrepreneur.
   Each supplier should include the following information:
