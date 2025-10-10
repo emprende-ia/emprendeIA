@@ -12,9 +12,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Lightbulb } from 'lucide-react';
 import { SupplierCard } from './supplier-card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 const formSchema = z.object({
   businessPlan: z.string().min(25, {
@@ -163,6 +164,17 @@ export function MainContent() {
       {recommendations && recommendations.suppliers.length > 0 && (
         <div className="space-y-8 animate-in fade-in-50 duration-500">
           <h2 className="font-headline text-4xl font-bold text-center">Proveedores Recomendados para ti</h2>
+          
+          {recommendations.combinedRecommendation && (
+             <Alert className="border-accent bg-accent/10">
+              <Lightbulb className="h-4 w-4 text-accent" />
+              <AlertTitle className="font-headline text-accent">Recomendación Estratégica</AlertTitle>
+              <AlertDescription>
+                {recommendations.combinedRecommendation}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {recommendations.suppliers?.map((supplier, index) => (
               <SupplierCard key={index} supplier={supplier} isVerified={index === 0} />

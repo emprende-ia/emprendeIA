@@ -2,7 +2,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Phone, Star, Ticket } from 'lucide-react';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Quote } from 'lucide-react';
 import type { SuggestRelevantSuppliersOutput } from '@/ai/flows/suggest-relevant-suppliers';
 import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
@@ -50,6 +50,12 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
         )}
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
+        <div className="rounded-md border-l-4 border-primary bg-primary/10 p-3 text-sm italic text-primary-foreground/80">
+           <div className="flex items-start gap-3">
+              <Quote className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{supplier.summaryIA}</span>
+            </div>
+        </div>
         <p className="text-sm text-muted-foreground">{supplier.description}</p>
         <div className="space-y-3 text-sm">
           <div className="flex items-start gap-3">
@@ -61,7 +67,7 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
             <span>{supplier.contactInfo}</span>
           </div>
           {supplier.specialOffers && (
-            <div className="flex items-start gap-3 rounded-md border-amber-600 bg-amber-500 p-3">
+            <div className="flex items-start gap-3 rounded-md bg-amber-500 p-3">
               <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-white" />
               <span className="font-semibold text-white">{supplier.specialOffers}</span>
             </div>
