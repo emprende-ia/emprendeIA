@@ -15,7 +15,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Stripe from 'stripe';
-
+import { getStripe } from '@/lib/stripe'; // Import the centralized Stripe getter
 
 const StripeWebhookInputSchema = z.object({
   body: z.string().describe('The raw request body from Stripe.'),
@@ -40,25 +40,18 @@ const handleStripeWebhookFlow = ai.defineFlow(
     outputSchema: StripeWebhookOutputSchema,
   },
   async ({ body, signature }) => {
+    // Get a Stripe instance from our centralized getter.
+    const stripe = getStripe();
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
     if (!webhookSecret) {
       console.error('STRIPE_WEBHOOK_SECRET is not set in environment variables.');
       throw new Error('Stripe webhook secret is not configured.');
     }
-    if (!stripeSecretKey) {
-      throw new Error(
-        'STRIPE_SECRET_KEY is not set in environment variables. Please set the key in your .env file.'
-      );
-    }
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });
-
 
     let event: Stripe.Event;
 
     try {
-      // Use the centralized stripe instance to construct the event
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
       console.error(`Webhook signature verification failed: ${err.message}`);
