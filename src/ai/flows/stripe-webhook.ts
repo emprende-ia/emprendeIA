@@ -16,9 +16,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 const StripeWebhookInputSchema = z.object({
   body: z.string().describe('The raw request body from Stripe.'),
   signature: z.string().describe('The stripe-signature header from the request.'),
@@ -42,6 +39,12 @@ const handleStripeWebhookFlow = ai.defineFlow(
     outputSchema: StripeWebhookOutputSchema,
   },
   async ({ body, signature }) => {
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      throw new Error('Stripe environment variables are not set.');
+    }
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
     let event: Stripe.Event;
 
     try {

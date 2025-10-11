@@ -16,13 +16,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Stripe from 'stripe';
 
-// Ensure the Stripe secret key is set in environment variables
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables.');
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 const CreateStripeCheckoutSessionInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe Price object.'),
   userEmail: z.string().email().describe('The email of the user making the purchase.'),
@@ -53,6 +46,12 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
     outputSchema: CreateStripeCheckoutSessionOutputSchema,
   },
   async ({ priceId, userEmail, userId }) => {
+    // Ensure the Stripe secret key is set in environment variables
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set in environment variables.');
+    }
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
