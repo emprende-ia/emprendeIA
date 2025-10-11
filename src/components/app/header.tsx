@@ -16,14 +16,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useRouter } from 'next/navigation';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const router = useRouter();
 
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
+      router.push('/login');
     }
   };
 
@@ -34,7 +37,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="relative flex flex-col items-center justify-center space-y-4 pt-12 text-center">
+    <header className="relative flex flex-col items-center justify-center space-y-4 text-center">
       <div className="absolute top-4 right-4">
         {isUserLoading ? (
           <Button variant="outline" size="sm" disabled>Cargando...</Button>
