@@ -47,7 +47,7 @@
     "Supplier": {
       "title": "Supplier",
       "description": "Represents a supplier in the marketplace.",
-      "type": "object",
+      "type": "object_IGNORE_COMMENT",
       "properties": {
         "name": {
           "type": "string",
