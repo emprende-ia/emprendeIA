@@ -2,13 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Crown, Gem, Loader2 } from "lucide-react";
+import { Check, Crown, Gem, Loader2, AlertCircle } from "lucide-react";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { createStripeCheckoutSession } from "@/ai/flows/create-stripe-checkout-session";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { loadStripe } from "@stripe/stripe-js";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 const entrepreneurFeatures = [
   "Descuentos Exclusivos con proveedores",
@@ -29,6 +30,10 @@ export function PricingSection() {
   const router = useRouter();
   const { toast } = useToast();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+
+  // Get price IDs from environment variables
+  const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID;
+  const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
 
   const handleGetPlan = async (priceId: string) => {
     if (!user) {
@@ -67,8 +72,7 @@ export function PricingSection() {
     }
   };
 
-  const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID!;
-  const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!;
+  const arePricesConfigured = plusPriceId && premiumPriceId;
 
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 bg-secondary/30 rounded-lg">
@@ -81,6 +85,19 @@ export function PricingSection() {
             </p>
           </div>
         </div>
+
+        {!arePricesConfigured && (
+          <div className="mt-8 max-w-2xl mx-auto">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Configuración Requerida</AlertTitle>
+              <AlertDescription>
+                Los planes de pago no están configurados. Por favor, añade las variables `NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID` y `NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID` a tu archivo .env para habilitar los pagos.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         <div className="mx-auto grid max-w-5xl items-stretch gap-8 py-12 sm:grid-cols-2">
           <Card className="flex flex-col shadow-md">
             <CardHeader className="items-center text-center">
@@ -106,8 +123,8 @@ export function PricingSection() {
               <Button 
                 variant="outline" 
                 className="w-full font-bold" 
-                onClick={() => handleGetPlan(plusPriceId)}
-                disabled={loadingPriceId === plusPriceId}
+                onClick={() => handleGetPlan(plusPriceId!)}
+                disabled={loadingPriceId === plusPriceId || !arePricesConfigured}
               >
                 {loadingPriceId === plusPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Emprendedor'}
               </Button>
@@ -136,8 +153,8 @@ export function PricingSection() {
             <CardFooter>
               <Button 
                 className="w-full font-bold" 
-                onClick={() => handleGetPlan(premiumPriceId)}
-                disabled={loadingPriceId === premiumPriceId}
+                onClick={() => handleGetPlan(premiumPriceId!)}
+                disabled={loadingPriceId === premiumPriceId || !arePricesConfigured}
               >
                 {loadingPriceId === premiumPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Proveedor'}
               </Button>
