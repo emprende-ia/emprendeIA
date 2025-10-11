@@ -11,6 +11,8 @@
  * @interface StripeWebhookOutput - The output type for the flow.
  * @function handleStripeWebhook - The main function that orchestrates the flow.
  */
+import { config } from 'dotenv';
+config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';

@@ -11,6 +11,8 @@
  * @interface CreateStripeCheckoutSessionOutput - The output type for the flow.
  * @function createStripeCheckoutSession - The main function that orchestrates the flow.
  */
+import { config } from 'dotenv';
+config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
