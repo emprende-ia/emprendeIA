@@ -1,6 +1,14 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Crown, Gem } from "lucide-react";
+import { Check, Crown, Gem, Loader2 } from "lucide-react";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
+import { createStripeCheckoutSession } from "@/ai/flows/create-stripe-checkout-session";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { loadStripe } from "@stripe/stripe-js";
 
 const entrepreneurFeatures = [
   "Descuentos Exclusivos con proveedores",
@@ -17,6 +25,51 @@ const supplierFeatures = [
 ];
 
 export function PricingSection() {
+  const { user } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+
+  const handleGetPlan = async (priceId: string) => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    
+    setLoadingPriceId(priceId);
+
+    try {
+      const { sessionId } = await createStripeCheckoutSession({ 
+        priceId, 
+        userEmail: user.email || '',
+        userId: user.uid,
+      });
+
+      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+      if (!stripe) {
+        throw new Error('Stripe.js no se ha cargado.');
+      }
+      
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      console.error("Error al crear la sesión de pago de Stripe:", error);
+      toast({
+        title: "Error al procesar el pago",
+        description: error.message || "No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPriceId(null);
+    }
+  };
+
+  const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID!;
+  const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID!;
+
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 bg-secondary/30 rounded-lg">
       <div className="container px-4 md:px-6">
@@ -50,7 +103,14 @@ export function PricingSection() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full font-bold">Obtener Plan Emprendedor</Button>
+              <Button 
+                variant="outline" 
+                className="w-full font-bold" 
+                onClick={() => handleGetPlan(plusPriceId)}
+                disabled={loadingPriceId === plusPriceId}
+              >
+                {loadingPriceId === plusPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Emprendedor'}
+              </Button>
             </CardFooter>
           </Card>
           <Card className="flex flex-col border-2 border-primary shadow-2xl">
@@ -74,7 +134,13 @@ export function PricingSection() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full font-bold">Obtener Plan Proveedor</Button>
+              <Button 
+                className="w-full font-bold" 
+                onClick={() => handleGetPlan(premiumPriceId)}
+                disabled={loadingPriceId === premiumPriceId}
+              >
+                {loadingPriceId === premiumPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Proveedor'}
+              </Button>
             </CardFooter>
           </Card>
         </div>
