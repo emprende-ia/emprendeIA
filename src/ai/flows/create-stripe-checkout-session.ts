@@ -14,7 +14,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { stripe } from '@/lib/stripe'; // Import the centralized Stripe instance
+import Stripe from 'stripe';
 
 const CreateStripeCheckoutSessionInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe Price object.'),
@@ -46,8 +46,13 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
     outputSchema: CreateStripeCheckoutSessionOutputSchema,
   },
   async ({ priceId, userEmail, userId }) => {
-    // The Stripe secret key check is now handled in src/lib/stripe.ts
-    // If the key is missing, the server will fail to start, which is a safer pattern.
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) {
+      throw new Error(
+        'STRIPE_SECRET_KEY is not set in environment variables. Please set the key in your .env file.'
+      );
+    }
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });
 
     try {
       const session = await stripe.checkout.sessions.create({
