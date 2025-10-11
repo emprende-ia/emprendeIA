@@ -11,12 +11,11 @@
  * @interface StripeWebhookOutput - The output type for the flow.
  * @function handleStripeWebhook - The main function that orchestrates the flow.
  */
-import { config } from 'dotenv';
-config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Stripe from 'stripe';
+import { stripe } from '@/lib/stripe'; // Import the centralized Stripe instance
 
 const StripeWebhookInputSchema = z.object({
   body: z.string().describe('The raw request body from Stripe.'),
@@ -41,16 +40,16 @@ const handleStripeWebhookFlow = ai.defineFlow(
     outputSchema: StripeWebhookOutputSchema,
   },
   async ({ body, signature }) => {
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-      throw new Error('Stripe environment variables are not set.');
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('STRIPE_WEBHOOK_SECRET is not set in environment variables.');
+      throw new Error('Stripe webhook secret is not configured.');
     }
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
     let event: Stripe.Event;
 
     try {
-      // Verify the event came from Stripe
+      // Use the centralized stripe instance to construct the event
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
       console.error(`Webhook signature verification failed: ${err.message}`);

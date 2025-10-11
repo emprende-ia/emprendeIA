@@ -11,12 +11,10 @@
  * @interface CreateStripeCheckoutSessionOutput - The output type for the flow.
  * @function createStripeCheckoutSession - The main function that orchestrates the flow.
  */
-import { config } from 'dotenv';
-config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import Stripe from 'stripe';
+import { stripe } from '@/lib/stripe'; // Import the centralized Stripe instance
 
 const CreateStripeCheckoutSessionInputSchema = z.object({
   priceId: z.string().describe('The ID of the Stripe Price object.'),
@@ -48,11 +46,8 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
     outputSchema: CreateStripeCheckoutSessionOutputSchema,
   },
   async ({ priceId, userEmail, userId }) => {
-    // Ensure the Stripe secret key is set in environment variables
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is not set in environment variables.');
-    }
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    // The Stripe secret key check is now handled in src/lib/stripe.ts
+    // If the key is missing, the server will fail to start, which is a safer pattern.
 
     try {
       const session = await stripe.checkout.sessions.create({
