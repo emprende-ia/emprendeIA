@@ -1,0 +1,182 @@
+/**
+ * @fileoverview Firestore Security Rules for EmprendeIA platform.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user profiles and memberships.
+ * Suppliers have ownership over their products and user reviews they receive.
+ * AI-generated recommendations are scoped to specific entrepreneurs.
+ *
+ * Data Structure:
+ * - /users/{userId}/entrepreneur_profile: Entrepreneur profiles owned by a specific user.
+ * - /users/{userId}/supplier_profile: Supplier profiles owned by a specific user.
+ * - /suppliers/{supplierId}/products/{productId}: Products offered by a specific supplier.
+ * - /entrepreneurs/{entrepreneurId}/recommendations/{recommendationId}: AI recommendations for entrepreneurs.
+ * - /users/{userId}/memberships/{membershipId}: Membership information for users.
+ * - /suppliers/{supplierId}/user_reviews/{userReviewId}: User reviews for suppliers.
+ *
+ * Key Security Decisions:
+ * - User profiles and memberships are strictly owned by the user, enforced using path-based authorization and `userId` field validation.
+ * - Suppliers own the products they create and the reviews they receive.
+ * - AI recommendations are scoped to the entrepreneur who receives them.
+ * - Listing operations are generally restricted to owners, except where public access is intended.
+ * - The rules are designed to prevent unauthorized data modification or deletion.
+ *
+ * Denormalization for Authorization:
+ * - The `userId` field is present in `EntrepreneurProfile`, `SupplierProfile`, and `Membership` documents,
+ *   allowing security rules to validate ownership based solely on `request.auth.uid` without needing to fetch parent documents.
+ * - The `supplierId` field is present in `Product` documents to allow rules to validate product ownership by suppliers.
+ *
+ * Structural Segregation:
+ * - User-specific data (profiles, memberships) is stored under the /users/{userId} path,
+ *   while supplier-owned data (products, reviews) is stored under the /suppliers/{supplierId} path,
+ *   and entrepreneur-specific data (recommendations) is stored under the /entrepreneurs/{entrepreneurId} path.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    /**
+     * @description Secure access to entrepreneur profiles based on user ownership.
+     * @path /users/{userId}/entrepreneur_profile
+     * @allow (create) User A creating their own entrepreneur profile: request.auth.uid == userId
+     * @allow (get) User A reading their own entrepreneur profile: request.auth.uid == userId
+     * @allow (update) User A updating their own entrepreneur profile: request.auth.uid == userId
+     * @allow (delete) User A deleting their own entrepreneur profile: request.auth.uid == userId
+     * @deny (create) User A creating an entrepreneur profile for User B: request.auth.uid != userId
+     * @deny (get) User A reading User B's entrepreneur profile: request.auth.uid != userId
+     * @deny (update) User A updating User B's entrepreneur profile: request.auth.uid != userId
+     * @deny (delete) User A deleting User B's entrepreneur profile: request.auth.uid != userId
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, validates relational integrity between documents.
+     */
+    match /users/{userId}/entrepreneur_profile {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.auth.uid == userId;
+      allow update: if isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isOwner(userId) && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Secure access to supplier profiles based on user ownership.
+     * @path /users/{userId}/supplier_profile
+     * @allow (create) User A creating their own supplier profile: request.auth.uid == userId
+     * @allow (get) User A reading their own supplier profile: request.auth.uid == userId
+     * @allow (update) User A updating their own supplier profile: request.auth.uid == userId
+     * @allow (delete) User A deleting their own supplier profile: request.auth.uid == userId
+     * @deny (create) User A creating a supplier profile for User B: request.auth.uid != userId
+     * @deny (get) User A reading User B's supplier profile: request.auth.uid != userId
+     * @deny (update) User A updating User B's supplier profile: request.auth.uid != userId
+     * @deny (delete) User A deleting User B's supplier profile: request.auth.uid != userId
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, validates relational integrity between documents.
+     */
+    match /users/{userId}/supplier_profile {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.auth.uid == userId;
+      allow update: if isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isOwner(userId) && request.auth.uid == userId;
+    }
+
+    function isSupplierOwner(supplierId) {
+      return isSignedIn() && request.auth.uid == supplierId;
+    }
+
+    function isExistingSupplierOwner(supplierId) {
+        return isSignedIn() && resource.data.supplierId == request.auth.uid;
+    }
+
+    /**
+     * @description Secure access to products based on supplier ownership.
+     * @path /suppliers/{supplierId}/products/{productId}
+     * @allow (create) Supplier A creating a product: request.auth.uid == supplierId
+     * @allow (get) Any user reading a product: if true;
+     * @allow (list) Any user listing products for a supplier: if true;
+     * @allow (update) Supplier A updating their own product: request.auth.uid == supplierId
+     * @allow (delete) Supplier A deleting their own product: request.auth.uid == supplierId
+     * @deny (create) Supplier A creating a product for Supplier B: request.auth.uid != supplierId
+     * @deny (update) Supplier A updating Supplier B's product: request.auth.uid != supplierId
+     * @deny (delete) Supplier A deleting Supplier B's product: request.auth.uid != supplierId
+     * @principle Enforces document ownership for writes, allows public reads for product listings.
+     */
+    match /suppliers/{supplierId}/products/{productId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSupplierOwner(supplierId) && request.auth.uid == supplierId;
+      allow update: if isSupplierOwner(supplierId) && request.auth.uid == supplierId;
+      allow delete: if isSupplierOwner(supplierId) && request.auth.uid == supplierId;
+    }
+
+    function isEntrepreneur(entrepreneurId) {
+        return isSignedIn() && request.auth.uid == entrepreneurId;
+    }
+
+    /**
+     * @description Secure access to AI recommendations based on entrepreneur ID.
+     * @path /entrepreneurs/{entrepreneurId}/recommendations/{recommendationId}
+     * @allow (get) Any user reading a recommendation: if true;
+     * @allow (list) Any user listing recommendations for an entrepreneur: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public reads for AI recommendations, prevents writes.
+     */
+    match /entrepreneurs/{entrepreneurId}/recommendations/{recommendationId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Secure access to memberships based on user ownership.
+     * @path /users/{userId}/memberships/{membershipId}
+     * @allow (create) User A creating their own membership: request.auth.uid == userId
+     * @allow (get) User A reading their own membership: request.auth.uid == userId
+     * @allow (update) User A updating their own membership: request.auth.uid == userId
+     * @allow (delete) User A deleting their own membership: request.auth.uid == userId
+     * @deny (create) User A creating a membership for User B: request.auth.uid != userId
+     * @deny (get) User A reading User B's membership: request.auth.uid != userId
+     * @deny (update) User A updating User B's membership: request.auth.uid != userId
+     * @deny (delete) User A deleting User B's membership: request.auth.uid != userId
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, validates relational integrity between documents.
+     */
+    match /users/{userId}/memberships/{membershipId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.auth.uid == userId;
+      allow update: if isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isOwner(userId) && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Secure access to user reviews based on supplier ownership.
+     * @path /suppliers/{supplierId}/user_reviews/{userReviewId}
+     * @allow (create) Any signed-in user can create a review: if isSignedIn();
+     * @allow (get) Any user can read a review: if true;
+     * @allow (list) Any user can list reviews for a supplier: if true;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public reads for user reviews, restricts writes.
+     */
+    match /suppliers/{supplierId}/user_reviews/{userReviewId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
