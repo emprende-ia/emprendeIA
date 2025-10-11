@@ -24,8 +24,6 @@ const supplierFeatures = [
   "Analíticas Detalladas de perfil",
 ];
 
-// Price IDs are now read on the server and passed to the client handler,
-// so we don't depend on process.env on the client.
 const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID;
 const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
 
@@ -55,7 +53,15 @@ export function PricingSection() {
     setLoadingPriceId(priceId);
 
     try {
-      await handleStripeCheckout(priceId, user);
+      // The handleStripeCheckout function now returns the session URL.
+      const { sessionUrl } = await handleStripeCheckout(priceId, user);
+
+      if (sessionUrl) {
+        // Perform the redirect on the top-level window to avoid iframe issues.
+        window.top!.location.href = sessionUrl;
+      } else {
+        throw new Error("No se pudo obtener la URL de pago de Stripe.");
+      }
     } catch (error: any) {
       console.error("Error al redirigir a Stripe:", error);
       toast({
