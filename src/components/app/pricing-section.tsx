@@ -5,10 +5,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check, Crown, Gem, Loader2, AlertCircle } from "lucide-react";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { createStripeCheckoutSession } from "@/ai/flows/create-stripe-checkout-session";
+import { handleStripeCheckout } from "@/lib/stripe-client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStripe } from "@stripe/stripe-js";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 const entrepreneurFeatures = [
@@ -25,43 +24,40 @@ const supplierFeatures = [
   "Analíticas Detalladas de perfil",
 ];
 
+// Price IDs are now read on the server and passed to the client handler,
+// so we don't depend on process.env on the client.
+const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID;
+const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
+
 export function PricingSection() {
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+  
+  const arePricesConfigured = plusPriceId && premiumPriceId;
 
-  // Get price IDs from environment variables
-  const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID;
-  const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
-
-  const handleGetPlan = async (priceId: string) => {
+  const handleGetPlan = async (priceId: string | undefined) => {
     if (!user) {
       router.push('/login');
+      return;
+    }
+    
+    if (!priceId) {
+      toast({
+        title: "Error de configuración",
+        description: "El ID del plan de precios no está configurado. Contacta al soporte.",
+        variant: "destructive",
+      });
       return;
     }
     
     setLoadingPriceId(priceId);
 
     try {
-      const { sessionId } = await createStripeCheckoutSession({ 
-        priceId, 
-        userEmail: user.email || '',
-        userId: user.uid,
-      });
-
-      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-      if (!stripe) {
-        throw new Error('Stripe.js no se ha cargado.');
-      }
-      
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-
-      if (error) {
-        throw new Error(error.message);
-      }
+      await handleStripeCheckout(priceId, user);
     } catch (error: any) {
-      console.error("Error al crear la sesión de pago de Stripe:", error);
+      console.error("Error al redirigir a Stripe:", error);
       toast({
         title: "Error al procesar el pago",
         description: error.message || "No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.",
@@ -71,8 +67,6 @@ export function PricingSection() {
       setLoadingPriceId(null);
     }
   };
-
-  const arePricesConfigured = plusPriceId && premiumPriceId;
 
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 bg-secondary/30 rounded-lg">
@@ -123,7 +117,7 @@ export function PricingSection() {
               <Button 
                 variant="outline" 
                 className="w-full font-bold" 
-                onClick={() => handleGetPlan(plusPriceId!)}
+                onClick={() => handleGetPlan(plusPriceId)}
                 disabled={loadingPriceId === plusPriceId || !arePricesConfigured}
               >
                 {loadingPriceId === plusPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Emprendedor'}
@@ -153,7 +147,7 @@ export function PricingSection() {
             <CardFooter>
               <Button 
                 className="w-full font-bold" 
-                onClick={() => handleGetPlan(premiumPriceId!)}
+                onClick={() => handleGetPlan(premiumPriceId)}
                 disabled={loadingPriceId === premiumPriceId || !arePricesConfigured}
               >
                 {loadingPriceId === premiumPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Proveedor'}
