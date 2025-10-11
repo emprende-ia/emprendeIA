@@ -14,6 +14,9 @@ export default function Home() {
           <Separator className="my-8" />
           <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
             <AccordionItem value="item-1" className="border-b-0">
+              <AccordionTrigger className="p-6 text-2xl font-headline data-[state=closed]:rounded-b-lg data-[state=closed]:border-b-0 hover:no-underline">
+                Comienza Aquí: Genera Recomendaciones
+              </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-12">
                   <MainContent />

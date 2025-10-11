@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Sparkles, LogOut, User as UserIcon } from 'lucide-react';

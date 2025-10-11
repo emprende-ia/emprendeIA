@@ -70,88 +70,79 @@ export function MainContent() {
 
   return (
     <div className="space-y-12">
-      <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
-        <AccordionItem value="item-1">
-          <Card className="overflow-hidden border-2 border-primary/20 shadow-lg bg-card">
-            <AccordionTrigger className="p-6 text-2xl font-headline data-[state=closed]:rounded-b-lg data-[state=closed]:border-b-0 hover:no-underline">
-              Comienza Aquí: Genera Recomendaciones
-            </AccordionTrigger>
-            <AccordionContent>
-              <CardContent className="p-6 md:p-8 pt-0">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <FormField
-                      control={form.control}
-                      name="businessPlan"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-lg font-semibold text-foreground">1. Describe tu idea o plan de negocio</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Ej: Quiero abrir una cafetería de especialidad en el centro de la ciudad, enfocada en productos orgánicos y un ambiente acogedor para teletrabajadores..."
-                              className="min-h-[150px] resize-y"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            La IA analizará tu plan para sugerirte los proveedores más adecuados.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="businessLocation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-lg font-semibold text-foreground">2. ¿Dónde se ubica tu negocio?</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Ciudad de México, Madrid, Buenos Aires..." {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Indica tu ciudad o región para encontrar proveedores cercanos a ti.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="supplierToolSelection"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-lg font-semibold text-foreground">3. ¿Qué tipo de insumos buscas? (Opcional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Máquinas de espresso, café orgánico, mobiliario..." {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Ayuda a la IA a afinar la búsqueda especificando productos o servicios.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" size="lg" className="w-full text-lg font-bold transition-transform hover:scale-[1.02]" disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                          Generando...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="mr-2 h-6 w-6" />
-                          Obtener Recomendaciones
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </AccordionContent>
-          </Card>
-        </AccordionItem>
-      </Accordion>
+      <Card className="overflow-hidden border-2 border-primary/20 shadow-lg bg-card">
+        <CardContent className="p-6 md:p-8">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="businessPlan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-lg font-semibold text-foreground">1. Describe tu idea o plan de negocio</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ej: Quiero abrir una cafetería de especialidad en el centro de la ciudad, enfocada en productos orgánicos y un ambiente acogedor para teletrabajadores..."
+                        className="min-h-[150px] resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      La IA analizará tu plan para sugerirte los proveedores más adecuados.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="businessLocation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-lg font-semibold text-foreground">2. ¿Dónde se ubica tu negocio?</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: Ciudad de México, Madrid, Buenos Aires..." {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Indica tu ciudad o región para encontrar proveedores cercanos a ti.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="supplierToolSelection"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-lg font-semibold text-foreground">3. ¿Qué tipo de insumos buscas? (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: Máquinas de espresso, café orgánico, mobiliario..." {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Ayuda a la IA a afinar la búsqueda especificando productos o servicios.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" size="lg" className="w-full text-lg font-bold transition-transform hover:scale-[1.02]" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-6 w-6" />
+                    Obtener Recomendaciones
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
 
       {isLoading && (
