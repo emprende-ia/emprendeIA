@@ -28,7 +28,7 @@ function LoginPageContent() {
       await signInWithPopup(auth, provider);
       // On successful sign-in, the useEffect for user status will redirect.
     } catch (error: any) {
-      console.error("Login popup error:", error);
+      // It's safe to ignore these errors as they happen when the user closes the popup intentionally.
       if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
         toast({
           title: "Error de inicio de sesión",
