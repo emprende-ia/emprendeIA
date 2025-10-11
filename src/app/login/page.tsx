@@ -22,6 +22,9 @@ function LoginPageContent() {
     if (!auth) return;
     setIsSigningIn(true);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
     try {
       await signInWithPopup(auth, provider);
       // On successful sign-in, the useEffect for user status will redirect.
