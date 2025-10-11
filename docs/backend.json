@@ -47,7 +47,7 @@
     "Supplier": {
       "title": "Supplier",
       "description": "Represents a supplier in the marketplace.",
-      "type": "object_IGNORE_COMMENT",
+      "type": "object",
       "properties": {
         "name": {
           "type": "string",
@@ -58,11 +58,7 @@
           "description": "A detailed description of the supplier's products and services."
         },
         "location": {
-          "type": "object",
-          "properties": {
-            "latitude": { "type": "number" },
-            "longitude": { "type": "number" }
-          },
+          "type": "string",
           "description": "The geographic location of the supplier."
         },
         "rating": {
