@@ -1,21 +1,49 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth, useUser } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, UserCredential } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    if (!auth) return;
+    setIsSigningIn(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // On successful sign-in, the useEffect for user status will redirect.
+    } catch (error: any) {
+      console.error("Login popup error:", error);
+      if (error.code !== 'auth/popup-closed-by-user') {
+        toast({
+          title: "Error de inicio de sesión",
+          description: "No se pudo completar el inicio de sesión con Google. Por favor, asegúrate de que las ventanas emergentes no estén bloqueadas e inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (searchParams.get('prompt') === 'true' && !user && !isUserLoading) {
+      handleGoogleSignIn();
+    }
+  }, [searchParams, user, isUserLoading]);
 
   useEffect(() => {
     // If user is logged in, redirect to home page
@@ -24,24 +52,6 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const handleGoogleSignIn = async () => {
-    if (!auth) return;
-    setIsSigningIn(true);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      // On successful sign-in, the useEffect above will redirect.
-    } catch (error: any) {
-      console.error("Login popup error:", error);
-      toast({
-        title: "Error de inicio de sesión",
-        description: "No se pudo completar el inicio de sesión con Google. Por favor, asegúrate de que las ventanas emergentes no estén bloqueadas e inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
 
   // Show a loading spinner while checking auth status or during sign-in process
   if (isUserLoading || isSigningIn || user) {
@@ -75,5 +85,14 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-secondary/30"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
