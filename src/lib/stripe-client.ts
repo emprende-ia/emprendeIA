@@ -5,7 +5,7 @@ import type { User } from 'firebase/auth';
 
 /**
  * This function is designed to be called from a client-side component.
- * It orchestrates the process of creating a Stripe checkout session and returns the session details.
+ * It calls the backend flow to create a Stripe checkout session and returns the session details.
  *
  * @param priceId The ID of the Stripe Price object.
  * @param user The Firebase authenticated user object.
@@ -17,8 +17,7 @@ export async function handleStripeCheckout(priceId: string, user: User) {
     throw new Error('El email del usuario es necesario para completar la compra.');
   }
 
-  // 1. Create the checkout session on the server by calling the Genkit flow.
-  // This now returns the full session object from Stripe.
+  // 1. Call the server-side Genkit flow to create the checkout session.
   const { sessionId, sessionUrl } = await createStripeCheckoutSession({
     priceId,
     userEmail: user.email,
@@ -29,6 +28,6 @@ export async function handleStripeCheckout(priceId: string, user: User) {
     throw new Error("Failed to create Stripe checkout session.");
   }
   
-  // 2. Return the session details to the client component.
+  // 2. Return the session details to the client component for redirection.
   return { sessionId, sessionUrl };
 }
