@@ -14,8 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Sparkles, Lightbulb } from 'lucide-react';
 import { SupplierCard } from './supplier-card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { useUser, useFirestore } from '@/firebase';
+import { saveSearchHistory } from '@/lib/firestore/search-history';
+
 
 const formSchema = z.object({
   businessPlan: z.string().min(25, {
@@ -33,6 +35,8 @@ export function MainContent() {
   const [recommendations, setRecommendations] = useState<SuggestRelevantSuppliersOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -46,6 +50,17 @@ export function MainContent() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
     setRecommendations(null);
+
+    if (!user || !firestore) {
+      toast({
+        title: "Usuario no autenticado",
+        description: "Debes iniciar sesión para usar esta función.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await suggestRelevantSuppliers(data);
       if (!result.suppliers || result.suppliers.length === 0) {
@@ -54,6 +69,13 @@ export function MainContent() {
           description: "Intenta refinar tu plan de negocio para obtener mejores resultados.",
           variant: "destructive"
         });
+      } else {
+         // Save the successful search to history
+         await saveSearchHistory(firestore, user.uid, {
+            term: data.businessPlan,
+            timestamp: new Date(),
+            resultingKeywords: result.suppliers.map(s => s.name).slice(0, 3), // Example keywords
+          });
       }
       setRecommendations(result);
     } catch (e) {
@@ -166,7 +188,7 @@ export function MainContent() {
             </Alert>
           )}
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {recommendations.suppliers?.map((supplier, index) => (
               <SupplierCard key={index} supplier={supplier} isVerified={index === 0} />
             ))}
