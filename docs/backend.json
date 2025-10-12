@@ -86,7 +86,8 @@
   },
   "auth": {
     "providers": [
-      "google.com"
+      "google.com",
+      "facebook.com"
     ]
   },
   "firestore": {
