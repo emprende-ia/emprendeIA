@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Firestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
+import { Firestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
 
 export interface SearchHistory {
   id?: string;
@@ -19,7 +19,7 @@ export interface SearchHistory {
 export async function saveSearchHistory(
   firestore: Firestore,
   userId: string,
-  searchData: Omit<SearchHistory, 'id'>
+  searchData: Omit<SearchHistory, 'id' | 'timestamp'>
 ): Promise<void> {
   try {
     const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
@@ -53,10 +53,12 @@ export async function getSearchHistory(
     
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
+      // Safely convert Firestore Timestamp to JS Date
+      const timestamp = data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date();
       return {
         id: doc.id,
         term: data.term,
-        timestamp: data.timestamp.toDate(), // Convert Firestore Timestamp to JS Date
+        timestamp: timestamp,
         resultingKeywords: data.resultingKeywords || [],
       };
     });

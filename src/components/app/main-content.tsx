@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -73,7 +74,6 @@ export function MainContent() {
          // Save the successful search to history
          await saveSearchHistory(firestore, user.uid, {
             term: data.businessPlan,
-            timestamp: new Date(),
             resultingKeywords: result.suppliers.map(s => s.name).slice(0, 3), // Example keywords
           });
       }
