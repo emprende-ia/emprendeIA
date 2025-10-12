@@ -31,14 +31,12 @@ export function saveSearchHistory(
 
   addDoc(historyCollection, dataToSave)
     .catch((error) => {
-      console.error("Caught permission error during saveSearchHistory:", error.message);
       const permissionError = new FirestorePermissionError({
         path: historyCollection.path,
         operation: 'create',
         requestResourceData: dataToSave,
       });
       errorEmitter.emit('permission-error', permissionError);
-      // We don't re-throw the original error, the emitter handles it.
     });
 }
 
@@ -72,7 +70,6 @@ export async function getSearchHistory(
     });
   } catch (error: any) {
       const historyCollectionPath = `users/${userId}/searchHistory`;
-      console.error(`Caught permission error during getSearchHistory for path: ${historyCollectionPath}`, error.message);
        const permissionError = new FirestorePermissionError({
         path: historyCollectionPath,
         operation: 'list',
