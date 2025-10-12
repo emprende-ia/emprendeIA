@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check, Crown, Gem, Loader2, AlertCircle } from "lucide-react";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { handleStripeCheckout } from "@/lib/stripe-client";
+import { createStripeCheckoutSession } from "@/ai/flows/create-stripe-checkout-session";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
@@ -41,10 +41,10 @@ export function PricingSection() {
       return;
     }
     
-    if (!priceId) {
+    if (!priceId || !user.email) {
       toast({
         title: "Error de configuración",
-        description: "El ID del plan de precios no está configurado. Contacta al soporte.",
+        description: "El ID del plan o el email del usuario no están disponibles. Contacta al soporte.",
         variant: "destructive",
       });
       return;
@@ -53,11 +53,15 @@ export function PricingSection() {
     setLoadingPriceId(priceId);
 
     try {
-      // The handleStripeCheckout function now returns the session URL.
-      const { sessionUrl } = await handleStripeCheckout(priceId, user);
+      // Directamente llamamos al flujo de Genkit que se ejecuta en el servidor.
+      const { sessionUrl } = await createStripeCheckoutSession({
+        priceId,
+        userEmail: user.email,
+        userId: user.uid,
+      });
 
       if (sessionUrl) {
-        // Perform the redirect on the top-level window to avoid iframe issues.
+        // La redirección se maneja en el nivel superior para evitar problemas de iframe.
         window.top!.location.href = sessionUrl;
       } else {
         throw new Error("No se pudo obtener la URL de pago de Stripe.");
