@@ -1,4 +1,3 @@
-// This is a server-side file.
 'use server';
 
 /**
