@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const GoogleIcon = () => (
@@ -27,7 +26,6 @@ function LoginPageContent() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -62,17 +60,8 @@ function LoginPageContent() {
     }
   }, [user, isUserLoading, router]);
 
-  useEffect(() => {
-    const providerParam = searchParams.get('provider');
-    if (providerParam === 'google') {
-      handleGoogleSignIn();
-    } else if (providerParam === 'facebook') {
-      handleFacebookSignIn();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
-  if (isUserLoading || isSigningIn || user) {
+  if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
