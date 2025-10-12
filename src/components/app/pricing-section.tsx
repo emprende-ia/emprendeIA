@@ -53,7 +53,6 @@ export function PricingSection() {
     setLoadingPriceId(priceId);
 
     try {
-      // Directamente llamamos al flujo de Genkit que se ejecuta en el servidor.
       const { sessionUrl } = await createStripeCheckoutSession({
         priceId,
         userEmail: user.email,
@@ -61,7 +60,6 @@ export function PricingSection() {
       });
 
       if (sessionUrl) {
-        // La redirección se maneja en el nivel superior para evitar problemas de iframe.
         window.top!.location.href = sessionUrl;
       } else {
         throw new Error("No se pudo obtener la URL de pago de Stripe.");
