@@ -2,6 +2,8 @@
 'use client';
 
 import { Firestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export interface SearchHistory {
   id?: string;
@@ -16,22 +18,28 @@ export interface SearchHistory {
  * @param userId - The ID of the user.
  * @param searchData - The search data to save.
  */
-export async function saveSearchHistory(
+export function saveSearchHistory(
   firestore: Firestore,
   userId: string,
   searchData: Omit<SearchHistory, 'id' | 'timestamp'>
-): Promise<void> {
-  try {
-    const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
-    await addDoc(historyCollection, {
-        ...searchData,
-        timestamp: serverTimestamp() // Use server timestamp for consistency
+): void {
+  const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
+  const dataToSave = {
+    ...searchData,
+    timestamp: serverTimestamp()
+  };
+
+  addDoc(historyCollection, dataToSave)
+    .catch((error) => {
+      console.error("Caught permission error during saveSearchHistory:", error.message);
+      const permissionError = new FirestorePermissionError({
+        path: historyCollection.path,
+        operation: 'create',
+        requestResourceData: dataToSave,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      // We don't re-throw the original error, the emitter handles it.
     });
-  } catch (error) {
-    console.error("Error saving search history: ", error);
-    // Optionally re-throw or handle the error as needed
-    throw error;
-  }
 }
 
 /**
@@ -62,9 +70,14 @@ export async function getSearchHistory(
         resultingKeywords: data.resultingKeywords || [],
       };
     });
-  } catch (error) {
-    console.error("Error getting search history: ", error);
-    // Optionally re-throw or handle the error as needed
-    return []; // Return empty array on error
+  } catch (error: any) {
+      const historyCollectionPath = `users/${userId}/searchHistory`;
+      console.error(`Caught permission error during getSearchHistory for path: ${historyCollectionPath}`, error.message);
+       const permissionError = new FirestorePermissionError({
+        path: historyCollectionPath,
+        operation: 'list',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      return []; // Return empty array on error
   }
 }
