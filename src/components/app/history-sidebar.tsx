@@ -20,12 +20,18 @@ export function HistorySidebar() {
   useEffect(() => {
     if (user && firestore) {
       setIsLoading(true);
-      getSearchHistory(firestore, user.uid, 15)
-        .then(setHistory)
-        .catch(console.error)
-        .finally(() => setIsLoading(false));
-    } else {
+      const unsubscribe = getSearchHistory(firestore, user.uid, 15, (newHistory) => {
+        setHistory(newHistory);
+        setIsLoading(false);
+      });
+      // The real-time listener will handle updates.
+      // We return the unsubscribe function to clean up when the component unmounts.
+      return () => unsubscribe();
+
+    } else if (!user) {
+      // If there's no user, we're not loading and there's no history.
       setIsLoading(false);
+      setHistory([]);
     }
   }, [user, firestore]);
 

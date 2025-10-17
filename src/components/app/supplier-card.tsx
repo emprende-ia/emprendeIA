@@ -67,9 +67,9 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
             <span>{supplier.contactInfo}</span>
           </div>
           {supplier.specialOffers && (
-            <div className="flex items-start gap-3 rounded-md bg-amber-500 p-3">
-              <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-white" />
-              <span className="font-semibold text-white">{supplier.specialOffers}</span>
+            <div className="flex items-start gap-3 rounded-md bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
+              <Ticket className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="font-semibold">{supplier.specialOffers}</span>
             </div>
           )}
         </div>

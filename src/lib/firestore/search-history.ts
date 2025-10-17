@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Firestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { Firestore, collection, addDoc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -41,23 +41,24 @@ export function saveSearchHistory(
 }
 
 /**
- * Retrieves the search history for a specific user.
+ * Retrieves the search history for a specific user in real-time.
  * @param firestore - The Firestore instance.
  * @param userId - The ID of the user.
  * @param count - The number of recent searches to retrieve.
- * @returns A promise that resolves to an array of search history records.
+ * @param onUpdate - Callback function to be called with the new history data.
+ * @returns An unsubscribe function for the real-time listener.
  */
-export async function getSearchHistory(
+export function getSearchHistory(
   firestore: Firestore,
   userId: string,
-  count: number = 10
-): Promise<SearchHistory[]> {
-  try {
-    const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
-    const q = query(historyCollection, orderBy('timestamp', 'desc'), limit(count));
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => {
+  count: number = 10,
+  onUpdate: (history: SearchHistory[]) => void
+): () => void {
+  const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
+  const q = query(historyCollection, orderBy('timestamp', 'desc'), limit(count));
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const history = querySnapshot.docs.map(doc => {
       const data = doc.data();
       // Safely convert Firestore Timestamp to JS Date
       const timestamp = data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date();
@@ -68,13 +69,17 @@ export async function getSearchHistory(
         resultingKeywords: data.resultingKeywords || [],
       };
     });
-  } catch (error: any) {
-      const historyCollectionPath = `users/${userId}/searchHistory`;
-       const permissionError = new FirestorePermissionError({
-        path: historyCollectionPath,
-        operation: 'list',
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      return []; // Return empty array on error
-  }
+    onUpdate(history);
+  }, (error) => {
+    const historyCollectionPath = `users/${userId}/searchHistory`;
+    const permissionError = new FirestorePermissionError({
+      path: historyCollectionPath,
+      operation: 'list',
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    console.error("Error getting search history:", error);
+    onUpdate([]); // Return empty array on error
+  });
+
+  return unsubscribe;
 }

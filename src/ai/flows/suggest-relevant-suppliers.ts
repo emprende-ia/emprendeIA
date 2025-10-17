@@ -11,7 +11,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const SuggestRelevantSuppliersInputSchema = z.object({
   businessPlan: z
@@ -68,11 +68,11 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
   - Specific Supplies Mentioned: {{{supplierToolSelection}}}
   {{/if}}
 
-  **Phase 2: Supplier Recommendation**
+  **Phase 2: Supplier Recommendation & Scoring**
   Based on your analysis, suggest a list of 3-5 highly relevant suppliers. For each supplier, you MUST:
   1.  Provide basic details: name, description, contactInfo, location, and any specialOffers.
   2.  Generate a "summaryIA": A dynamic, personalized summary explaining EXACTLY why this supplier is a great fit for the user's specific business idea. For example: "Este proveedor es ideal para tu cafetería, ya que ofrece granos de café de especialidad tostados artesanalmente."
-  3.  Prioritize suppliers in or near the specified business location.
+  3.  **Crucially, prioritize suppliers in or very near the specified business location. Proximity is a key scoring factor.** A supplier in another state is less relevant than one in the same city.
 
   **Phase 3: Combined Strategy**
   After listing the suppliers, provide a "combinedRecommendation". This should be a short paragraph suggesting how the top 2-3 suppliers could work together to provide a comprehensive solution. For example: "Para un lanzamiento exitoso, podrías combinar los granos de 'Café del Sur' con el mobiliario de 'Diseño Rústico' para crear el ambiente perfecto."
