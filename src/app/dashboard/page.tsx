@@ -8,7 +8,7 @@ import { AppFooter } from "@/components/app/footer";
 export default function DashboardPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <main className="flex flex-1 flex-col items-center">
+      <main className="flex-1 items-center">
         <div className="container mx-auto max-w-7xl px-4 py-8">
           <AppHeader />
           <Separator className="my-8" />
@@ -16,15 +16,15 @@ export default function DashboardPage() {
             <div className="space-y-12">
               <MainContent />
             </div>
-            <div className="hidden lg:block">
+            <div className="space-y-8">
               <HistorySidebar />
             </div>
           </div>
         </div>
-        <div className="w-full mt-auto">
-          <AppFooter />
-        </div>
       </main>
+      <div className="w-full mt-auto">
+        <AppFooter />
+      </div>
     </div>
   );
 }
