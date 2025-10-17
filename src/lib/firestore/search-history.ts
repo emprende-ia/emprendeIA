@@ -23,6 +23,7 @@ export function saveSearchHistory(
   userId: string,
   searchData: Omit<SearchHistory, 'id' | 'timestamp'>
 ): void {
+  if (!userId) return;
   const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
   const dataToSave = {
     ...searchData,
@@ -31,6 +32,7 @@ export function saveSearchHistory(
 
   addDoc(historyCollection, dataToSave)
     .catch((error) => {
+      console.error("Error saving search history: ", error);
       const permissionError = new FirestorePermissionError({
         path: historyCollection.path,
         operation: 'create',

@@ -48,7 +48,7 @@ export function HistorySidebar() {
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
         ) : history.length > 0 ? (
@@ -61,8 +61,8 @@ export function HistorySidebar() {
                 </p>
                 {item.resultingKeywords && item.resultingKeywords.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-2">
-                        {item.resultingKeywords.map(keyword => (
-                            <Badge key={keyword} variant="secondary">{keyword}</Badge>
+                        {item.resultingKeywords.map((keyword, index) => (
+                            <Badge key={index} variant="secondary">{keyword}</Badge>
                         ))}
                     </div>
                 )}

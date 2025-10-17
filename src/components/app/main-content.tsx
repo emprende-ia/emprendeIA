@@ -72,7 +72,7 @@ export function MainContent() {
         });
       } else {
          // Save the successful search to history
-         await saveSearchHistory(firestore, user.uid, {
+         saveSearchHistory(firestore, user.uid, {
             term: data.businessPlan,
             resultingKeywords: result.suppliers.map(s => s.name).slice(0, 3), // Example keywords
           });
