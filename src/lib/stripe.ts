@@ -1,10 +1,4 @@
 // This file is the single source of truth for initializing the Stripe client.
-
-// By using `require` here, we ensure that dotenv is loaded synchronously
-// before any other code in this module is executed. We also provide a
-// full path to the .env file to avoid any ambiguity.
-require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
-
 import Stripe from 'stripe';
 
 let stripeInstance: Stripe | null = null;

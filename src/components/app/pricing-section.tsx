@@ -1,168 +1,164 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Crown, Gem, Loader2, AlertCircle } from "lucide-react";
-import { useUser } from "@/firebase";
-import { useRouter } from "next/navigation";
-import { createStripeCheckoutSession } from "@/ai/flows/create-stripe-checkout-session";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Check, Gem, Sparkles, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { createStripeCheckoutSession } from '@/ai/flows/create-stripe-checkout-session';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-const entrepreneurFeatures = [
-  "Descuentos Exclusivos con proveedores",
-  "Acceso Prioritario a proveedores verificados",
-  "Reportes de Mercado Avanzados",
-  "Análisis de viabilidad con IA mejorado",
+
+const plans = [
+  {
+    name: 'Básico',
+    icon: User,
+    price: 'Gratis',
+    priceId: null,
+    description: 'Para empezar a explorar y encontrar tus primeros proveedores.',
+    features: [
+      'Recomendaciones de IA',
+      'Directorio de proveedores',
+      'Búsquedas limitadas',
+    ],
+    cta: 'Comenzar Ahora',
+    isPrimary: false,
+  },
+  {
+    name: 'Plus',
+    icon: Sparkles,
+    price: '$19',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID,
+    description: 'Ideal para emprendedores que buscan optimizar su cadena de suministro.',
+    features: [
+      'Recomendaciones priorizadas',
+      'Acceso a proveedores verificados',
+      'Búsquedas ilimitadas',
+      'Soporte por correo electrónico',
+    ],
+    cta: 'Obtener Plan Plus',
+    isPrimary: true,
+  },
+  {
+    name: 'Premium',
+    icon: Gem,
+    price: '$49',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID,
+    description: 'Para negocios que necesitan analítica avanzada y máxima visibilidad.',
+    features: [
+      'Todo en Plus',
+      'Reportes de mercado avanzados',
+      'Analíticas de perfil de proveedor',
+      'Soporte prioritario 24/7',
+    ],
+    cta: 'Obtener Plan Premium',
+    isPrimary: false,
+  },
 ];
-
-const supplierFeatures = [
-  "Mayor Visibilidad en las búsquedas",
-  "Distintivo 'Proveedor Premium'",
-  "Datos de Tendencias de mercado",
-  "Analíticas Detalladas de perfil",
-];
-
-const plusPriceId = process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID;
-const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
 
 export function PricingSection() {
-  const { user } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-  
-  const arePricesConfigured = plusPriceId && premiumPriceId;
+    const { user } = useUser();
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState<string | null>(null);
+    const router = useRouter();
 
-  const handleGetPlan = async (priceId: string | undefined) => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
-    if (!priceId || !user.email) {
-      toast({
-        title: "Error de configuración",
-        description: "El ID del plan o el email del usuario no están disponibles. Contacta al soporte.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setLoadingPriceId(priceId);
+    const handleCheckout = async (priceId: string | null | undefined) => {
+        if (!user) {
+            toast({
+                title: 'Inicia sesión para continuar',
+                description: 'Necesitas una cuenta para poder suscribirte a un plan.',
+                variant: 'destructive',
+            });
+            router.push('/login');
+            return;
+        }
 
-    try {
-      const { sessionUrl } = await createStripeCheckoutSession({
-        priceId,
-        userEmail: user.email,
-        userId: user.uid,
-      });
+        if (!priceId) {
+            toast({
+                title: 'Plan no disponible',
+                description: 'Este plan no requiere un pago.',
+            });
+            return;
+        }
 
-      if (sessionUrl) {
-        window.top!.location.href = sessionUrl;
-      } else {
-        throw new Error("No se pudo obtener la URL de pago de Stripe.");
-      }
-    } catch (error: any) {
-      console.error("Error al redirigir a Stripe:", error);
-      toast({
-        title: "Error al procesar el pago",
-        description: error.message || "No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingPriceId(null);
-    }
-  };
+        setIsLoading(priceId);
+
+        try {
+            const { sessionUrl } = await createStripeCheckoutSession({
+                priceId,
+                userEmail: user.email || '',
+                userId: user.uid,
+            });
+
+            if (sessionUrl) {
+                window.location.href = sessionUrl;
+            } else {
+                throw new Error('No se pudo obtener la URL de checkout.');
+            }
+        } catch (error: any) {
+             toast({
+                title: 'Error al crear la sesión de pago',
+                description: error.message || 'No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.',
+                variant: 'destructive',
+            });
+            setIsLoading(null);
+        }
+    };
+
 
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-secondary/30 rounded-lg">
-      <div className="container px-4 md:px-6">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="space-y-2">
-            <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl">Planes Premium para Impulsar tu Crecimiento</h2>
-            <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Desbloquea herramientas exclusivas tanto para emprendedores como para proveedores y lleva tu negocio al siguiente nivel.
-            </p>
-          </div>
-        </div>
-
-        {!arePricesConfigured && (
-          <div className="mt-8 max-w-2xl mx-auto">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Configuración Requerida</AlertTitle>
-              <AlertDescription>
-                Los planes de pago no están configurados. Por favor, añade las variables `NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID` y `NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID` a tu archivo .env para habilitar los pagos.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-
-        <div className="mx-auto grid max-w-5xl items-stretch gap-8 py-12 sm:grid-cols-2">
-          <Card className="flex flex-col shadow-md">
-            <CardHeader className="items-center text-center">
-              <Crown className="h-10 w-10 text-primary" />
-              <CardTitle className="font-headline text-2xl pt-2">EmprendeIA Plus</CardTitle>
-              <CardDescription>Para Emprendedores</CardDescription>
-              <div className="flex items-baseline gap-2 pt-4">
-                <span className="text-4xl font-bold">$19</span>
-                <span className="text-sm text-muted-foreground">/mes</span>
+     <section className="py-12">
+      <div className="text-center mb-12">
+        <h2 className="font-headline text-4xl font-bold">Planes para cada etapa de tu negocio</h2>
+        <p className="text-muted-foreground text-lg mt-2">Elige el plan que se adapte a tus necesidades y comienza a crecer.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {plans.map((plan) => (
+          <Card
+            key={plan.name}
+            className={cn('flex flex-col', plan.isPrimary && 'border-primary border-2 shadow-lg')}
+          >
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <plan.icon className="h-8 w-8" />
               </div>
+              <CardTitle className="font-headline text-2xl">{plan.name}</CardTitle>
+              <CardDescription>{plan.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow space-y-4">
-              <ul className="space-y-3 text-sm">
-                {entrepreneurFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <Check className="h-4 w-4 shrink-0 text-accent" />
+            <CardContent className="flex-grow">
+              <div className="text-center mb-6">
+                <span className="font-headline text-4xl font-bold">{plan.price}</span>
+                {plan.price !== 'Gratis' && <span className="text-muted-foreground">/mes</span>}
+              </div>
+              <ul className="space-y-3">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm">
+                    <Check className="h-5 w-5 text-green-500" />
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
             <CardFooter>
-              <Button 
-                variant="outline" 
-                className="w-full font-bold" 
-                onClick={() => handleGetPlan(plusPriceId)}
-                disabled={loadingPriceId === plusPriceId || !arePricesConfigured}
+               <Button
+                size="lg"
+                className="w-full"
+                variant={plan.isPrimary ? 'default' : 'outline'}
+                onClick={() => handleCheckout(plan.priceId)}
+                disabled={!!isLoading}
               >
-                {loadingPriceId === plusPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Emprendedor'}
+                {isLoading === plan.priceId ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  plan.cta
+                )}
               </Button>
             </CardFooter>
           </Card>
-          <Card className="flex flex-col border-2 border-primary shadow-2xl">
-            <CardHeader className="items-center text-center">
-              <Gem className="h-10 w-10 text-primary" />
-              <CardTitle className="font-headline text-2xl pt-2">Proveedor Premium</CardTitle>
-              <CardDescription>Para Proveedores</CardDescription>
-              <div className="flex items-baseline gap-2 pt-4">
-                <span className="text-4xl font-bold">$49</span>
-                <span className="text-sm text-muted-foreground">/mes</span>
-              </div>
-            </CardHeader>
-            <CardContent className="flex-grow space-y-4">
-              <ul className="space-y-3 text-sm">
-                {supplierFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <Check className="h-4 w-4 shrink-0 text-accent" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                className="w-full font-bold" 
-                onClick={() => handleGetPlan(premiumPriceId)}
-                disabled={loadingPriceId === premiumPriceId || !arePricesConfigured}
-              >
-                {loadingPriceId === premiumPriceId ? <Loader2 className="animate-spin" /> : 'Obtener Plan Proveedor'}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
+        ))}
       </div>
     </section>
   );

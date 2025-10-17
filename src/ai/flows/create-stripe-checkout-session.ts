@@ -46,9 +46,8 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
     outputSchema: CreateStripeCheckoutSessionOutputSchema,
   },
   async ({ priceId, userEmail, userId }) => {
-    // Get a Stripe instance from our centralized getter.
-    // This function now handles loading environment variables and initialization.
     const stripe = getStripe();
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
 
     try {
       const session = await stripe.checkout.sessions.create({
@@ -60,9 +59,10 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
           },
         ],
         mode: 'subscription',
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}`,
+        success_url: `${appUrl}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/pricing`,
         customer_email: userEmail,
+        client_reference_id: userId,
         metadata: {
           firebase_uid: userId,
         },
@@ -76,7 +76,6 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
 
     } catch (error: any) {
       console.error('Stripe Flow Error:', error.message);
-      // It's better to throw a structured error, but for now, we'll re-throw
       throw new Error(`Could not create checkout session: ${error.message}`);
     }
   }

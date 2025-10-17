@@ -1,4 +1,3 @@
-// This is a server-side file.
 'use server';
 
 /**
@@ -15,7 +14,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import Stripe from 'stripe';
-import { getStripe } from '@/lib/stripe'; // Import the centralized Stripe getter
+import { getStripe } from '@/lib/stripe'; 
 
 const StripeWebhookInputSchema = z.object({
   body: z.string().describe('The raw request body from Stripe.'),
@@ -40,7 +39,6 @@ const handleStripeWebhookFlow = ai.defineFlow(
     outputSchema: StripeWebhookOutputSchema,
   },
   async ({ body, signature }) => {
-    // Get a Stripe instance from our centralized getter.
     const stripe = getStripe();
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -61,12 +59,19 @@ const handleStripeWebhookFlow = ai.defineFlow(
     // Handle the checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('Checkout session completed!', session);
+      const userId = session.metadata?.firebase_uid;
 
-      // TODO: Here you would typically fulfill the order:
-      // 1. Retrieve the user's ID from session.metadata.firebase_uid
-      // 2. Update the user's role in your Firestore database to 'plus' or 'premium'.
-      // 3. This will grant them access to the premium features.
+      if (userId) {
+        console.log(`Checkout session completed for user: ${userId}`);
+        // TODO: Here you would typically fulfill the order:
+        // 1. Retrieve the user's ID from session.metadata.firebase_uid.
+        // 2. Determine which plan was purchased from the line items.
+        // 3. Update the user's role in your Firestore database to 'plus' or 'premium'.
+        // This will grant them access to the premium features.
+        console.log('User needs role update in Firestore.');
+      } else {
+        console.error('No firebase_uid found in session metadata.');
+      }
     }
 
     // You can handle other event types here as needed

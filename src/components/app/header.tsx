@@ -1,8 +1,8 @@
 'use client';
 
-import { Sparkles, LogOut, User as UserIcon } from 'lucide-react';
+import { Sparkles, LogOut, User as UserIcon, Gem } from 'lucide-react';
 import React from 'react';
-import { useUser, useAuth } from '@/firebase';
+import { useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
@@ -37,9 +38,19 @@ export function AppHeader() {
 
   return (
     <header className="relative flex flex-col items-center justify-center space-y-4 text-center">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex items-center gap-4">
+        {!isUserLoading && !user && (
+          <Button asChild variant="outline" size="sm">
+            <Link href="/pricing">
+              <Gem className="mr-2 h-4 w-4" />
+              Ver Planes
+            </Link>
+          </Button>
+        )}
         {isUserLoading ? (
-          <Button variant="outline" size="sm" disabled>Cargando...</Button>
+          <Button variant="outline" size="icon" disabled>
+            <UserIcon className="h-4 w-4" />
+          </Button>
         ) : user ? (
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -59,6 +70,13 @@ export function AppHeader() {
                   </p>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+               <DropdownMenuItem asChild>
+                <Link href="/pricing">
+                  <Gem className="mr-2 h-4 w-4" />
+                  <span>Ver Planes</span>
+                 </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />

@@ -7,10 +7,14 @@ import { handleStripeWebhook } from '@/ai/flows/stripe-webhook';
  * It's a simple wrapper that passes the request to a Genkit flow for secure processing.
  */
 export async function POST(req: NextRequest) {
-  const body = await req.text();
-  const signature = req.headers.get('stripe-signature') as string;
-
   try {
+    const body = await req.text();
+    const signature = req.headers.get('stripe-signature');
+
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+    }
+    
     // Pass the raw body and signature to the Genkit flow for verification and processing
     const result = await handleStripeWebhook({ body, signature });
     return NextResponse.json(result);
