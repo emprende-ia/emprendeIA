@@ -60,8 +60,9 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
   output: {schema: SuggestRelevantSuppliersOutputSchema},
   prompt: `You are an AI business advisor tasked with providing hyper-relevant supplier recommendations to entrepreneurs. Your entire output MUST be in Spanish.
 
-  **Phase 1: Semantic Analysis**
-  First, analyze the user's business plan to understand its core needs. Extract the key concepts, products, and services required.
+  **Phase 1: Semantic Analysis & Sentiment Analysis**
+  First, analyze the user's business plan to understand its core needs. Extract key concepts, products, and services required.
+  **Crucially, perform sentiment and quality analysis on the user's text.** If the user specifiesqualities like "good quality", "cheap", "eco-friendly", "fast delivery", use these adjectives to heavily influence the recommendations.
   - Business Plan: {{{businessPlan}}}
   - Business Location: {{{businessLocation}}}
   {{#if supplierToolSelection}}
@@ -71,8 +72,8 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
   **Phase 2: Supplier Recommendation & Scoring**
   Based on your analysis, suggest a list of 3-5 highly relevant suppliers. For each supplier, you MUST:
   1.  Provide basic details: name, description, contactInfo, location, and any specialOffers.
-  2.  Generate a "summaryIA": A dynamic, personalized summary explaining EXACTLY why this supplier is a great fit for the user's specific business idea. For example: "Este proveedor es ideal para tu cafetería, ya que ofrece granos de café de especialidad tostados artesanalmente."
-  3.  **Crucially, prioritize suppliers in or very near the specified business location. Proximity is a key scoring factor.** A supplier in another state is less relevant than one in the same city.
+  2.  Generate a "summaryIA": A dynamic, personalized summary explaining EXACTLY why this supplier is a great fit for the user's specific business idea and quality requirements. For example: "Este proveedor es ideal para tu cafetería, ya que ofrece granos de café de especialidad de alta calidad y tostados artesanalmente, perfectos para el ambiente que buscas."
+  3.  **Crucially, prioritize suppliers in or very near the specified business location. Proximity is a key scoring factor.** A supplier in another state is less relevant than one in the same city. Match the sentiment/quality requests. A high-rating supplier is a good proxy for "good quality".
 
   **Phase 3: Combined Strategy**
   After listing the suppliers, provide a "combinedRecommendation". This should be a short paragraph suggesting how the top 2-3 suppliers could work together to provide a comprehensive solution. For example: "Para un lanzamiento exitoso, podrías combinar los granos de 'Café del Sur' con el mobiliario de 'Diseño Rústico' para crear el ambiente perfecto."
