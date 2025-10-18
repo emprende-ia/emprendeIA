@@ -31,7 +31,7 @@ const generateMarketingImageFlow = ai.defineFlow(
   async ({ prompt }) => {
     
     const { media } = await ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
+        model: 'googleai/imagen-3.0-generate-002',
         prompt: `Create a professional, high-quality marketing image for a new business. The image should be visually appealing and suitable for social media campaigns. Prompt: "${prompt}"`,
     });
 

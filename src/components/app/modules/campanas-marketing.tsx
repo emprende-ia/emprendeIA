@@ -43,12 +43,12 @@ export function CampanasMarketingModule() {
         description: "Tu nueva imagen de marketing está lista.",
       });
     } catch (e) {
+      console.error(e);
       toast({
           title: "Error al generar la imagen",
-          description: "Hubo un problema con la IA. Por favor, inténtalo de nuevo.",
+          description: "No se pudo generar la imagen. Asegúrate de que tu proyecto de Google Cloud tenga la facturación habilitada.",
           variant: "destructive"
         });
-      console.error(e);
     } finally {
       setIsLoading(false);
     }
