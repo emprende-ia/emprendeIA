@@ -87,12 +87,14 @@ function LoginPageContent() {
           </Button>
         </CardContent>
         <CardFooter className="flex-col gap-6 px-8 pb-8">
-            <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105">
-                    <Sparkles className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <span className="font-headline text-xl font-semibold">EmprendeIA</span>
-            </Link>
+            <div className="flex w-full flex-col items-center gap-4 pt-6">
+                <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105">
+                        <Sparkles className="h-8 w-8 text-primary-foreground" />
+                    </div>
+                    <span className="font-headline text-xl font-semibold">EmprendeIA</span>
+                </Link>
+            </div>
              <p className="px-8 text-center text-xs text-muted-foreground">
                 Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.
             </p>
