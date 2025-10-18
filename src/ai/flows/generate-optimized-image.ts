@@ -2,7 +2,7 @@
 
 /**
  * @fileOverview This file defines a Genkit flow for generating a high-quality, optimized marketing image using a two-step AI process.
- * 1. An LLM optimizes the user's prompt.
+ * 1. An LLM optimizes the user's prompt based on the desired creative type (logo or brand image).
  * 2. An image generation model creates an image from the optimized prompt.
  * @module ai/flows/generate-optimized-image
  */
@@ -10,8 +10,11 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
+const CreativeTypeSchema = z.enum(['LOGO', 'BRAND_IMAGE']);
+
 const GenerateOptimizedImageInputSchema = z.object({
   prompt: z.string().describe('The user\'s simple text prompt to generate the image from.'),
+  creativeType: CreativeTypeSchema.describe('The type of creative to generate.'),
 });
 export type GenerateOptimizedImageInput = z.infer<typeof GenerateOptimizedImageInputSchema>;
 
@@ -27,11 +30,16 @@ export async function generateOptimizedImage(input: GenerateOptimizedImageInput)
 
 const promptOptimizerPrompt = ai.definePrompt({
     name: 'promptOptimizerPrompt',
-    input: { schema: z.object({ prompt: z.string() }) },
+    input: { schema: GenerateOptimizedImageInputSchema },
     prompt: `You are a creative assistant that enhances user prompts for an AI image generator.
-    Rewrite the following user prompt to be more descriptive, artistic, and detailed.
-    Add concepts like 'photorealistic', 'ultra-detailed', '3D render', 'cinematic lighting', and 'professional photography' to ensure a high-quality visual output.
-    Your response should ONLY be the new, optimized prompt.
+    Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
+
+    {{#if (eq creativeType 'LOGO')}}
+    Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.
+    {{/if}}
+    {{#if (eq creativeType 'BRAND_IMAGE')}}
+    Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.
+    {{/if}}
 
     User Prompt: {{{prompt}}}
     Optimized Prompt:`,
@@ -43,9 +51,9 @@ const generateOptimizedImageFlow = ai.defineFlow(
     inputSchema: GenerateOptimizedImageInputSchema,
     outputSchema: GenerateOptimizedImageOutputSchema,
   },
-  async ({ prompt }) => {
-    // Step 1: Optimize the user's prompt with an LLM.
-    const { text: optimizedPrompt } = await promptOptimizerPrompt({ prompt });
+  async ({ prompt, creativeType }) => {
+    // Step 1: Optimize the user's prompt with an LLM based on the creative type.
+    const { text: optimizedPrompt } = await promptOptimizerPrompt({ prompt, creativeType });
 
     if (!optimizedPrompt) {
         throw new Error("Failed to optimize the prompt.");

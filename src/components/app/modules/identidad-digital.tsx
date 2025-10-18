@@ -17,6 +17,8 @@ import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-
 import { generateOptimizedImage } from '@/ai/flows/generate-optimized-image';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const identityFormSchema = z.object({
   businessDescription: z.string().min(10, {
@@ -29,6 +31,7 @@ const imageFormSchema = z.object({
   prompt: z.string().min(5, {
     message: 'Tu idea para la imagen debe tener al menos 5 caracteres.',
   }),
+  creativeType: z.enum(['LOGO', 'BRAND_IMAGE']),
 });
 type ImageFormValues = z.infer<typeof imageFormSchema>;
 
@@ -48,7 +51,10 @@ export function IdentidadDigitalModule() {
 
   const imageForm = useForm<ImageFormValues>({
     resolver: zodResolver(imageFormSchema),
-    defaultValues: { prompt: '' },
+    defaultValues: { 
+      prompt: '',
+      creativeType: 'LOGO',
+    },
   });
 
   const onIdentitySubmit: SubmitHandler<IdentityFormValues> = async (data) => {
@@ -192,6 +198,37 @@ export function IdentidadDigitalModule() {
                           </FormItem>
                           )}
                       />
+
+                      <FormField
+                        control={imageForm.control}
+                        name="creativeType"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3">
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex items-center space-x-4"
+                              >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="LOGO" />
+                                  </FormControl>
+                                  <Label className="font-normal">Logo</Label>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="BRAND_IMAGE" />
+                                  </FormControl>
+                                  <Label className="font-normal">Imagen de Marca</Label>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
                       <Button type="submit" size="sm" className="w-full font-bold" disabled={isImageLoading}>
                           {isImageLoading ? (
                           <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando imagen...</>
