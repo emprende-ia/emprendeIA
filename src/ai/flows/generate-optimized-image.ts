@@ -34,10 +34,10 @@ const promptOptimizerPrompt = ai.definePrompt({
     prompt: `You are a creative assistant that enhances user prompts for an AI image generator.
     Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
 
-    {{#if (eq creativeType 'LOGO')}}
+    {{#if isLogo}}
     Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.
     {{/if}}
-    {{#if (eq creativeType 'BRAND_IMAGE')}}
+    {{#if isBrandImage}}
     Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.
     {{/if}}
 
@@ -53,7 +53,13 @@ const generateOptimizedImageFlow = ai.defineFlow(
   },
   async ({ prompt, creativeType }) => {
     // Step 1: Optimize the user's prompt with an LLM based on the creative type.
-    const { text: optimizedPrompt } = await promptOptimizerPrompt({ prompt, creativeType });
+    const optimizerInput = {
+      prompt,
+      creativeType,
+      isLogo: creativeType === 'LOGO',
+      isBrandImage: creativeType === 'BRAND_IMAGE',
+    };
+    const { text: optimizedPrompt } = await promptOptimizerPrompt(optimizerInput);
 
     if (!optimizedPrompt) {
         throw new Error("Failed to optimize the prompt.");
