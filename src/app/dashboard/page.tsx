@@ -4,6 +4,7 @@ import { MainContent } from "@/components/app/main-content";
 import { HistorySidebar } from "@/components/app/history-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppFooter } from "@/components/app/footer";
+import AdminPage from "@/app/admin/page";
 
 export default function DashboardPage() {
   return (
@@ -12,14 +13,7 @@ export default function DashboardPage() {
         <div className="container mx-auto max-w-7xl px-4 py-8">
           <AppHeader />
           <Separator className="my-8" />
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_350px]">
-            <div className="space-y-12">
-              <MainContent />
-            </div>
-            <div className="space-y-8">
-              <HistorySidebar />
-            </div>
-          </div>
+          <AdminPage />
         </div>
       </main>
       <div className="w-full mt-auto">
