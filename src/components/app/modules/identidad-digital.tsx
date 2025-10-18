@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Palette, Check } from "lucide-react";
 import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
 import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
-import { generateMarketingImage } from '@/ai/flows/generate-marketing-image';
+import { generateOptimizedImage } from '@/ai/flows/generate-optimized-image';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 
@@ -79,7 +79,7 @@ export function IdentidadDigitalModule() {
     setIsImageLoading(true);
     setGeneratedImage(null);
     try {
-      const result = await generateMarketingImage(data);
+      const result = await generateOptimizedImage(data);
       setGeneratedImage(result.imageUrl);
       toast({
         title: "¡Imagen generada!",
