@@ -4,13 +4,17 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  background-image: url('https://i.postimg.cc/PrYTC88B/1425.png');
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
 }
 
 @layer base {
   :root {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 240 10% 3.9% / 0.8;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
@@ -24,7 +28,7 @@ body {
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
+    --border: 240 3.7% 25.9%;
     --input: 240 3.7% 15.9%;
     --ring: 262.1 83.3% 57.8%;
     --chart-1: 220 70% 50%;
