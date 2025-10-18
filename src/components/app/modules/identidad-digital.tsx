@@ -58,8 +58,10 @@ export function IdentidadDigitalModule() {
     try {
       const result = await generateDigitalIdentity(data);
       setIdentity(result);
-      // Pre-fill image prompt with brand name
-      imageForm.setValue('prompt', `Un logo para una marca llamada "${result.brandName}"`);
+      // Pre-fill image prompt with AI-suggested prompt
+      if (result.logoPrompt) {
+        imageForm.setValue('prompt', result.logoPrompt);
+      }
       setIsModalOpen(true);
     } catch (e) {
       toast({
@@ -184,7 +186,7 @@ export function IdentidadDigitalModule() {
                           render={({ field }) => (
                           <FormItem>
                               <FormControl>
-                              <Input placeholder="Un logo para una marca llamada..." {...field} />
+                              <Input placeholder="Un logo minimalista para una marca de café..." {...field} />
                               </FormControl>
                               <FormMessage />
                           </FormItem>
