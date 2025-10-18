@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth, useUser } from '@/firebase';
 import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, AuthProvider } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -73,13 +73,10 @@ function LoginPageContent() {
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <Link href="/" className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105">
-            <Sparkles className="h-10 w-10 text-primary-foreground" />
-          </Link>
           <CardTitle className="font-headline text-3xl">Bienvenido de Nuevo</CardTitle>
           <CardDescription className="pt-2">Selecciona un método para continuar</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 p-8 pt-0">
+        <CardContent className="flex flex-col gap-4 p-8 pt-6">
           <Button onClick={handleGoogleSignIn} size="lg" className="w-full text-base font-bold" disabled={!auth || isSigningIn}>
             {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
             Continuar con Google
@@ -88,10 +85,18 @@ function LoginPageContent() {
             {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FacebookIcon />}
             Continuar con Facebook
           </Button>
-          <p className="px-8 text-center text-xs text-muted-foreground">
-            Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.
-          </p>
         </CardContent>
+        <CardFooter className="flex-col gap-6 px-8 pb-8">
+            <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105">
+                    <Sparkles className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <span className="font-headline text-xl font-semibold">EmprendeIA</span>
+            </Link>
+             <p className="px-8 text-center text-xs text-muted-foreground">
+                Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.
+            </p>
+        </CardFooter>
       </Card>
     </main>
   );
