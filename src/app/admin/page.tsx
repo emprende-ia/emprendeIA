@@ -36,17 +36,23 @@ export default function AdminPage() {
           </div>
         </Card>
 
-        <Card className="flex flex-col hover:border-primary transition-colors">
-          <CardHeader className="flex-grow">
-             <div className="flex items-center gap-3">
-                <BookOpen className="h-8 w-8 text-primary" />
-                <CardTitle>Guía Paso a Paso</CardTitle>
+        <Card 
+            className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+            style={{ backgroundImage: "url('https://i.postimg.cc/3JXfnH9y/e84c22d5-5cb4-4ecd-bd25-2e473f54ee60.jpg')" }}
+        >
+            <div className="absolute inset-0 bg-black/60 z-0" />
+            <div className="relative z-10 flex flex-col h-full">
+                <CardHeader className="flex-grow">
+                   <div className="flex items-center gap-3">
+                      <BookOpen className="h-8 w-8 text-primary" />
+                      <CardTitle>Guía Paso a Paso</CardTitle>
+                  </div>
+                  <CardDescription>Genera un plan de acción detallado para tu idea de negocio.</CardDescription>
+                </CardHeader>
+                <CardFooter>
+                  <GuiaPasoAPasoModule />
+                </CardFooter>
             </div>
-            <CardDescription>Genera un plan de acción detallado para tu idea de negocio.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <GuiaPasoAPasoModule />
-          </CardFooter>
         </Card>
 
         <Card 
