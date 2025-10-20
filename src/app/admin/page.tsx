@@ -68,17 +68,23 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col hover:border-primary transition-colors">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-                <DollarSign className="h-8 w-8 text-primary" />
-                <CardTitle>Administración de Recursos</CardTitle>
+        <Card 
+            className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+            style={{ backgroundImage: "url('https://i.postimg.cc/tTn2P0YH/Inversiones-Internacionales-Asesor-a-Financiera.jpg')" }}
+        >
+            <div className="absolute inset-0 bg-black/60 z-0" />
+            <div className="relative z-10 flex flex-col h-full">
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <DollarSign className="h-8 w-8 text-primary" />
+                        <CardTitle>Administración de Recursos</CardTitle>
+                    </div>
+                    <CardDescription>Obtén un presupuesto estimado y plan de recursos.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <AdministracionRecursosModule />
+                </CardContent>
             </div>
-            <CardDescription>Obtén un presupuesto estimado y plan de recursos.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <AdministracionRecursosModule />
-          </CardContent>
         </Card>
 
       </div>

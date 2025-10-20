@@ -8,7 +8,7 @@ import { Sparkles } from "lucide-react";
 export function AdministracionRecursosModule() {
   return (
     <div className="space-y-4">
-        <Textarea placeholder="Lista los recursos que necesitas y tu capital inicial..." className="min-h-[100px]"/>
+        <Textarea placeholder="Lista los recursos que necesitas y tu capital inicial..." className="min-h-[100px] bg-background/80 placeholder:text-foreground/70"/>
         <Button size="sm" className="w-full font-bold">
             <Sparkles className="mr-2 h-4 w-4" />
             Generar Presupuesto
