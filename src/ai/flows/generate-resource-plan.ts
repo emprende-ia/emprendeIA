@@ -16,7 +16,7 @@ export type GenerateResourcePlanInput = z.infer<typeof GenerateResourcePlanInput
 const BudgetItemSchema = z.object({
     category: z.string().describe('The category of the expense (e.g., "Marketing", "Equipo", "Legales").'),
     item: z.string().describe('The specific budget item.'),
-    estimatedCost: z.string().describe('A string representing the estimated cost, can be a range (e.g., "$500 - $1,000 USD").'),
+    estimatedCost: z.string().describe('A string representing the estimated cost, can be a range (e.g., "$10,000 - $20,000 MXN").'),
     justification: z.string().describe('A brief justification for why this expense is necessary.'),
 });
 
@@ -42,7 +42,7 @@ const generateResourcePlanPrompt = ai.definePrompt({
     Based on this description, generate a list of key budget items required to launch and operate the business for the first 3-6 months. For each item, provide:
     1.  **Category:** A logical grouping (e.g., "Equipo y Software", "Marketing y Ventas", "Costos Operativos", "Gastos Legales").
     2.  **Item:** The specific resource or expense.
-    3.  **Estimated Cost:** A realistic cost range in USD (e.g., "$1,000 - $2,500 USD").
+    3.  **Estimated Cost:** A realistic cost range in Mexican Pesos (MXN) (e.g., "$10,000 - $25,000 MXN").
     4.  **Justification:** A short explanation of why this is important.
 
     After listing the items, provide a **totalEstimatedCost** summary and a brief **summary** with your main recommendations.
