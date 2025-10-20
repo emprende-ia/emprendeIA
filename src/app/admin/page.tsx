@@ -56,17 +56,23 @@ export default function AdminPage() {
           </CardFooter>
         </Card>
 
-        <Card className="flex flex-col hover:border-primary transition-colors">
-          <CardHeader className="flex-grow">
-             <div className="flex items-center gap-3">
-                <Megaphone className="h-8 w-8 text-primary" />
-                <CardTitle>Campañas de Marketing</CardTitle>
+        <Card 
+            className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+            style={{ backgroundImage: "url('https://i.postimg.cc/2jGNShR6/Grow-Your-Business-with-Powerful-Digital-Marketing.jpg')" }}
+        >
+            <div className="absolute inset-0 bg-black/60 z-0" />
+            <div className="relative z-10 flex flex-col h-full">
+                <CardHeader className="flex-grow">
+                    <div className="flex items-center gap-3">
+                        <Megaphone className="h-8 w-8 text-primary" />
+                        <CardTitle>Campañas de Marketing</CardTitle>
+                    </div>
+                    <CardDescription>Diseña una estrategia de marketing digital para llegar a tus clientes.</CardDescription>
+                </CardHeader>
+                <CardFooter>
+                    <CampanasMarketingModule />
+                </CardFooter>
             </div>
-            <CardDescription>Diseña una estrategia de marketing digital para llegar a tus clientes.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <CampanasMarketingModule />
-          </CardFooter>
         </Card>
 
         <Card 
