@@ -12,13 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Lightbulb } from 'lucide-react';
 import { SupplierCard } from '../supplier-card';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useUser, useFirestore } from '@/firebase';
 import { saveSearchHistory } from '@/lib/firestore/search-history';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Lightbulb } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 const formSchema = z.object({
   businessPlan: z.string().min(25, {
@@ -35,7 +34,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function ProveedoresModule() {
   const [recommendations, setRecommendations] = useState<SuggestRelevantSuppliersOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -76,7 +75,6 @@ export function ProveedoresModule() {
             resultingKeywords: result.suppliers.map(s => s.name).slice(0, 3),
           });
          setRecommendations(result);
-         setIsModalOpen(true);
       }
     } catch (e) {
       toast({
@@ -90,58 +88,72 @@ export function ProveedoresModule() {
     }
   };
 
-  return (
-    <>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="businessPlan"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe tu idea de negocio..."
-                    className="min-h-[100px] resize-y"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-           <FormField
-            control={form.control}
-            name="businessLocation"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="¿Dónde se ubica tu negocio?" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" size="sm" className="w-full font-bold" disabled={isLoading}>
-            {isLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Buscando...</>
-            ) : (
-              <><Sparkles className="mr-2 h-4 w-4" /> Buscar Proveedores</>
-            )}
-          </Button>
-        </form>
-      </Form>
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      form.reset();
+      setRecommendations(null);
+      setIsLoading(false);
+    }
+  }
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle className="font-headline text-2xl">Proveedores Recomendados</DialogTitle>
-            <DialogDescription>
-              Aquí tienes una selección de proveedores generada por IA para tu negocio.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto p-1">
-             {recommendations && (
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Buscar Proveedores</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="font-headline text-2xl">Buscador de Proveedores con IA</DialogTitle>
+          <DialogDescription>
+            Describe tu negocio y la IA encontrará los proveedores más relevantes para ti, priorizando la ubicación y calidad.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
+          <div className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="businessPlan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ej: 'Quiero abrir una cafetería de especialidad con ambiente rústico y postres artesanales.'"
+                          className="min-h-[120px] resize-y"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="businessLocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="¿Dónde se ubica tu negocio? (Ej: 'Ciudad de México')" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" size="sm" className="w-full font-bold" disabled={isLoading}>
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Buscando...</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-4 w-4" /> Buscar Proveedores</>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </div>
+
+          <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-2">
+             {recommendations ? (
                 <div className="space-y-6">
                     {recommendations.combinedRecommendation && (
                         <Alert className="border-accent bg-accent/10">
@@ -152,19 +164,20 @@ export function ProveedoresModule() {
                         </AlertDescription>
                         </Alert>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         {recommendations.suppliers?.map((supplier, index) => (
                         <SupplierCard key={index} supplier={supplier} isVerified={index === 0} />
                         ))}
                     </div>
                 </div>
+             ) : (
+               <div className="flex items-center justify-center h-full text-center text-muted-foreground p-8 rounded-lg border-2 border-dashed">
+                  <p>Los resultados de la IA aparecerán aquí.</p>
+               </div>
              )}
           </div>
-          <DialogFooter>
-            <Button onClick={() => setIsModalOpen(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

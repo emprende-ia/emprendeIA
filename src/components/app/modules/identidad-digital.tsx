@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,18 +8,17 @@ import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, Check } from "lucide-react";
+import { Loader2, Sparkles, Palette } from "lucide-react";
 import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
 import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage } from '@/ai/flows/generate-optimized-image';
 import Image from 'next/image';
-import { Separator } from '@/components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 
 const identityFormSchema = z.object({
   businessDescription: z.string().min(10, {
@@ -35,11 +35,10 @@ const imageFormSchema = z.object({
 });
 type ImageFormValues = z.infer<typeof imageFormSchema>;
 
-
 export function IdentidadDigitalModule() {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [identity, setIdentity] = useState<GenerateDigitalIdentityOutput | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const { toast } = useToast();
@@ -60,15 +59,13 @@ export function IdentidadDigitalModule() {
   const onIdentitySubmit: SubmitHandler<IdentityFormValues> = async (data) => {
     setIsIdentityLoading(true);
     setIdentity(null);
-    setGeneratedImage(null); // Reset image when generating new identity
+    setGeneratedImage(null);
     try {
       const result = await generateDigitalIdentity(data);
       setIdentity(result);
-      // Pre-fill image prompt with AI-suggested prompt
       if (result.logoPrompt) {
         imageForm.setValue('prompt', result.logoPrompt);
       }
-      setIsModalOpen(true);
     } catch (e) {
       toast({
           title: "Error al crear la identidad",
@@ -111,42 +108,57 @@ export function IdentidadDigitalModule() {
     });
   }
 
-  return (
-    <>
-      <Form {...identityForm}>
-        <form onSubmit={identityForm.handleSubmit(onIdentitySubmit)} className="space-y-4">
-          <FormField
-            control={identityForm.control}
-            name="businessDescription"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Textarea placeholder="Describe tu negocio para crear su identidad..." {...field} className="min-h-[100px]"/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading}>
-            {isIdentityLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando...</>
-            ) : (
-              <><Sparkles className="mr-2 h-4 w-4" /> Crear Identidad</>
-            )}
-          </Button>
-        </form>
-      </Form>
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      identityForm.reset();
+      imageForm.reset({ prompt: '', creativeType: 'LOGO' });
+      setIdentity(null);
+      setGeneratedImage(null);
+      setIsIdentityLoading(false);
+      setIsImageLoading(false);
+    }
+  }
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Tu Nueva Identidad Digital</DialogTitle>
-            <DialogDescription>
-              Aquí tienes un kit de marca completo generado por IA. Haz clic en cualquier elemento para copiarlo.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto p-1 space-y-6">
-            {identity && (
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Crear Identidad</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Tu Nueva Identidad Digital</DialogTitle>
+          <DialogDescription>
+            Genera un kit de marca (nombre, eslogan, colores, logo) para tu negocio en segundos.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-6">
+          <Form {...identityForm}>
+            <form onSubmit={identityForm.handleSubmit(onIdentitySubmit)} className="space-y-4">
+              <FormField
+                control={identityForm.control}
+                name="businessDescription"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea placeholder="Describe tu negocio para crear su identidad..." {...field} className="min-h-[100px]"/>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading}>
+                {isIdentityLoading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando kit de marca...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" /> Generar Kit de Marca</>
+                )}
+              </Button>
+            </form>
+          </Form>
+
+          {identity && (
+            <div className="max-h-[60vh] overflow-y-auto p-1 space-y-6 pt-4">
               <>
                 <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-muted-foreground">NOMBRE DE MARCA</h3>
@@ -175,13 +187,13 @@ export function IdentidadDigitalModule() {
                   <h3 className="text-sm font-semibold text-muted-foreground">GENERA UN LOGO O IMAGEN PARA TU MARCA</h3>
                    {generatedImage && (
                       <div className="rounded-md overflow-hidden border border-border">
-                      <Image 
-                          src={generatedImage} 
-                          alt="Imagen de marca generada por IA"
-                          width={500}
-                          height={500}
-                          className="w-full h-auto object-cover aspect-square"
-                      />
+                        <Image 
+                            src={generatedImage} 
+                            alt="Imagen de marca generada por IA"
+                            width={500}
+                            height={500}
+                            className="w-full h-auto object-cover aspect-square"
+                        />
                       </div>
                   )}
                   <Form {...imageForm}>
@@ -198,7 +210,6 @@ export function IdentidadDigitalModule() {
                           </FormItem>
                           )}
                       />
-
                       <FormField
                         control={imageForm.control}
                         name="creativeType"
@@ -228,7 +239,6 @@ export function IdentidadDigitalModule() {
                           </FormItem>
                         )}
                       />
-
                       <Button type="submit" size="sm" className="w-full font-bold" disabled={isImageLoading}>
                           {isImageLoading ? (
                           <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando imagen...</>
@@ -240,13 +250,10 @@ export function IdentidadDigitalModule() {
                   </Form>
                 </div>
               </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setIsModalOpen(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

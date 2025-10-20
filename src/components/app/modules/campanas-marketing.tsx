@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Megaphone } from "lucide-react";
 import { generateMarketingCampaign } from '@/ai/flows/generate-marketing-campaign';
 import type { GenerateMarketingCampaignOutput } from '@/ai/flows/generate-marketing-campaign';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 const campaignFormSchema = z.object({
   productDescription: z.string().min(10, {
@@ -23,6 +25,7 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 export function CampanasMarketingModule() {
   const [isCampaignLoading, setIsCampaignLoading] = useState(false);
   const [campaignIdeas, setCampaignIdeas] = useState<GenerateMarketingCampaignOutput | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
   const campaignForm = useForm<CampaignFormValues>({
@@ -52,47 +55,69 @@ export function CampanasMarketingModule() {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      campaignForm.reset();
+      setCampaignIdeas(null);
+      setIsCampaignLoading(false);
+    }
+  }
+
   return (
-    <div className="space-y-4 pt-2">
-        <Form {...campaignForm}>
-        <form onSubmit={campaignForm.handleSubmit(onCampaignSubmit)} className="space-y-4">
-            <FormField
-            control={campaignForm.control}
-            name="productDescription"
-            render={({ field }) => (
-                <FormItem>
-                <FormControl>
-                    <Textarea placeholder="Describe tu producto o servicio..." {...field} className="min-h-[100px]"/>
-                </FormControl>
-                <FormMessage />
-                </FormItem>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Diseñar Estrategia</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Megaphone/> Ideas para Campañas de Marketing</DialogTitle>
+          <DialogDescription>
+            Describe tu producto o servicio y la IA creará ideas de campañas para llegar a tus clientes.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-6">
+            <Form {...campaignForm}>
+            <form onSubmit={campaignForm.handleSubmit(onCampaignSubmit)} className="space-y-4">
+                <FormField
+                control={campaignForm.control}
+                name="productDescription"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormControl>
+                        <Textarea placeholder="Ej: 'Una nueva bebida energética natural con sabores exóticos y sin azúcar.'" {...field} className="min-h-[100px]"/>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <Button type="submit" size="sm" className="w-full font-bold" disabled={isCampaignLoading}>
+                {isCampaignLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analizando...</>
+                ) : (
+                    <><Sparkles className="mr-2 h-4 w-4" /> Generar Estrategia</>
+                )}
+                </Button>
+            </form>
+            </Form>
+            {campaignIdeas && (
+                <div className="space-y-4 pt-4 max-h-[50vh] overflow-y-auto">
+                    {campaignIdeas.campaigns.map((campaign, index) => (
+                        <Card key={index} className="bg-secondary/50">
+                            <CardHeader>
+                                <CardTitle className="text-lg">{campaign.title}</CardTitle>
+                                <CardDescription>Canal: {campaign.channel}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="text-sm space-y-2">
+                                <p><span className="font-semibold">Mensaje Clave:</span> {campaign.keyMessage}</p>
+                                <p><span className="font-semibold">Público Objetivo:</span> {campaign.targetAudience}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             )}
-            />
-            <Button type="submit" size="sm" className="w-full font-bold" disabled={isCampaignLoading}>
-            {isCampaignLoading ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analizando...</>
-            ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Generar Estrategia</>
-            )}
-            </Button>
-        </form>
-        </Form>
-        {campaignIdeas && (
-            <div className="space-y-4 pt-4">
-                {campaignIdeas.campaigns.map((campaign, index) => (
-                    <Card key={index} className="bg-secondary/50">
-                        <CardHeader>
-                            <CardTitle className="text-lg">{campaign.title}</CardTitle>
-                            <CardDescription>Canal: {campaign.channel}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="text-sm space-y-2">
-                            <p><span className="font-semibold">Mensaje Clave:</span> {campaign.keyMessage}</p>
-                            <p><span className="font-semibold">Público Objetivo:</span> {campaign.targetAudience}</p>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        )}
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
