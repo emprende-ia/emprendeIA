@@ -49,17 +49,23 @@ export default function AdminPage() {
           </CardFooter>
         </Card>
 
-        <Card className="flex flex-col hover:border-primary transition-colors">
-          <CardHeader className="flex-grow">
-             <div className="flex items-center gap-3">
-                <Palette className="h-8 w-8 text-primary" />
-                <CardTitle>Identidad Digital</CardTitle>
+        <Card 
+            className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+            style={{ backgroundImage: "url('https://i.postimg.cc/PxFbSSvD/2245c379-2a35-4366-9584-598eaae9013c.jpg')" }}
+        >
+            <div className="absolute inset-0 bg-black/60 z-0" />
+            <div className="relative z-10 flex flex-col h-full">
+                <CardHeader className="flex-grow">
+                   <div className="flex items-center gap-3">
+                      <Palette className="h-8 w-8 text-primary" />
+                      <CardTitle>Identidad Digital</CardTitle>
+                  </div>
+                  <CardDescription>Crea un nombre, eslogan y paleta de colores para tu marca.</CardDescription>
+                </CardHeader>
+                <CardFooter>
+                  <IdentidadDigitalModule />
+                </CardFooter>
             </div>
-            <CardDescription>Crea un nombre, eslogan y paleta de colores para tu marca.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <IdentidadDigitalModule />
-          </CardFooter>
         </Card>
 
         <Card 
