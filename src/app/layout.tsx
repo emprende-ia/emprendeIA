@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'EmprendeIA Marketplace',
+  title: 'EmprendeIA',
   description: 'Conectando Ideas con Oportunidades Reales',
 };
 
