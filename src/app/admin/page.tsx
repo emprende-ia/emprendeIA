@@ -17,17 +17,23 @@ export default function AdminPage() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <Card className="flex flex-col hover:border-primary transition-colors">
-          <CardHeader className="flex-grow">
-            <div className="flex items-center gap-3">
-                <Search className="h-8 w-8 text-primary" />
-                <CardTitle>Proveedores</CardTitle>
-            </div>
-            <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <ProveedoresModule />
-          </CardFooter>
+        <Card 
+            className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+            style={{ backgroundImage: "url('https://i.postimg.cc/NGJCn4vP/However-technology-has-revolutionized-packers-and.jpg')" }}
+        >
+          <div className="absolute inset-0 bg-black/60 z-0" />
+          <div className="relative z-10 flex flex-col h-full">
+            <CardHeader className="flex-grow">
+              <div className="flex items-center gap-3">
+                  <Search className="h-8 w-8 text-primary" />
+                  <CardTitle>Proveedores</CardTitle>
+              </div>
+              <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <ProveedoresModule />
+            </CardFooter>
+          </div>
         </Card>
 
         <Card className="flex flex-col hover:border-primary transition-colors">
