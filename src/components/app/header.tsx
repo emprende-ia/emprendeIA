@@ -102,7 +102,7 @@ export function AppHeader() {
           EmprendeIA
         </h1>
       </div>
-      <p className="max-w-2xl text-lg text-muted-foreground">
+      <p className="max-w-2xl text-xl text-foreground/90">
         Desde la idea hasta el proveedor. Conectamos tu visión con oportunidades reales, impulsado por inteligencia artificial.
       </p>
     </header>
