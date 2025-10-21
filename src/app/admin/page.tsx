@@ -3,13 +3,14 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search, Route } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, Route, Target } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
 import { CampanasMarketingModule } from "@/components/app/modules/campanas-marketing";
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
 import { MisRutasModule } from "@/components/app/modules/mis-rutas";
+import { MisCampanasModule } from "@/components/app/modules/mis-campanas";
 import { useUser } from "@/firebase";
 import { Loader2 } from "lucide-react";
 
@@ -117,9 +118,9 @@ export default function AdminPage() {
                   <CardHeader className="flex-grow">
                       <div className="flex items-center gap-3">
                           <Megaphone className="h-8 w-8 text-primary" />
-                          <CardTitle>Campañas de Marketing</CardTitle>
+                          <CardTitle>Generador de Campañas</CardTitle>
                       </div>
-                      <CardDescription>Diseña una estrategia de marketing digital para llegar a tus clientes.</CardDescription>
+                      <CardDescription>Genera ideas de campañas de marketing y planes de acción.</CardDescription>
                   </CardHeader>
                   <CardFooter>
                       <CampanasMarketingModule />
@@ -164,6 +165,26 @@ export default function AdminPage() {
                   </CardFooter>
               </div>
           </Card>
+
+          <Card 
+              className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+              style={{ backgroundImage: "url('https://i.postimg.cc/Hxbk3bCj/4f40f2e0-c831-4089-923a-344154a3399c.jpg')" }}
+          >
+              <div className="absolute inset-0 bg-black/60 z-0" />
+              <div className="relative z-10 flex flex-col h-full">
+                  <CardHeader className="flex-grow">
+                      <div className="flex items-center gap-3">
+                          <Target className="h-8 w-8 text-primary" />
+                          <CardTitle>Mis Campañas</CardTitle>
+                      </div>
+                      <CardDescription>Da seguimiento a tus campañas de marketing activas.</CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                      <MisCampanasModule />
+                  </CardFooter>
+              </div>
+          </Card>
+
 
         </div>
       </div>

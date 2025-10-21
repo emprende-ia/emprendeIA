@@ -136,6 +136,34 @@
         }
       },
       "required": ["createdAt", "pathData"]
+    },
+     "MarketingCampaign": {
+      "title": "Marketing Campaign",
+      "description": "An AI-generated marketing campaign plan saved by a user.",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the campaign was saved."
+        },
+        "campaignIdea": {
+          "type": "object",
+           "description": "The initial campaign idea object."
+        },
+        "campaignPlan": {
+          "type": "object",
+          "description": "The full JSON data of the generated campaign action plan."
+        },
+        "completedTasks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of task titles that have been marked as completed."
+        }
+      },
+      "required": ["createdAt", "campaignIdea", "campaignPlan"]
     }
   },
   "auth": {
@@ -184,6 +212,14 @@
           "entityName": "LearningPath",
           "schema": { "$ref": "#/entities/LearningPath" },
           "description": "Stores a user's saved learning paths."
+        }
+      },
+       {
+        "path": "/users/{userId}/marketingCampaigns/{campaignId}",
+        "definition": {
+          "entityName": "MarketingCampaign",
+          "schema": { "$ref": "#/entities/MarketingCampaign" },
+          "description": "Stores a user's saved marketing campaigns."
         }
       }
     ]

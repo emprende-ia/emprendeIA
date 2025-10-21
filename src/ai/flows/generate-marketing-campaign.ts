@@ -14,7 +14,7 @@ const GenerateMarketingCampaignInputSchema = z.object({
 });
 export type GenerateMarketingCampaignInput = z.infer<typeof GenerateMarketingCampaignInputSchema>;
 
-const CampaignIdeaSchema = z.object({
+export const CampaignIdeaSchema = z.object({
     title: z.string().describe('A catchy title for the campaign idea.'),
     channel: z.string().describe('The recommended marketing channel (e.g., Instagram, Email Marketing, Google Ads).'),
     keyMessage: z.string().describe('The core message of the campaign.'),
