@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot } from "lucide-react";
-import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
-import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon } from "lucide-react";
+import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
+import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Image from 'next/image';
 
 const identityFormSchema = z.object({
   businessDescription: z.string().min(10, {
@@ -25,7 +26,9 @@ type IdentityFormValues = z.infer<typeof identityFormSchema>;
 
 export function IdentidadDigitalModule() {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<GenerateOptimizedImageOutput | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
@@ -37,6 +40,7 @@ export function IdentidadDigitalModule() {
   const onIdentitySubmit: SubmitHandler<IdentityFormValues> = async (data) => {
     setIsIdentityLoading(true);
     setIdentityResult(null);
+    setGeneratedImage(null);
     try {
       const result = await generateDigitalIdentity(data);
       setIdentityResult(result);
@@ -55,13 +59,41 @@ export function IdentidadDigitalModule() {
       setIsIdentityLoading(false);
     }
   };
+
+  const onImageGenerate = async () => {
+      if (!identityResult?.logoPrompt) return;
+
+      setIsImageLoading(true);
+      try {
+          const result = await generateOptimizedImage({
+              prompt: identityResult.logoPrompt,
+              creativeType: 'LOGO',
+          });
+          setGeneratedImage(result);
+          toast({
+              title: "¡Logo generado!",
+              description: "Tu logo está listo para que lo veas."
+          });
+      } catch (e) {
+          console.error(e);
+          toast({
+              title: "Error al generar la imagen",
+              description: "No se pudo crear el logo. Inténtalo de nuevo.",
+              variant: "destructive",
+          });
+      } finally {
+          setIsImageLoading(false);
+      }
+  };
   
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
       identityForm.reset();
       setIdentityResult(null);
+      setGeneratedImage(null);
       setIsIdentityLoading(false);
+      setIsImageLoading(false);
     }
   }
 
@@ -74,7 +106,7 @@ export function IdentidadDigitalModule() {
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
           <DialogDescription>
-            Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y una idea para tu logo.
+            Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y hasta un borrador de tu logo.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
@@ -92,7 +124,7 @@ export function IdentidadDigitalModule() {
                         </FormItem>
                     )}
                     />
-                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading}>
+                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isImageLoading}>
                     {isIdentityLoading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando Magia...</>
                     ) : (
@@ -110,31 +142,45 @@ export function IdentidadDigitalModule() {
                         <AlertDescription>Usa estos elementos como punto de partida para construir una marca sólida y coherente.</AlertDescription>
                     </Alert>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card className="bg-secondary/50">
-                            <CardHeader>
-                                <CardTitle className="text-lg">Nombre de Marca</CardTitle>
-                                <CardDescription>Una sugerencia creativa para tu negocio.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="font-headline text-2xl text-primary">{identityResult.brandName}</p>
+                    {generatedImage ? (
+                        <Card className="overflow-hidden">
+                            <CardContent className="p-0">
+                                <div className="aspect-video bg-muted flex items-center justify-center">
+                                    <Image src={generatedImage.imageUrl} alt="Logo generado por IA" width={512} height={288} className="object-contain"/>
+                                </div>
+                                <div className="flex">
+                                    {identityResult.colorPalette.map(color => (
+                                        <div key={color.hex} style={{ backgroundColor: color.hex }} className="h-4 flex-1"/>
+                                    ))}
+                                </div>
                             </CardContent>
                         </Card>
-                         <Card className="bg-secondary/50">
-                            <CardHeader>
-                                <CardTitle className="text-lg">Eslogan</CardTitle>
-                                <CardDescription>Una frase corta y memorable.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-lg italic text-muted-foreground">"{identityResult.slogan}"</p>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    ) : (
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Card className="bg-secondary/50">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Nombre de Marca</CardTitle>
+                                    <CardDescription>Una sugerencia creativa para tu negocio.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="font-headline text-2xl text-primary">{identityResult.brandName}</p>
+                                </CardContent>
+                            </Card>
+                             <Card className="bg-secondary/50">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">Eslogan</CardTitle>
+                                    <CardDescription>Una frase corta y memorable.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-lg italic text-muted-foreground">"{identityResult.slogan}"</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
                    
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg">Paleta de Colores</CardTitle>
-                            <CardDescription>Colores que reflejan la personalidad de tu marca.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-wrap gap-4">
                             {identityResult.colorPalette.map((color) => (
@@ -152,11 +198,20 @@ export function IdentidadDigitalModule() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2"><PenTool className="h-5 w-5" /> Idea para tu Logo</CardTitle>
-                            <CardDescription>Usa esta descripción (prompt) en un generador de imágenes con IA como Midjourney o DALL-E.</CardDescription>
+                            <CardDescription>Usa esta descripción (prompt) en un generador de imágenes con IA.</CardDescription>
                         </CardHeader>
                         <CardContent>
                            <p className="text-sm italic p-4 bg-secondary rounded-md text-muted-foreground font-mono">"{identityResult.logoPrompt}"</p>
                         </CardContent>
+                        <CardFooter>
+                            <Button onClick={onImageGenerate} disabled={isImageLoading || isIdentityLoading} className="w-full">
+                                {isImageLoading ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo...</>
+                                ) : (
+                                    <><ImageIcon className="mr-2 h-4 w-4" /> Generar imagen con esta idea</>
+                                )}
+                            </Button>
+                        </CardFooter>
                     </Card>
 
                 </div>
