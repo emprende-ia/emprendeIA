@@ -44,7 +44,7 @@ export default function LandingPage() {
 
         <div className="flex w-full max-w-sm flex-col gap-4 pt-4">
           <Button asChild size="lg" className="w-full text-lg font-bold">
-            <Link href="/login">
+            <Link href="/register">
                 <User className="mr-2 h-5 w-5" />
                 Registrarme
             </Link>
