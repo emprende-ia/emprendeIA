@@ -8,7 +8,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { CampaignPlanSchema } from '@/lib/firestore/marketing-campaigns';
 
 const GenerateCampaignPlanInputSchema = z.object({
   campaignTitle: z.string().describe("The title of the marketing campaign idea."),
@@ -17,6 +16,14 @@ const GenerateCampaignPlanInputSchema = z.object({
   campaignAudience: z.string().describe("The target audience for the campaign."),
 });
 export type GenerateCampaignPlanInput = z.infer<typeof GenerateCampaignPlanInputSchema>;
+
+// Define the schema locally to avoid server/client module conflicts.
+const CampaignPlanSchema = z.object({
+    strategy: z.string().describe("A brief, one-paragraph summary of the overall strategy for this campaign."),
+    contentSuggestions: z.array(z.string()).describe("A list of 3-5 specific content ideas to create for this campaign (e.g., 'Un Reel mostrando el proceso artesanal', 'Un carrusel con testimonios de clientes')."),
+    actionableTasks: z.array(z.string()).describe("A list of 5-7 concrete, actionable tasks to execute the campaign (e.g., 'Definir paleta de colores para la campaña', 'Escribir 3 borradores de copy para anuncios', 'Contactar a 2 micro-influencers')."),
+    kpis: z.array(z.string()).describe("A list of 2-3 key performance indicators (KPIs) to measure the campaign's success (e.g., 'Tasa de interacción', 'Número de seguidores nuevos', 'Ventas generadas desde el link en bio')."),
+});
 
 export type CampaignPlanOutput = z.infer<typeof CampaignPlanSchema>;
 
