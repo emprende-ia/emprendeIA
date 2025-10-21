@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Firestore, collection, addDoc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+import { Firestore, collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -9,20 +10,22 @@ export interface Transaction {
   description: string;
   amount: number;
   type: 'income' | 'expense';
-  category?: string;
+  category: string;
   timestamp: Date;
 }
 
+type NewTransactionData = Omit<Transaction, 'id' | 'timestamp'>;
+
 /**
- * Saves a financial transaction for a specific user.
+ * Saves a new financial transaction for a specific user.
  * @param firestore - The Firestore instance.
  * @param userId - The ID of the user.
  * @param transactionData - The transaction data to save.
  */
-export function saveTransaction(
+export function addTransaction(
   firestore: Firestore,
   userId: string,
-  transactionData: Omit<Transaction, 'id' | 'timestamp'>
+  transactionData: NewTransactionData
 ): void {
   if (!userId) {
     console.error("User ID is required to save a transaction.");
@@ -44,6 +47,59 @@ export function saveTransaction(
       errorEmitter.emit('permission-error', permissionError);
     });
 }
+
+/**
+ * Updates an existing financial transaction for a specific user.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param transactionId - The ID of the transaction to update.
+ * @param transactionData - The new data for the transaction.
+ */
+export function updateTransaction(
+  firestore: Firestore,
+  userId: string,
+  transactionId: string,
+  transactionData: NewTransactionData
+): void {
+  if (!userId || !transactionId) return;
+  const transactionDoc = doc(firestore, `users/${userId}/transactions`, transactionId);
+
+  updateDoc(transactionDoc, transactionData)
+    .catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: transactionDoc.path,
+        operation: 'update',
+        requestResourceData: transactionData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+}
+
+
+/**
+ * Deletes a financial transaction for a specific user.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param transactionId - The ID of the transaction to delete.
+ */
+export function deleteTransaction(
+  firestore: Firestore,
+  userId: string,
+  transactionId: string
+): void {
+  if (!userId || !transactionId) return;
+  const transactionDoc = doc(firestore, `users/${userId}/transactions`, transactionId);
+  
+  deleteDoc(transactionDoc)
+    .catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: transactionDoc.path,
+        operation: 'delete',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+}
+
 
 /**
  * Retrieves transactions for a specific user in real-time.

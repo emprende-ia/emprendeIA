@@ -3,21 +3,23 @@
 
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateResourcePlan } from '@/ai/flows/generate-resource-plan';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser, useFirestore } from '@/firebase';
-import { getTransactions, Transaction } from '@/lib/firestore/transactions';
+import { getTransactions, deleteTransaction, Transaction } from '@/lib/firestore/transactions';
 import { TransactionForm } from './transaction-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -134,7 +136,10 @@ function FinancialAssistant() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [formType, setFormType] = useState<'income' | 'expense'>('income');
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const { toast } = useToast();
 
     React.useEffect(() => {
         if (user && firestore) {
@@ -150,11 +155,29 @@ function FinancialAssistant() {
         }
     }, [user, firestore]);
 
-    const openForm = (type: 'income' | 'expense') => {
-        setFormType(type);
+    const handleAddNew = () => {
+        setEditingTransaction(null);
+        setIsFormOpen(true);
+    }
+
+    const handleEdit = (transaction: Transaction) => {
+        setEditingTransaction(transaction);
         setIsFormOpen(true);
     }
     
+    const handleDeleteRequest = (transaction: Transaction) => {
+        setTransactionToDelete(transaction);
+        setIsAlertOpen(true);
+    }
+
+    const handleConfirmDelete = () => {
+        if (!user || !firestore || !transactionToDelete || !transactionToDelete.id) return;
+        deleteTransaction(firestore, user.uid, transactionToDelete.id);
+        toast({ title: 'Transacción eliminada' });
+        setIsAlertOpen(false);
+        setTransactionToDelete(null);
+    };
+
     const { totalIncome, totalExpenses, balance, expenseByCategory } = useMemo(() => {
         const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
         const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
@@ -254,14 +277,9 @@ function FinancialAssistant() {
                     </CardContent>
                 </Card>
                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button variant="outline" className="font-bold py-6 text-sm" onClick={() => openForm('income')}>
-                            <PlusCircle className="mr-2 h-5 w-5 text-green-500"/> Registrar Venta
-                        </Button>
-                        <Button variant="outline" className="font-bold py-6 text-sm" onClick={() => openForm('expense')}>
-                            <MinusCircle className="mr-2 h-5 w-5 text-red-500"/> Registrar Gasto
-                        </Button>
-                    </div>
+                    <Button variant="outline" className="font-bold py-6 text-sm w-full" onClick={handleAddNew}>
+                        <PlusCircle className="mr-2 h-5 w-5"/> Registrar Nueva Transacción
+                    </Button>
                      <div className="space-y-2">
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <History className="h-5 w-5" />
@@ -279,8 +297,25 @@ function FinancialAssistant() {
                                                     <p className="font-medium text-sm">{tx.description}</p>
                                                     <p className="text-xs text-muted-foreground">{tx.category} • {formatDistanceToNow(tx.timestamp, { addSuffix: true, locale: es })}</p>
                                                 </div>
-                                                <div className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                                                    {tx.type === 'income' ? '+' : '-'} ${tx.amount.toLocaleString('es-MX')}
+                                                <div className='flex items-center gap-2'>
+                                                  <div className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                                                      {tx.type === 'income' ? '+' : '-'} ${tx.amount.toLocaleString('es-MX')}
+                                                  </div>
+                                                  <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                      </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent>
+                                                      <DropdownMenuItem onSelect={() => handleEdit(tx)}>
+                                                        <Edit className="mr-2 h-4 w-4" /> Editar
+                                                      </DropdownMenuItem>
+                                                      <DropdownMenuItem onSelect={() => handleDeleteRequest(tx)} className="text-red-500">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                                                      </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                  </DropdownMenu>
                                                 </div>
                                             </div>
                                         ))}
@@ -300,8 +335,23 @@ function FinancialAssistant() {
             <TransactionForm 
                 isOpen={isFormOpen}
                 setIsOpen={setIsFormOpen}
-                type={formType}
+                transaction={editingTransaction}
             />
+
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción de tus registros.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmDelete}>Eliminar</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
         </div>
     );
