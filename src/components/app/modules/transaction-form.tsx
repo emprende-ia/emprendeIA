@@ -56,7 +56,7 @@ export function TransactionForm({ isOpen, setIsOpen, type }: TransactionFormProp
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: '',
-      amount: undefined,
+      amount: '' as any, // Use empty string to avoid uncontrolled input warning
       category: '',
     },
   });
@@ -65,7 +65,7 @@ export function TransactionForm({ isOpen, setIsOpen, type }: TransactionFormProp
   useEffect(() => {
     form.reset({
         description: '',
-        amount: undefined,
+        amount: '' as any,
         category: '',
     });
   }, [isOpen, type, form]);
