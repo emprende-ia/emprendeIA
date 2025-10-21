@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History } from "lucide-react";
+import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateResourcePlan } from '@/ai/flows/generate-resource-plan';
@@ -13,11 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser, useFirestore } from '@/firebase';
 import { getTransactions, Transaction } from '@/lib/firestore/transactions';
 import { TransactionForm } from './transaction-form';
-import { Card, CardContent } from '@/components/ui/card';
-import { formatDistanceToNow } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 
-// Budget Estimation Components
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -138,7 +139,7 @@ function FinancialAssistant() {
     React.useEffect(() => {
         if (user && firestore) {
           setIsLoading(true);
-          const unsubscribe = getTransactions(firestore, user.uid, 20, (newTransactions) => {
+          const unsubscribe = getTransactions(firestore, user.uid, 50, (newTransactions) => {
             setTransactions(newTransactions);
             setIsLoading(false);
           });
@@ -154,18 +155,146 @@ function FinancialAssistant() {
         setIsFormOpen(true);
     }
     
+    const { totalIncome, totalExpenses, balance, expenseByCategory } = useMemo(() => {
+        const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+        
+        const expenseCat = transactions
+            .filter(t => t.type === 'expense' && t.category)
+            .reduce((acc, t) => {
+                acc[t.category!] = (acc[t.category!] || 0) + t.amount;
+                return acc;
+            }, {} as Record<string, number>);
+
+        const expenseByCategoryChartData = Object.entries(expenseCat).map(([name, value]) => ({ name, value, fill: `hsl(var(--chart-${Object.keys(expenseCat).indexOf(name) + 1}))`}));
+
+        return {
+            totalIncome: income,
+            totalExpenses: expenses,
+            balance: income - expenses,
+            expenseByCategory: expenseByCategoryChartData,
+        };
+    }, [transactions]);
+    
+    const chartConfig: ChartConfig = useMemo(() => {
+        const config: ChartConfig = {};
+        expenseByCategory.forEach((item, index) => {
+            config[item.name] = {
+                label: item.name,
+                color: `hsl(var(--chart-${index + 1}))`,
+            };
+        });
+        return config;
+    }, [expenseByCategory]);
+    
     return (
-        <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-                Registra tus ventas y gastos para tener un control claro de tus finanzas.
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="font-bold py-6" onClick={() => openForm('income')}>
-                    <PlusCircle className="mr-2 h-5 w-5 text-green-500"/> Registrar Venta
-                </Button>
-                <Button variant="outline" className="font-bold py-6" onClick={() => openForm('expense')}>
-                    <MinusCircle className="mr-2 h-5 w-5 text-red-500"/> Registrar Gasto
-                </Button>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-500">+${totalIncome.toLocaleString('es-MX')}</div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Gastos Totales</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-500">-${totalExpenses.toLocaleString('es-MX')}</div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Balance General</CardTitle>
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className={`text-2xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>${balance.toLocaleString('es-MX')}</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Distribución de Gastos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       {expenseByCategory.length > 0 ? (
+                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                            <PieChart>
+                                <ChartTooltip content={<ChartTooltipContent nameKey="value" hideLabel />} />
+                                <Pie data={expenseByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                                      const RADIAN = Math.PI / 180;
+                                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                      const x  = cx + radius * Math.cos(-midAngle * RADIAN);
+                                      const y = cy  + radius * Math.sin(-midAngle * RADIAN);
+                                 
+                                      return (
+                                        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                                          {`${(percent * 100).toFixed(0)}%`}
+                                        </text>
+                                      );
+                                    }}
+                                >
+                                    {expenseByCategory.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ChartContainer>
+                       ) : (
+                         <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">No hay gastos para mostrar</div>
+                       )}
+                    </CardContent>
+                </Card>
+                 <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Button variant="outline" className="font-bold py-6 text-sm" onClick={() => openForm('income')}>
+                            <PlusCircle className="mr-2 h-5 w-5 text-green-500"/> Registrar Venta
+                        </Button>
+                        <Button variant="outline" className="font-bold py-6 text-sm" onClick={() => openForm('expense')}>
+                            <MinusCircle className="mr-2 h-5 w-5 text-red-500"/> Registrar Gasto
+                        </Button>
+                    </div>
+                     <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <History className="h-5 w-5" />
+                            <h3 className="text-lg font-semibold">Historial Reciente</h3>
+                        </div>
+                        {isLoading ? (
+                            <div className="text-center py-8"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>
+                        ) : transactions.length > 0 ? (
+                            <Card>
+                                <CardContent className="p-0 max-h-[160px] overflow-y-auto">
+                                    <div className="space-y-1">
+                                        {transactions.slice(0, 5).map(tx => (
+                                            <div key={tx.id} className="flex justify-between items-center p-3 border-b last:border-b-0">
+                                                <div>
+                                                    <p className="font-medium text-sm">{tx.description}</p>
+                                                    <p className="text-xs text-muted-foreground">{tx.category} • {formatDistanceToNow(tx.timestamp, { addSuffix: true, locale: es })}</p>
+                                                </div>
+                                                <div className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                                                    {tx.type === 'income' ? '+' : '-'} ${tx.amount.toLocaleString('es-MX')}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="text-center text-sm text-muted-foreground py-8 border-2 border-dashed rounded-lg">
+                                <p>Aún no has registrado transacciones.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
             </div>
 
             <TransactionForm 
@@ -174,38 +303,6 @@ function FinancialAssistant() {
                 type={formType}
             />
 
-            <div className="pt-4 space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <History className="h-5 w-5" />
-                    <h3 className="text-lg font-semibold">Historial de Transacciones</h3>
-                </div>
-                 {isLoading ? (
-                    <div className="text-center py-8"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>
-                 ) : transactions.length > 0 ? (
-                    <Card>
-                        <CardContent className="p-0">
-                             <div className="space-y-1">
-                                {transactions.map(tx => (
-                                    <div key={tx.id} className="flex justify-between items-center p-3 border-b last:border-b-0">
-                                        <div>
-                                            <p className="font-medium text-sm">{tx.description}</p>
-                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(tx.timestamp, { addSuffix: true, locale: es })}</p>
-                                        </div>
-                                        <div className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                                            {tx.type === 'income' ? '+' : '-'} ${tx.amount.toLocaleString('es-MX')}
-                                        </div>
-                                    </div>
-                                ))}
-                             </div>
-                        </CardContent>
-                    </Card>
-                 ) : (
-                    <div className="text-center text-sm text-muted-foreground py-8 border-2 border-dashed rounded-lg">
-                        <p>Aún no has registrado transacciones.</p>
-                        <p>¡Registra tu primera venta o gasto!</p>
-                    </div>
-                 )}
-            </div>
         </div>
     );
 }
@@ -218,11 +315,11 @@ export function AdministracionRecursosModule() {
       <DialogTrigger asChild>
         <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Asistente Financiero</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2"><DollarSign /> Administración de Recursos</DialogTitle>
           <DialogDescription>
-            Usa el Asistente Financiero para registrar tus movimientos o el Planificador para estimar un presupuesto inicial.
+            Usa el Asistente Financiero para registrar y visualizar tus movimientos, o el Planificador para estimar un presupuesto inicial.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -231,7 +328,7 @@ export function AdministracionRecursosModule() {
                     <TabsTrigger value="assistant">Asistente Financiero</TabsTrigger>
                     <TabsTrigger value="budget">Presupuesto Inicial</TabsTrigger>
                 </TabsList>
-                <TabsContent value="assistant" className="mt-4 max-h-[65vh] overflow-y-auto p-1">
+                <TabsContent value="assistant" className="mt-6 max-h-[70vh] overflow-y-auto p-1">
                    <FinancialAssistant />
                 </TabsContent>
                 <TabsContent value="budget" className="mt-4 max-h-[65vh] overflow-y-auto p-1">

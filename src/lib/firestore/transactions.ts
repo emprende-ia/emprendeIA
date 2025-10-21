@@ -10,7 +10,7 @@ export interface Transaction {
   description: string;
   amount: number;
   type: 'income' | 'expense';
-  category?: string; // Optional for now
+  category?: string;
   timestamp: Date;
 }
 
@@ -58,7 +58,7 @@ export function saveTransaction(
 export function getTransactions(
   firestore: Firestore,
   userId: string,
-  count: number = 20,
+  count: number = 50,
   onUpdate: (transactions: Transaction[]) => void
 ): () => void {
   const transactionsCollection = collection(firestore, `users/${userId}/transactions`);
