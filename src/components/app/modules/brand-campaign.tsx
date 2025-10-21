@@ -27,11 +27,11 @@ export function BrandCampaign() {
               <Card>
                 <CardHeader><CardTitle className="text-base">Define Objetivos SMART</CardTitle></CardHeader>
                 <CardContent className="text-sm">
-                  <p><Badge>S</Badge> (Específico): ¿Qué quieres lograr? (Ej: "Aumentar seguidores en Instagram").</p>
-                  <p><Badge>M</Badge> (Medible): ¿Cómo sabrás que lo lograste? (Ej: "Llegar a 500 seguidores").</p>
-                  <p><Badge>A</Badge> (Alcanzable): ¿Es realista con tus recursos? (Ej: "Sí, puedo dedicar 1h/día").</p>
-                  <p><Badge>R</Badge> (Relevante): ¿Por qué es importante para tu negocio? (Ej: "Para construir una comunidad").</p>
-                  <p><Badge>T</Badge> (Tiempo): ¿En cuánto tiempo? (Ej: "En 3 meses").</p>
+                  <div><Badge>S</Badge> (Específico): ¿Qué quieres lograr? (Ej: "Aumentar seguidores en Instagram").</div>
+                  <div><Badge>M</Badge> (Medible): ¿Cómo sabrás que lo lograste? (Ej: "Llegar a 500 seguidores").</div>
+                  <div><Badge>A</Badge> (Alcanzable): ¿Es realista con tus recursos? (Ej: "Sí, puedo dedicar 1h/día").</div>
+                  <div><Badge>R</Badge> (Relevante): ¿Por qué es importante para tu negocio? (Ej: "Para construir una comunidad").</div>
+                  <div><Badge>T</Badge> (Tiempo): ¿En cuánto tiempo? (Ej: "En 3 meses").</div>
                 </CardContent>
               </Card>
                <Card>
@@ -180,4 +180,3 @@ export function BrandCampaign() {
     </Tabs>
   );
 }
-
