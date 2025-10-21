@@ -14,26 +14,24 @@ export default function LandingPage() {
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    // Only redirect if the user is confirmed to be logged in.
+    // Redirect logged-in users to the start page.
     if (!isUserLoading && user) {
       router.push('/start');
     }
   }, [user, isUserLoading, router]);
 
-  // While loading, show a spinner. The rest of the logic handles the display
-  // for logged-out users.
-  if (isUserLoading) {
+  // If the auth state is still loading, or if the user is logged in
+  // (and about to be redirected), show the loader.
+  if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-
-  // If the user is logged in, this component will be replaced by a redirect,
-  // so we don't need a separate loading state for the logged-in case.
-  // We only render the landing page content if the user is definitively logged out.
-  if (!user) {
+  
+  // If loading is finished and there's no user, show the landing page.
+  if (!isUserLoading && !user) {
     return (
         <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
           <div className="flex flex-col items-center space-y-8 text-center">
@@ -75,10 +73,6 @@ export default function LandingPage() {
     );
   }
 
-  // Fallback for the brief moment after loading and before redirect.
-  return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-  );
+  // This is a fallback that should rarely be seen.
+  return null;
 }
