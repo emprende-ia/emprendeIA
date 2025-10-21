@@ -82,6 +82,36 @@
         }
       },
       "required": ["name", "description", "location"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Represents a single financial transaction (income or expense).",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A brief description of the transaction."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary value of the transaction."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "The type of transaction."
+        },
+        "category": {
+          "type": "string",
+          "description": "The financial category of the transaction (e.g., 'Ventas', 'Renta', 'Marketing')."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the transaction occurred."
+        }
+      },
+      "required": ["description", "amount", "type", "timestamp"]
     }
   },
   "auth": {
@@ -114,6 +144,14 @@
           "entityName": "SearchHistory",
           "schema": { "$ref": "#/entities/SearchHistory" },
           "description": "Stores a user's search history for personalization."
+        }
+      },
+       {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": { "$ref": "#/entities/Transaction" },
+          "description": "Stores a user's financial transactions."
         }
       }
     ]
