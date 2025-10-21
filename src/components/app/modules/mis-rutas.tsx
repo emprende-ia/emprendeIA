@@ -30,26 +30,48 @@ const getIconForType = (type: string) => {
 }
 
 const motivationalMessages = {
-    30: {
-        title: "¡Vas por excelente camino!",
-        description: "Has completado el 30% de tu ruta. La constancia es el motor del éxito. ¡Sigue así!",
+    25: {
+        title: "¡Has dado el primer gran paso!",
+        description: "“El secreto para salir adelante es empezar.” - Mark Twain. Ya completaste el 25%, ¡la inercia está de tu lado!",
         icon: <Sparkles className="h-10 w-10 text-yellow-500" />
     },
     50: {
-        title: "¡Llegaste a la mitad del camino!",
-        description: "Has alcanzado el 50%. Estás demostrando un compromiso increíble con tu proyecto. ¡Lo que sigue es crecimiento!",
+        title: "¡Estás a mitad de camino!",
+        description: "“Estoy convencido de que la mitad de lo que separa a los emprendedores exitosos de los no exitosos es la pura perseverancia.” - Steve Jobs. ¡Sigue adelante!",
         icon: <Award className="h-10 w-10 text-blue-500" />
     },
-    90: {
-        title: "¡Ya casi lo logras!",
-        description: "Estás al 90%. La meta está a la vista. Un último esfuerzo para consolidar todo tu aprendizaje.",
+    75: {
+        title: "¡La meta está a la vista!",
+        description: "“Si puedes soñarlo, puedes hacerlo.” - Walt Disney. Estás a solo un paso de consolidar todo este conocimiento. ¡No te detengas ahora!",
         icon: <Rocket className="h-10 w-10 text-purple-500" />
     },
     100: {
-        title: "¡Felicidades, lo has completado!",
-        description: "Has llegado al 100%. Has adquirido nuevas herramientas y validado tus ideas. ¡Este es un gran paso hacia el éxito de tu emprendimiento!",
+        title: "¡Felicidades, Misión Cumplida!",
+        description: "“El éxito es la suma de pequeños esfuerzos repetidos día tras día.” - Robert Collier. Has completado tu ruta. ¡Aplica lo aprendido y ve por tu sueño!",
         icon: <PartyPopper className="h-10 w-10 text-green-500" />
     },
+};
+
+// Simple function to play a success sound
+const playSuccessSound = () => {
+    // Check if window is defined (runs only in browser)
+    if (typeof window !== 'undefined') {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (!audioContext) return;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        
+        oscillator.start(audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
 };
 
 
@@ -77,7 +99,7 @@ function SavedPathsList() {
                     const totalTasks = path.pathData.ruta_aprendizaje.length;
                     const completedTasksCount = path.completedTasks.length;
                     const progress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
-                    const milestones = [30, 50, 90, 100];
+                    const milestones = [25, 50, 75, 100];
                     
                     const shownForThisPath = shownMilestones[path.id] || [];
 
@@ -85,6 +107,7 @@ function SavedPathsList() {
                         if (progress >= milestone && !shownForThisPath.includes(milestone)) {
                             setAlertContent(motivationalMessages[milestone as keyof typeof motivationalMessages]);
                             setIsAlertOpen(true);
+                            playSuccessSound();
                             // Mark this milestone as shown for this path
                             setShownMilestones(prev => ({
                                 ...prev,
