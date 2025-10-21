@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Firestore, collection, addDoc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
@@ -37,7 +36,6 @@ export function saveTransaction(
 
   addDoc(transactionsCollection, dataToSave)
     .catch((error) => {
-      console.error("Error saving transaction: ", error);
       const permissionError = new FirestorePermissionError({
         path: transactionsCollection.path,
         operation: 'create',
@@ -85,7 +83,6 @@ export function getTransactions(
       operation: 'list',
     });
     errorEmitter.emit('permission-error', permissionError);
-    console.error("Error getting transactions:", error);
     onUpdate([]); // Return empty array on error
   });
 
