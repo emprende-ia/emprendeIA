@@ -2,146 +2,165 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Sparkles, Palette, PenTool, Bot } from "lucide-react";
+import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
+import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Palette, Lightbulb, Users, Brush, Type, Mic, MessageSquare } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const identityFormSchema = z.object({
+  businessDescription: z.string().min(10, {
+    message: 'La descripción de tu negocio debe tener al menos 10 caracteres.',
+  }),
+});
+type IdentityFormValues = z.infer<typeof identityFormSchema>;
 
 export function IdentidadDigitalModule() {
+  const [isIdentityLoading, setIsIdentityLoading] = useState(false);
+  const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+
+  const identityForm = useForm<IdentityFormValues>({
+    resolver: zodResolver(identityFormSchema),
+    defaultValues: { businessDescription: '' },
+  });
+  
+  const onIdentitySubmit: SubmitHandler<IdentityFormValues> = async (data) => {
+    setIsIdentityLoading(true);
+    setIdentityResult(null);
+    try {
+      const result = await generateDigitalIdentity(data);
+      setIdentityResult(result);
+      toast({
+        title: "¡Identidad Digital Generada!",
+        description: "Aquí tienes los elementos clave para tu nueva marca.",
+      });
+    } catch (e) {
+      console.error(e);
+      toast({
+        title: "Error al crear la identidad",
+        description: "Hubo un problema con la IA. Por favor, inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsIdentityLoading(false);
+    }
+  };
+  
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      identityForm.reset();
+      setIdentityResult(null);
+      setIsIdentityLoading(false);
+    }
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Crear Identidad</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Guía para tu Identidad de Marca</DialogTitle>
+          <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
           <DialogDescription>
-            Sigue estos pasos para construir una marca memorable y coherente desde cero.
+            Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y una idea para tu logo.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-            <Tabs defaultValue="fundamentos" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="fundamentos">1. Fundamentos</TabsTrigger>
-                    <TabsTrigger value="visuales">2. Elementos Visuales</TabsTrigger>
-                    <TabsTrigger value="voz">3. Voz y Tono</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="fundamentos" className="mt-4 max-h-[60vh] overflow-y-auto p-1 space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Lightbulb className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>¿Qué es la identidad de marca?</CardTitle>
-                                <p className="text-sm text-muted-foreground">Es la personalidad de tu negocio y la promesa que haces a tus clientes.</p>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm">No es solo un logo. Es cómo se ve, se siente y habla tu marca. Incluye tus valores, tu forma de comunicar y la experiencia que ofreces. Una identidad sólida genera confianza y lealtad.</p>
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Users className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>Define tu público objetivo o "Buyer Persona"</CardTitle>
-                                <p className="text-sm text-muted-foreground">¿Para quién es tu negocio?</p>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm mb-2">Crear un perfil de tu cliente ideal te ayuda a conectar mejor. Responde a estas preguntas:</p>
-                             <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                                <li>¿Qué edad tiene? ¿Dónde vive? ¿A qué se dedica?</li>
-                                <li>¿Qué le frustra? ¿Qué necesita? (El problema que tú resuelves)</li>
-                                <li>¿Qué redes sociales usa? ¿Qué le gusta hacer en su tiempo libre?</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+        <div className="py-4 space-y-6">
+            <Form {...identityForm}>
+                <form onSubmit={identityForm.handleSubmit(onIdentitySubmit)} className="space-y-4">
+                    <FormField
+                    control={identityForm.control}
+                    name="businessDescription"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormControl>
+                            <Textarea placeholder="Ej: 'Una marca de ropa sostenible hecha con materiales reciclados para jóvenes conscientes del medio ambiente.'" {...field} className="min-h-[100px]"/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading}>
+                    {isIdentityLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando Magia...</>
+                    ) : (
+                        <><Sparkles className="mr-2 h-4 w-4" /> Generar Identidad de Marca</>
+                    )}
+                    </Button>
+                </form>
+            </Form>
 
-                <TabsContent value="visuales" className="mt-4 max-h-[60vh] overflow-y-auto p-1 space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Brush className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>Creación de un Logotipo</CardTitle>
-                                <p className="text-sm text-muted-foreground">Es la cara de tu marca.</p>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm mb-2">Tu logo debe ser simple, memorable y representar la esencia de tu negocio. Puedes usar herramientas como Canva (gratis) para empezar, o contratar a un diseñador en plataformas como Fiverr si buscas algo más profesional.</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Palette className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>Paleta de Colores</CardTitle>
-                                <p className="text-sm text-muted-foreground">Los colores comunican emociones.</p>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                             <p className="text-sm mb-2">Elige 2-3 colores principales y 1-2 de acento. La psicología del color es clave:</p>
-                             <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                                <li><strong>Azul:</strong> Confianza, calma, profesionalismo.</li>
-                                <li><strong>Rojo:</strong> Pasión, urgencia, energía.</li>
-                                <li><strong>Verde:</strong> Naturaleza, crecimiento, frescura.</li>
-                                <li><strong>Amarillo:</strong> Alegría, optimismo, atención.</li>
-                            </ul>
-                             <p className="text-sm mt-2">Herramientas como Coolors.co te ayudan a generar paletas armoniosas.</p>
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Type className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>Tipografía</CardTitle>
-                                <p className="text-sm text-muted-foreground">La voz escrita de tu marca.</p>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm">Elige una fuente para títulos (puede ser más creativa) y otra para textos largos (debe ser muy legible). Google Fonts ofrece un catálogo inmenso y gratuito. Lo importante es la consistencia.</p>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+            {identityResult && (
+                <div className="space-y-4 pt-4 max-h-[55vh] overflow-y-auto pr-2">
+                     <Alert>
+                        <Bot className="h-4 w-4" />
+                        <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
+                        <AlertDescription>Usa estos elementos como punto de partida para construir una marca sólida y coherente.</AlertDescription>
+                    </Alert>
 
-                <TabsContent value="voz" className="mt-4 max-h-[60vh] overflow-y-auto p-1 space-y-4">
-                     <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Mic className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>Define tu Voz y Tono</CardTitle>
-                                <p className="text-sm text-muted-foreground">¿Cómo "habla" tu marca?</p>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card className="bg-secondary/50">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Nombre de Marca</CardTitle>
+                                <CardDescription>Una sugerencia creativa para tu negocio.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="font-headline text-2xl text-primary">{identityResult.brandName}</p>
+                            </CardContent>
+                        </Card>
+                         <Card className="bg-secondary/50">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Eslogan</CardTitle>
+                                <CardDescription>Una frase corta y memorable.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-lg italic text-muted-foreground">"{identityResult.slogan}"</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                   
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Paleta de Colores</CardTitle>
+                            <CardDescription>Colores que reflejan la personalidad de tu marca.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-sm mb-2">Tu tono debe ser consistente en todas tus comunicaciones (redes, emails, web). Decide si quieres sonar:</p>
-                             <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                                <li><strong>Profesional y formal:</strong> Ideal para servicios B2B.</li>
-                                <li><strong>Amigable y cercano:</strong> Perfecto para marcas de consumo.</li>
-                                <li><strong>Humorístico e ingenioso:</strong> Genial para conectar con audiencias jóvenes.</li>
-                                <li><strong>Inspirador y motivacional:</strong> Si tu marca se centra en el crecimiento personal.</li>
-                            </ul>
+                        <CardContent className="flex flex-wrap gap-4">
+                            {identityResult.colorPalette.map((color) => (
+                                <div key={color.hex} className="flex flex-col items-center gap-2">
+                                    <div className="h-16 w-16 rounded-full border-2" style={{ backgroundColor: color.hex }} />
+                                    <div className="text-center">
+                                        <p className="text-sm font-medium">{color.name}</p>
+                                        <p className="text-xs text-muted-foreground font-mono">{color.hex}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <MessageSquare className="h-8 w-8 text-primary" />
-                            <div>
-                                <CardTitle>Mensaje Clave</CardTitle>
-                                <p className="text-sm text-muted-foreground">Tu "elevator pitch" en una frase.</p>
-                            </div>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2"><PenTool className="h-5 w-5" /> Idea para tu Logo</CardTitle>
+                            <CardDescription>Usa esta descripción (prompt) en un generador de imágenes con IA como Midjourney o DALL-E.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm">Resume lo que haces, para quién y por qué eres diferente. Debe ser una frase corta y potente que puedas usar en todas partes. Por ejemplo: "Ayudamos a emprendedores a lanzar su negocio con herramientas de IA, ahorrándoles tiempo y dinero".</p>
+                           <p className="text-sm italic p-4 bg-secondary rounded-md text-muted-foreground font-mono">"{identityResult.logoPrompt}"</p>
                         </CardContent>
                     </Card>
-                </TabsContent>
-            </Tabs>
+
+                </div>
+            )}
         </div>
       </DialogContent>
     </Dialog>
