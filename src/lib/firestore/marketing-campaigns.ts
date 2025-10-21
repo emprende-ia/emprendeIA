@@ -5,8 +5,14 @@ import { Firestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove,
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { z } from 'zod';
-import { CampaignIdeaSchema } from '@/ai/flows/generate-marketing-campaign';
 import { generateCampaignPlan, CampaignPlanSchema } from '@/ai/flows/generate-campaign-plan';
+
+export const CampaignIdeaSchema = z.object({
+    title: z.string().describe('A catchy title for the campaign idea.'),
+    channel: z.string().describe('The recommended marketing channel (e.g., Instagram, Email Marketing, Google Ads).'),
+    keyMessage: z.string().describe('The core message of the campaign.'),
+    targetAudience: z.string().describe('The specific audience this campaign should target.'),
+});
 
 export type CampaignIdea = z.infer<typeof CampaignIdeaSchema>;
 export type CampaignPlan = z.infer<typeof CampaignPlanSchema>;
