@@ -1,15 +1,16 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -24,26 +25,50 @@ const identityFormSchema = z.object({
 });
 type IdentityFormValues = z.infer<typeof identityFormSchema>;
 
+const brandElementsSchema = z.object({
+    brandName: z.string(),
+    slogan: z.string(),
+});
+type BrandElementsFormValues = z.infer<typeof brandElementsSchema>;
+
 export function IdentidadDigitalModule() {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
   const [generatedImage, setGeneratedImage] = useState<GenerateOptimizedImageOutput | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [logoPrompt, setLogoPrompt] = useState<string>('');
+  
+  // State for individual loading
+  const [isRegeneratingName, setIsRegeneratingName] = useState(false);
+  const [isRegeneratingSlogan, setIsRegeneratingSlogan] = useState(false);
+  const [isRegeneratingLogoPrompt, setIsRegeneratingLogoPrompt] = useState(false);
+
   const { toast } = useToast();
 
-  const identityForm = useForm<IdentityFormValues>({
+  const businessForm = useForm<IdentityFormValues>({
     resolver: zodResolver(identityFormSchema),
     defaultValues: { businessDescription: '' },
   });
-  
-  const onIdentitySubmit: SubmitHandler<IdentityFormValues> = async (data) => {
+
+  const brandForm = useForm<BrandElementsFormValues>({
+    resolver: zodResolver(brandElementsSchema),
+    defaultValues: { brandName: '', slogan: '' },
+  });
+
+  const isBrandDirty = brandForm.formState.isDirty;
+
+  const onBusinessSubmit: SubmitHandler<IdentityFormValues> = async (data) => {
     setIsIdentityLoading(true);
     setIdentityResult(null);
     setGeneratedImage(null);
+    brandForm.reset();
+    setLogoPrompt('');
     try {
       const result = await generateDigitalIdentity(data);
       setIdentityResult(result);
+      brandForm.reset({ brandName: result.brandName, slogan: result.slogan });
+      setLogoPrompt(result.logoPrompt);
       toast({
         title: "¡Identidad Digital Generada!",
         description: "Aquí tienes los elementos clave para tu nueva marca.",
@@ -60,13 +85,53 @@ export function IdentidadDigitalModule() {
     }
   };
 
+  const handleRegenerateField = async (field: 'brandName' | 'slogan') => {
+      const businessDescription = businessForm.getValues('businessDescription');
+      if (!businessDescription) return;
+
+      if (field === 'brandName') setIsRegeneratingName(true);
+      if (field === 'slogan') setIsRegeneratingSlogan(true);
+      
+      try {
+        const result = await generateDigitalIdentity({ businessDescription });
+        brandForm.setValue(field, result[field], { shouldDirty: true });
+      } catch (e) {
+        toast({ title: `Error al regenerar el ${field === 'brandName' ? 'nombre' : 'eslogan'}`, variant: "destructive" });
+      } finally {
+        if (field === 'brandName') setIsRegeneratingName(false);
+        if (field === 'slogan') setIsRegeneratingSlogan(false);
+      }
+  };
+
+  const handleUpdateLogoPrompt = async () => {
+    const businessDescription = businessForm.getValues('businessDescription');
+    const brandName = brandForm.getValues('brandName');
+    const slogan = brandForm.getValues('slogan');
+    if (!businessDescription || !brandName || !slogan) return;
+    
+    setIsRegeneratingLogoPrompt(true);
+    try {
+        // We call the main flow again, but only use the logoPrompt from its result.
+        const result = await generateDigitalIdentity({ 
+            businessDescription: `${businessDescription} The brand name is '${brandName}' and the slogan is '${slogan}'`
+        });
+        setLogoPrompt(result.logoPrompt);
+        brandForm.reset(brandForm.getValues()); // Resets dirty state
+        toast({ title: "Idea para logo actualizada" });
+    } catch (e) {
+        toast({ title: "Error al actualizar la idea para el logo", variant: "destructive" });
+    } finally {
+        setIsRegeneratingLogoPrompt(false);
+    }
+  };
+
   const onImageGenerate = async () => {
-      if (!identityResult?.logoPrompt) return;
+      if (!logoPrompt) return;
 
       setIsImageLoading(true);
       try {
           const result = await generateOptimizedImage({
-              prompt: identityResult.logoPrompt,
+              prompt: logoPrompt,
               creativeType: 'LOGO',
           });
           setGeneratedImage(result);
@@ -88,12 +153,16 @@ export function IdentidadDigitalModule() {
 
   const handleApplyIdentity = () => {
     if (identityResult) {
-      localStorage.setItem('brandIdentity', JSON.stringify(identityResult));
+      const currentBrandName = brandForm.getValues('brandName');
+      const finalIdentity = {
+          ...identityResult,
+          brandName: currentBrandName
+      };
+      localStorage.setItem('brandIdentity', JSON.stringify(finalIdentity));
       toast({
         title: '¡Identidad Aplicada!',
         description: 'Tu panel de control ahora refleja tu nueva marca. Refresca la página para ver los cambios.',
       });
-      // Optionally force a reload to see changes immediately
       window.location.reload();
     }
   };
@@ -101,11 +170,13 @@ export function IdentidadDigitalModule() {
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      identityForm.reset();
+      businessForm.reset();
+      brandForm.reset();
       setIdentityResult(null);
       setGeneratedImage(null);
       setIsIdentityLoading(false);
       setIsImageLoading(false);
+      setLogoPrompt('');
     }
   }
 
@@ -132,10 +203,10 @@ export function IdentidadDigitalModule() {
             </div>
         </DialogHeader>
         <div className="py-4 space-y-6">
-            <Form {...identityForm}>
-                <form onSubmit={identityForm.handleSubmit(onIdentitySubmit)} className="space-y-4">
+            <Form {...businessForm}>
+                <form onSubmit={businessForm.handleSubmit(onBusinessSubmit)} className="space-y-4">
                     <FormField
-                    control={identityForm.control}
+                    control={businessForm.control}
                     name="businessDescription"
                     render={({ field }) => (
                         <FormItem>
@@ -161,7 +232,7 @@ export function IdentidadDigitalModule() {
                      <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
-                        <AlertDescription>Usa estos elementos como punto de partida para construir una marca sólida y coherente.</AlertDescription>
+                        <AlertDescription>Puedes editar o regenerar cualquier elemento para ajustarlo a tu gusto.</AlertDescription>
                     </Alert>
 
                     {generatedImage ? (
@@ -178,25 +249,51 @@ export function IdentidadDigitalModule() {
                             </CardContent>
                         </Card>
                     ) : (
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="space-y-4">
+                            <Form {...brandForm}>
                             <Card className="bg-secondary/50">
                                 <CardHeader>
                                     <CardTitle className="text-lg">Nombre de Marca</CardTitle>
-                                    <CardDescription>Una sugerencia creativa para tu negocio.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="font-headline text-2xl text-primary">{identityResult.brandName}</p>
+                                    <FormField
+                                        control={brandForm.control}
+                                        name="brandName"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center gap-2">
+                                                <FormControl>
+                                                    <Input {...field} className="text-xl font-headline"/>
+                                                </FormControl>
+                                                <Button type="button" variant="ghost" size="icon" onClick={() => handleRegenerateField('brandName')} disabled={isRegeneratingName || isRegeneratingSlogan}>
+                                                    {isRegeneratingName ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4"/>}
+                                                </Button>
+                                            </FormItem>
+                                        )}
+                                    />
                                 </CardContent>
                             </Card>
                              <Card className="bg-secondary/50">
                                 <CardHeader>
                                     <CardTitle className="text-lg">Eslogan</CardTitle>
-                                    <CardDescription>Una frase corta y memorable.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-lg italic text-muted-foreground">"{identityResult.slogan}"</p>
+                                     <FormField
+                                        control={brandForm.control}
+                                        name="slogan"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center gap-2">
+                                                <FormControl>
+                                                    <Input {...field} className="italic"/>
+                                                </FormControl>
+                                                <Button type="button" variant="ghost" size="icon" onClick={() => handleRegenerateField('slogan')} disabled={isRegeneratingName || isRegeneratingSlogan}>
+                                                    {isRegeneratingSlogan ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4"/>}
+                                                </Button>
+                                            </FormItem>
+                                        )}
+                                    />
                                 </CardContent>
                             </Card>
+                            </Form>
                         </div>
                     )}
                    
@@ -222,11 +319,20 @@ export function IdentidadDigitalModule() {
                             <CardTitle className="text-lg flex items-center gap-2"><PenTool className="h-5 w-5" /> Idea para tu Logo</CardTitle>
                             <CardDescription>Usa esta descripción (prompt) en un generador de imágenes con IA.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                           <p className="text-sm italic p-4 bg-secondary rounded-md text-muted-foreground font-mono">"{identityResult.logoPrompt}"</p>
+                        <CardContent className="space-y-4">
+                           <p className="text-sm italic p-4 bg-secondary rounded-md text-muted-foreground font-mono">"{logoPrompt}"</p>
+                           {isBrandDirty && (
+                             <Button onClick={handleUpdateLogoPrompt} disabled={isRegeneratingLogoPrompt} className="w-full" variant="secondary">
+                                {isRegeneratingLogoPrompt ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Actualizando...</>
+                                ) : (
+                                    <><RefreshCw className="mr-2 h-4 w-4" /> Actualizar idea para logo</>
+                                )}
+                            </Button>
+                           )}
                         </CardContent>
                         <CardFooter>
-                            <Button onClick={onImageGenerate} disabled={isImageLoading || isIdentityLoading} className="w-full">
+                            <Button onClick={onImageGenerate} disabled={isImageLoading || isIdentityLoading || isBrandDirty} className="w-full">
                                 {isImageLoading ? (
                                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo...</>
                                 ) : (
@@ -243,3 +349,5 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
+
+    
