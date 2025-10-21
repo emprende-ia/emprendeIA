@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Building } from 'lucide-react';
 import Link from 'next/link';
@@ -18,14 +17,14 @@ export default function StartPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full pt-4">
             <Card className="hover:border-primary transition-all cursor-pointer">
-                <Link href="/new-venture" className="block h-full">
-                    <CardHeader>
+                <Link href="/new-venture" className="block h-full p-6">
+                    <CardHeader className="p-0">
                         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <Sparkles className="h-8 w-8" />
                         </div>
                         <CardTitle className="font-headline text-2xl">Quiero empezar un emprendimiento nuevo</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0 pt-4">
                         <CardDescription>
                             Obtén un análisis de viabilidad, crea tu identidad de marca y recibe un plan de acción para lanzar tu idea desde cero.
                         </CardDescription>
@@ -33,18 +32,20 @@ export default function StartPage() {
                 </Link>
             </Card>
 
-            <Card className="border-dashed bg-transparent opacity-60">
-                 <CardHeader>
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-                        <Building className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <CardTitle className="font-headline text-2xl">Ya tengo un emprendimiento pero quiero potenciarlo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <CardDescription>
-                        (Próximamente) Analiza tu negocio actual, descubre oportunidades de crecimiento y obtén estrategias para escalar tus ventas.
-                    </CardDescription>
-                </CardContent>
+            <Card className="hover:border-primary transition-all cursor-pointer">
+                 <Link href="/existing-venture" className="block h-full p-6">
+                    <CardHeader className="p-0">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Building className="h-8 w-8" />
+                        </div>
+                        <CardTitle className="font-headline text-2xl">Ya tengo un emprendimiento pero quiero potenciarlo</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 pt-4">
+                        <CardDescription>
+                            Analiza tu negocio actual, descubre oportunidades de crecimiento y obtén estrategias para escalar tus ventas.
+                        </CardDescription>
+                    </CardContent>
+                </Link>
             </Card>
         </div>
       </div>
