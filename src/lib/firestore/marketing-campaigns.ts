@@ -5,13 +5,20 @@ import { Firestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove,
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { z } from 'zod';
-import { generateCampaignPlan, CampaignPlanSchema } from '@/ai/flows/generate-campaign-plan';
+import { generateCampaignPlan } from '@/ai/flows/generate-campaign-plan';
 
 export const CampaignIdeaSchema = z.object({
     title: z.string().describe('A catchy title for the campaign idea.'),
     channel: z.string().describe('The recommended marketing channel (e.g., Instagram, Email Marketing, Google Ads).'),
     keyMessage: z.string().describe('The core message of the campaign.'),
     targetAudience: z.string().describe('The specific audience this campaign should target.'),
+});
+
+export const CampaignPlanSchema = z.object({
+    strategy: z.string().describe("A brief, one-paragraph summary of the overall strategy for this campaign."),
+    contentSuggestions: z.array(z.string()).describe("A list of 3-5 specific content ideas to create for this campaign (e.g., 'Un Reel mostrando el proceso artesanal', 'Un carrusel con testimonios de clientes')."),
+    actionableTasks: z.array(z.string()).describe("A list of 5-7 concrete, actionable tasks to execute the campaign (e.g., 'Definir paleta de colores para la campaña', 'Escribir 3 borradores de copy para anuncios', 'Contactar a 2 micro-influencers')."),
+    kpis: z.array(z.string()).describe("A list of 2-3 key performance indicators (KPIs) to measure the campaign's success (e.g., 'Tasa de interacción', 'Número de seguidores nuevos', 'Ventas generadas desde el link en bio')."),
 });
 
 export type CampaignIdea = z.infer<typeof CampaignIdeaSchema>;
