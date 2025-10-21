@@ -1,4 +1,7 @@
 
+'use client';
+
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { BookOpen, Palette, Megaphone, DollarSign, Search, Route } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
@@ -7,13 +10,43 @@ import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digit
 import { CampanasMarketingModule } from "@/components/app/modules/campanas-marketing";
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
 import { MisRutasModule } from "@/components/app/modules/mis-rutas";
+import { useUser } from "@/firebase";
+import { Loader2 } from "lucide-react";
 
 export default function AdminPage() {
+  const { user, isUserLoading } = useUser();
+  const [brandName, setBrandName] = useState("Emprendimiento");
+
+  useEffect(() => {
+    // Apply theme from localStorage on client-side
+    const savedIdentity = localStorage.getItem('brandIdentity');
+    if (savedIdentity) {
+      const { brandName: savedBrandName, colorPalette } = JSON.parse(savedIdentity);
+      if (savedBrandName) {
+        setBrandName(savedBrandName);
+      }
+      if (colorPalette && colorPalette[0] && colorPalette[2]) {
+        // Simple mapping: first color to primary, third to accent
+        // This is a basic example; a more robust solution might map specific color roles.
+        document.documentElement.style.setProperty('--primary', colorPalette[0].hex);
+        document.documentElement.style.setProperty('--accent', colorPalette[2].hex);
+      }
+    }
+  }, []);
+
+  if (isUserLoading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
       <div className="space-y-8">
         <div className="text-center">
-          <h1 className="font-headline text-4xl font-bold">Panel de Control de Emprendimiento</h1>
+          <h1 className="font-headline text-4xl font-bold">Panel de {brandName}</h1>
           <p className="text-muted-foreground mt-2 text-lg">Tus herramientas de IA para lanzar y crecer tu negocio.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

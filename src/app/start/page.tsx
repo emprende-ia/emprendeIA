@@ -1,13 +1,14 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Building } from 'lucide-react';
+import { Sparkles, Building, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function StartPage() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4">
-      <div className="flex flex-col items-center space-y-8 text-center max-w-2xl">
+      <div className="flex flex-col items-center space-y-8 text-center max-w-4xl">
         <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground sm:text-5xl">
             Elige tu camino
         </h1>
@@ -47,6 +48,14 @@ export default function StartPage() {
                     </CardContent>
                 </Link>
             </Card>
+        </div>
+        <div className="pt-6 w-full max-w-sm">
+            <Button asChild variant="outline" size="lg" className="w-full text-lg">
+                <Link href="/admin">
+                    <LayoutDashboard className="mr-2 h-5 w-5" />
+                    Ir a mi Panel de Control
+                </Link>
+            </Button>
         </div>
       </div>
     </main>

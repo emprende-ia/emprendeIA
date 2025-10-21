@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -85,6 +85,18 @@ export function IdentidadDigitalModule() {
           setIsImageLoading(false);
       }
   };
+
+  const handleApplyIdentity = () => {
+    if (identityResult) {
+      localStorage.setItem('brandIdentity', JSON.stringify(identityResult));
+      toast({
+        title: '¡Identidad Aplicada!',
+        description: 'Tu panel de control ahora refleja tu nueva marca. Refresca la página para ver los cambios.',
+      });
+      // Optionally force a reload to see changes immediately
+      window.location.reload();
+    }
+  };
   
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -104,10 +116,20 @@ export function IdentidadDigitalModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
-          <DialogDescription>
-            Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y hasta un borrador de tu logo.
-          </DialogDescription>
+            <div className="flex justify-between items-start">
+                <div>
+                    <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
+                    <DialogDescription>
+                        Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y hasta un borrador de tu logo.
+                    </DialogDescription>
+                </div>
+                {identityResult && (
+                    <Button onClick={handleApplyIdentity} size="sm" variant="outline">
+                        <Heart className="mr-2 h-4 w-4" />
+                        Quiero que esta sea mi identidad
+                    </Button>
+                )}
+            </div>
         </DialogHeader>
         <div className="py-4 space-y-6">
             <Form {...identityForm}>
