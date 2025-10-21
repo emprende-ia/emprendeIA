@@ -99,11 +99,11 @@ export function AppHeader() {
           <Sparkles className="h-8 w-8 text-primary-foreground" />
         </div>
         <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl">
-          EmprendeIA
+          Emprende Fácil
         </h1>
       </div>
       <p className="max-w-2xl text-xl text-foreground/90">
-        Desde la idea hasta el proveedor. Conectamos tu visión con oportunidades reales, impulsado por inteligencia artificial.
+        Tu idea, tu futuro. El asistente inteligente para tu emprendimiento.
       </p>
     </header>
   );

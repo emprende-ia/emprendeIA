@@ -6,7 +6,7 @@ export function AppFooter() {
       <div className="container flex flex-col items-center justify-center gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />
-          <p>EmprendeIA</p>
+          <p>Emprende Fácil</p>
         </div>
         <p>&copy; {new Date().getFullYear()}. Todos los derechos reservados.</p>
       </div>

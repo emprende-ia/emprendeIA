@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const GoogleIcon = () => (
@@ -26,15 +26,22 @@ function LoginPageContent() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState<string | null>(null);
 
-  const handleSignIn = async (provider: AuthProvider) => {
+  const handleSignIn = async (providerName: 'google' | 'facebook') => {
     if (!auth) return;
-    setIsSigningIn(true);
+
+    const provider = providerName === 'google' 
+      ? new GoogleAuthProvider() 
+      : new FacebookAuthProvider();
+
+    setIsSigningIn(providerName);
     provider.setCustomParameters({
       prompt: 'select_account'
     });
+
     try {
       await signInWithPopup(auth, provider);
       // On successful sign-in, the useEffect for user status will redirect.
@@ -47,18 +54,26 @@ function LoginPageContent() {
         });
       }
     } finally {
-      setIsSigningIn(false);
+      setIsSigningIn(null);
     }
   };
-
-  const handleGoogleSignIn = () => handleSignIn(new GoogleAuthProvider());
-  const handleFacebookSignIn = () => handleSignIn(new FacebookAuthProvider());
   
   useEffect(() => {
+    // Redirect to onboarding if user is logged in
     if (!isUserLoading && user) {
-      router.push('/dashboard');
+      router.push('/start');
     }
   }, [user, isUserLoading, router]);
+
+  // Handle automatic sign-in if provider is in URL
+  useEffect(() => {
+    const providerParam = searchParams.get('provider');
+    if (providerParam === 'google') {
+      handleSignIn('google');
+    } else if (providerParam === 'facebook') {
+      handleSignIn('facebook');
+    }
+  }, [searchParams]);
 
 
   if (isUserLoading || user) {
@@ -77,12 +92,12 @@ function LoginPageContent() {
           <CardDescription className="pt-2">Selecciona un método para continuar</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 p-8 pt-6">
-          <Button onClick={handleGoogleSignIn} size="lg" className="w-full text-base font-bold" disabled={!auth || isSigningIn}>
-            {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
+          <Button onClick={() => handleSignIn('google')} size="lg" className="w-full text-base font-bold" disabled={!auth || !!isSigningIn}>
+            {isSigningIn === 'google' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
             Continuar con Google
           </Button>
-           <Button onClick={handleFacebookSignIn} size="lg" className="w-full text-base font-bold" disabled={!auth || isSigningIn}>
-            {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FacebookIcon />}
+           <Button onClick={() => handleSignIn('facebook')} size="lg" className="w-full text-base font-bold" disabled={!auth || !!isSigningIn}>
+            {isSigningIn === 'facebook' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FacebookIcon />}
             Continuar con Facebook
           </Button>
         </CardContent>
@@ -92,7 +107,7 @@ function LoginPageContent() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105">
                         <Sparkles className="h-8 w-8 text-primary-foreground" />
                     </div>
-                    <span className="font-headline text-xl font-semibold">EmprendeIA</span>
+                    <span className="font-headline text-xl font-semibold">Emprende Fácil</span>
                 </Link>
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground">
