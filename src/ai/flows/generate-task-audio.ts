@@ -73,7 +73,7 @@ const generateTaskAudioFlow = ai.defineFlow(
 
     const { text: script } = await ai.generate({
       prompt: scriptPrompt,
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-2.5-flash',
     });
 
     if (!script) {
