@@ -98,17 +98,6 @@ function SavedPathsList() {
     const [shownMilestones, setShownMilestones] = useState<Record<string, number[]>>({});
 
     useEffect(() => {
-        // Load audios from localStorage on initial render
-        const savedAudios: Record<string, string> = {};
-        if (typeof window !== 'undefined') {
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('audioHelp-')) {
-                    savedAudios[key.replace('audioHelp-', '')] = localStorage.getItem(key)!;
-                }
-            });
-            setGeneratedAudios(savedAudios);
-        }
-
         if (user && firestore) {
             setIsLoading(true);
             const unsubscribe = getLearningPaths(firestore, user.uid, (newPaths) => {
@@ -168,11 +157,7 @@ function SavedPathsList() {
             });
             
             setGeneratedAudios(prev => ({...prev, [audioKey]: result.audioUrl }));
-            // Save to localStorage
-            if (typeof window !== 'undefined') {
-                localStorage.setItem(`audioHelp-${audioKey}`, result.audioUrl);
-            }
-
+            
             toast({ title: '¡Audio de ayuda listo!', description: 'Presiona el botón de reproducir para escucharlo.' });
         } catch (error) {
             console.error("Error generating audio:", error);
@@ -347,5 +332,3 @@ export function MisRutasModule() {
     </Dialog>
   );
 }
-
-    
