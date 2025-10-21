@@ -1,14 +1,15 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
-import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, PlayCircle } from "lucide-react";
+import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, PlayCircle, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,30 @@ const getIconForType = (type: string) => {
     }
 }
 
+const motivationalMessages = {
+    30: {
+        title: "¡Vas por excelente camino!",
+        description: "Has completado el 30% de tu ruta. La constancia es el motor del éxito. ¡Sigue así!",
+        icon: <Sparkles className="h-10 w-10 text-yellow-500" />
+    },
+    50: {
+        title: "¡Llegaste a la mitad del camino!",
+        description: "Has alcanzado el 50%. Estás demostrando un compromiso increíble con tu proyecto. ¡Lo que sigue es crecimiento!",
+        icon: <Award className="h-10 w-10 text-blue-500" />
+    },
+    90: {
+        title: "¡Ya casi lo logras!",
+        description: "Estás al 90%. La meta está a la vista. Un último esfuerzo para consolidar todo tu aprendizaje.",
+        icon: <Rocket className="h-10 w-10 text-purple-500" />
+    },
+    100: {
+        title: "¡Felicidades, lo has completado!",
+        description: "Has llegado al 100%. Has adquirido nuevas herramientas y validado tus ideas. ¡Este es un gran paso hacia el éxito de tu emprendimiento!",
+        icon: <PartyPopper className="h-10 w-10 text-green-500" />
+    },
+};
+
+
 function SavedPathsList() {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -36,11 +61,41 @@ function SavedPathsList() {
     const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
     const [generatedAudios, setGeneratedAudios] = useState<Record<string, string>>({});
     const { toast } = useToast();
+    
+    // State for motivational alert
+    const [alertContent, setAlertContent] = useState<{ title: string, description: string, icon: React.ReactNode } | null>(null);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    // Track shown milestones to prevent re-showing alerts {pathId: [milestone1, milestone2]}
+    const [shownMilestones, setShownMilestones] = useState<Record<string, number[]>>({});
 
     useEffect(() => {
         if (user && firestore) {
             setIsLoading(true);
             const unsubscribe = getLearningPaths(firestore, user.uid, (newPaths) => {
+                // Check for milestone completion when paths are updated
+                newPaths.forEach(path => {
+                    const totalTasks = path.pathData.ruta_aprendizaje.length;
+                    const completedTasksCount = path.completedTasks.length;
+                    const progress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
+                    const milestones = [30, 50, 90, 100];
+                    
+                    const shownForThisPath = shownMilestones[path.id] || [];
+
+                    for (const milestone of milestones) {
+                        if (progress >= milestone && !shownForThisPath.includes(milestone)) {
+                            setAlertContent(motivationalMessages[milestone as keyof typeof motivationalMessages]);
+                            setIsAlertOpen(true);
+                            // Mark this milestone as shown for this path
+                            setShownMilestones(prev => ({
+                                ...prev,
+                                [path.id]: [...(prev[path.id] || []), milestone]
+                            }));
+                            // We only show one alert at a time
+                            break;
+                        }
+                    }
+                });
+
                 setPaths(newPaths);
                 setIsLoading(false);
             });
@@ -49,7 +104,7 @@ function SavedPathsList() {
             setIsLoading(false);
             setPaths([]);
         }
-    }, [user, firestore]);
+    }, [user, firestore, shownMilestones]);
     
     const handleTaskToggle = (pathId: string, taskTitle: string, isCompleted: boolean) => {
         if (!user || !firestore) return;
@@ -200,6 +255,25 @@ function SavedPathsList() {
                     </Card>
                 )
             })}
+
+            {alertContent && (
+                <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+                            {alertContent.icon}
+                        </div>
+                        <AlertDialogTitle className="text-center font-headline text-2xl">{alertContent.title}</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-base pt-2">
+                           {alertContent.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setIsAlertOpen(false)}>¡Continuar!</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            )}
         </div>
     );
 }
