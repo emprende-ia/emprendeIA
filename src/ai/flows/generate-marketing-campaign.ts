@@ -8,17 +8,28 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { CampaignIdeaSchema } from '@/lib/firestore/marketing-campaigns';
+import { CampaignIdeaSchema, type CampaignIdea } from '@/lib/firestore/marketing-campaigns';
 
 const GenerateMarketingCampaignInputSchema = z.object({
   productDescription: z.string().describe('A description of the product or service to market.'),
 });
 export type GenerateMarketingCampaignInput = z.infer<typeof GenerateMarketingCampaignInputSchema>;
 
+// The output schema for the AI must explicitly define the object inside the array
+// for the prompt generation to work correctly. Re-using CampaignIdeaSchema directly
+// doesn't provide the 'items' field the API expects.
 const GenerateMarketingCampaignOutputSchema = z.object({
-  campaigns: z.array(CampaignIdeaSchema).describe('A list of 2-3 distinct marketing campaign ideas.'),
+  campaigns: z.array(z.object({
+      title: z.string().describe('A catchy title for the campaign idea.'),
+      channel: z.string().describe('The recommended marketing channel (e.g., Instagram, Email Marketing, Google Ads).'),
+      keyMessage: z.string().describe('The core message of the campaign.'),
+      targetAudience: z.string().describe('The specific audience this campaign should target.'),
+    }))
+    .describe('A list of 2-3 distinct marketing campaign ideas.'),
 });
+
 export type GenerateMarketingCampaignOutput = z.infer<typeof GenerateMarketingCampaignOutputSchema>;
+
 
 export async function generateMarketingCampaign(input: GenerateMarketingCampaignInput): Promise<GenerateMarketingCampaignOutput> {
   return generateMarketingCampaignFlow(input);
