@@ -13,3 +13,4 @@ import '@/ai/flows/generate-optimized-image.ts';
 import '@/ai/flows/generate-marketing-campaign.ts';
 import '@/ai/flows/generate-resource-plan.ts';
 import '@/ai/flows/analyze-existing-business.ts';
+import '@/ai/flows/generate-task-audio.ts';

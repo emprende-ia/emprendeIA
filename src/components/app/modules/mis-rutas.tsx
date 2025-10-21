@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
-import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info } from "lucide-react";
+import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
+import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, PlayCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,6 @@ import { es } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-
 
 const getIconForType = (type: string) => {
     switch (type) {
@@ -33,6 +33,8 @@ function SavedPathsList() {
     const firestore = useFirestore();
     const [paths, setPaths] = useState<LearningPath[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
+    const [generatedAudios, setGeneratedAudios] = useState<Record<string, string>>({});
     const { toast } = useToast();
 
     useEffect(() => {
@@ -52,6 +54,31 @@ function SavedPathsList() {
     const handleTaskToggle = (pathId: string, taskTitle: string, isCompleted: boolean) => {
         if (!user || !firestore) return;
         toggleTaskCompletion(firestore, user.uid, pathId, taskTitle, isCompleted);
+    };
+
+    const handleAudioHelp = async (pathId: string, stepIndex: number) => {
+        const audioKey = `${pathId}-${stepIndex}`;
+        setIsAudioLoading(audioKey);
+        try {
+            const path = paths.find(p => p.id === pathId);
+            if (!path) return;
+            const step = path.pathData.ruta_aprendizaje[stepIndex];
+
+            const result = await generateTaskAudio({
+                taskTitle: step.titulo,
+                taskObjective: step.objetivo_de_aprendizaje,
+                taskContent: step.contenido_clave.join(', '),
+                taskAction: step.tarea_del_dia,
+            });
+            
+            setGeneratedAudios(prev => ({...prev, [audioKey]: result.audioUrl }));
+            toast({ title: '¡Audio de ayuda listo!', description: 'Presiona el botón de reproducir para escucharlo.' });
+        } catch (error) {
+            console.error("Error generating audio:", error);
+            toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
+        } finally {
+            setIsAudioLoading(null);
+        }
     };
 
     if (isLoading) {
@@ -89,6 +116,9 @@ function SavedPathsList() {
                             <Accordion type="single" collapsible className="w-full">
                                 {path.pathData.ruta_aprendizaje.map((step, index) => {
                                     const isCompleted = path.completedTasks.includes(step.tarea_del_dia);
+                                    const audioKey = `${path.id}-${index}`;
+                                    const audioUrl = generatedAudios[audioKey];
+                                    
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
                                             <AccordionTrigger>
@@ -110,6 +140,21 @@ function SavedPathsList() {
                                                         <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{step.tarea_del_dia}</p>
                                                     </label>
                                                 </div>
+                                                
+                                                <div className="flex items-center gap-2">
+                                                    <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, index)} disabled={!!isAudioLoading}>
+                                                         {isAudioLoading === audioKey ? (
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                         ) : (
+                                                            <HelpCircle className="mr-2 h-4 w-4" />
+                                                         )}
+                                                         Necesito ayuda con esta tarea
+                                                    </Button>
+                                                    {audioUrl && (
+                                                         <audio controls src={audioUrl} className="h-8" />
+                                                    )}
+                                                </div>
+
 
                                                 <div>
                                                     <h4 className="font-semibold text-sm">Contenido Clave:</h4>
