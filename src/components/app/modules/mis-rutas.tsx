@@ -15,6 +15,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+
 
 const getIconForType = (type: string) => {
     switch (type) {
@@ -66,83 +68,93 @@ function SavedPathsList() {
 
     return (
         <div className="space-y-4">
-            {paths.map(path => (
-                <Card key={path.id} className="bg-card">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Ruta para: {path.pathData.perfil_usuario.giro}</CardTitle>
-                        <CardDescription>
-                            Guardada {formatDistanceToNow(path.createdAt, { addSuffix: true, locale: es })}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Accordion type="single" collapsible className="w-full">
-                            {path.pathData.ruta_aprendizaje.map((step, index) => {
-                                const isCompleted = path.completedTasks.includes(step.tarea_del_dia);
-                                return (
-                                    <AccordionItem value={`item-${index}`} key={index}>
-                                        <AccordionTrigger>
-                                            <div className="flex items-center gap-3">
-                                                {getIconForType(step.tipo)}
-                                                <span className={isCompleted ? "line-through text-muted-foreground" : ""}>{step.titulo}</span>
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent className="space-y-4 pl-8">
-                                            <div className="flex items-start gap-3 p-4 bg-secondary/50 rounded-md">
-                                                <Checkbox 
-                                                    id={`task-${path.id}-${index}`}
-                                                    checked={isCompleted}
-                                                    onCheckedChange={(checked) => handleTaskToggle(path.id, step.tarea_del_dia, !!checked)}
-                                                    className="mt-1"
-                                                />
-                                                <label htmlFor={`task-${path.id}-${index}`} className="flex-1">
-                                                    <p className="font-semibold">Tarea del Día:</p>
-                                                    <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{step.tarea_del_dia}</p>
-                                                </label>
-                                            </div>
+            {paths.map(path => {
+                const totalTasks = path.pathData.ruta_aprendizaje.length;
+                const completedTasksCount = path.completedTasks.length;
+                const progress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
 
-                                            <div>
-                                                <h4 className="font-semibold text-sm">Contenido Clave:</h4>
-                                                <ul className="list-disc list-inside text-sm text-muted-foreground pl-2">
-                                                    {step.contenido_clave.map((item, i) => <li key={i}>{item}</li>)}
-                                                </ul>
-                                            </div>
-                                            
-                                             {step.herramientas_sugeridas.length > 0 && (
-                                                <div>
-                                                    <h4 className="font-semibold text-sm">Herramientas Sugeridas:</h4>
-                                                    <div className="flex flex-wrap gap-2 mt-1">
-                                                        {step.herramientas_sugeridas.map((tool, i) => <Badge key={i} variant="secondary">{tool}</Badge>)}
-                                                    </div>
-                                                </div>
-                                             )}
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                );
-                            })}
-                        </Accordion>
-                        <Separator className="my-6" />
-                        <div>
-                            <h3 className="font-headline text-md mb-2 flex items-center gap-2"><GraduationCap />Recomendaciones Educativas UTEL</h3>
-                            <div className="space-y-3">
-                                {path.pathData.recomendaciones_utel.map((rec, index) => (
-                                     <Card key={index} className="bg-secondary/50">
-                                        <CardHeader className="p-4">
-                                            <CardTitle className="text-sm">{rec.nombre}</CardTitle>
-                                            <CardDescription>
-                                                <Badge variant="default" className="text-xs">{rec.tipo}</Badge>
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="p-4 pt-0">
-                                            <p className="text-xs text-muted-foreground mb-3">{rec.por_que_encaja}</p>
-                                            <Button size="sm" variant="outline" asChild><a href={rec.link_placeholder} target="_blank" rel="noopener noreferrer">Ver {rec.tipo}</a></Button>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                return (
+                    <Card key={path.id} className="bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Ruta para: {path.pathData.perfil_usuario.giro}</CardTitle>
+                            <CardDescription>
+                                Guardada {formatDistanceToNow(path.createdAt, { addSuffix: true, locale: es })}
+                            </CardDescription>
+                            <div className="pt-2 space-y-1">
+                                <Progress value={progress} className="h-2" />
+                                <p className="text-xs text-muted-foreground">{Math.round(progress)}% completado ({completedTasksCount} de {totalTasks} tareas)</p>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+                        </CardHeader>
+                        <CardContent>
+                            <Accordion type="single" collapsible className="w-full">
+                                {path.pathData.ruta_aprendizaje.map((step, index) => {
+                                    const isCompleted = path.completedTasks.includes(step.tarea_del_dia);
+                                    return (
+                                        <AccordionItem value={`item-${index}`} key={index}>
+                                            <AccordionTrigger>
+                                                <div className="flex items-center gap-3">
+                                                    {getIconForType(step.tipo)}
+                                                    <span className={isCompleted ? "line-through text-muted-foreground" : ""}>{step.titulo}</span>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="space-y-4 pl-8">
+                                                <div className="flex items-start gap-3 p-4 bg-secondary/50 rounded-md">
+                                                    <Checkbox 
+                                                        id={`task-${path.id}-${index}`}
+                                                        checked={isCompleted}
+                                                        onCheckedChange={(checked) => handleTaskToggle(path.id, step.tarea_del_dia, !!checked)}
+                                                        className="mt-1"
+                                                    />
+                                                    <label htmlFor={`task-${path.id}-${index}`} className="flex-1">
+                                                        <p className="font-semibold">Tarea del Día:</p>
+                                                        <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{step.tarea_del_dia}</p>
+                                                    </label>
+                                                </div>
+
+                                                <div>
+                                                    <h4 className="font-semibold text-sm">Contenido Clave:</h4>
+                                                    <ul className="list-disc list-inside text-sm text-muted-foreground pl-2">
+                                                        {step.contenido_clave.map((item, i) => <li key={i}>{item}</li>)}
+                                                    </ul>
+                                                </div>
+                                                
+                                                 {step.herramientas_sugeridas.length > 0 && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-sm">Herramientas Sugeridas:</h4>
+                                                        <div className="flex flex-wrap gap-2 mt-1">
+                                                            {step.herramientas_sugeridas.map((tool, i) => <Badge key={i} variant="secondary">{tool}</Badge>)}
+                                                        </div>
+                                                    </div>
+                                                 )}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    );
+                                })}
+                            </Accordion>
+                            <Separator className="my-6" />
+                            <div>
+                                <h3 className="font-headline text-md mb-2 flex items-center gap-2"><GraduationCap />Recomendaciones Educativas UTEL</h3>
+                                <div className="space-y-3">
+                                    {path.pathData.recomendaciones_utel.map((rec, index) => (
+                                         <Card key={index} className="bg-secondary/50">
+                                            <CardHeader className="p-4">
+                                                <CardTitle className="text-sm">{rec.nombre}</CardTitle>
+                                                <CardDescription>
+                                                    <Badge variant="default" className="text-xs">{rec.tipo}</Badge>
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="p-4 pt-0">
+                                                <p className="text-xs text-muted-foreground mb-3">{rec.por_que_encaja}</p>
+                                                <Button size="sm" variant="outline" asChild><a href={rec.link_placeholder} target="_blank" rel="noopener noreferrer">Ver {rec.tipo}</a></Button>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            })}
         </div>
     );
 }
