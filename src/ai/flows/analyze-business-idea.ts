@@ -8,8 +8,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-// Schema for the detailed form input
-export const AnalyzeBusinessIdeaInputSchema = z.object({
+// Schema for the detailed form input, now defined internally.
+const AnalyzeBusinessIdeaInputSchema = z.object({
   idea: z.string().describe('The user\'s business idea.'),
   tipoNegocio: z.string().describe('The type of business (physical, online, both).'),
   capitalInicial: z.string().describe('The initial capital investment range.'),
@@ -20,9 +20,10 @@ export const AnalyzeBusinessIdeaInputSchema = z.object({
   competencia: z.string().optional().describe('Any known competitors.'),
   disponibilidadTiempo: z.string().describe('The time commitment available per week.'),
 });
+// The type can still be exported.
 export type AnalyzeBusinessIdeaInput = z.infer<typeof AnalyzeBusinessIdeaInputSchema>;
 
-// Schema for the AI's output
+// Schema for the AI's output, now defined internally.
 const ViabilityAnalysisSchema = z.object({
     comment: z.string().describe('A brief but critical and encouraging comment about the business idea.'),
     swot: z.object({
@@ -37,12 +38,13 @@ const ViabilityAnalysisSchema = z.object({
     }).describe('The viability summary with a traffic light indicator.'),
 });
 
-export const AnalyzeBusinessIdeaOutputSchema = z.object({
+const AnalyzeBusinessIdeaOutputSchema = z.object({
   analysis: ViabilityAnalysisSchema,
 });
+// The type can still be exported.
 export type AnalyzeBusinessIdeaOutput = z.infer<typeof AnalyzeBusinessIdeaOutputSchema>;
 
-
+// This is the only function exported, and it's async, which is correct.
 export async function analyzeBusinessIdea(input: AnalyzeBusinessIdeaInput): Promise<AnalyzeBusinessIdeaOutput> {
   return analyzeBusinessIdeaFlow(input);
 }
