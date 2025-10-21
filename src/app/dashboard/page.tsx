@@ -1,17 +1,14 @@
 
 import { AppHeader } from "@/components/app/header";
-import { MainContent } from "@/components/app/main-content";
-import { HistorySidebar } from "@/components/app/history-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppFooter } from "@/components/app/footer";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Lightbulb, BookOpen, Palette, Megaphone, DollarSign, Search, Route } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, Route } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
 import { CampanasMarketingModule } from "@/components/app/modules/campanas-marketing";
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
-import { Button } from "@/components/ui/button";
 import { MisRutasModule } from "@/components/app/modules/mis-rutas";
 
 export default function DashboardPage() {
