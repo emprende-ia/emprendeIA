@@ -1,3 +1,4 @@
+'use server';
 import { config } from 'dotenv';
 config();
 
@@ -10,3 +11,4 @@ import '@/ai/flows/generate-action-plan.ts';
 import '@/ai/flows/generate-optimized-image.ts';
 import '@/ai/flows/generate-marketing-campaign.ts';
 import '@/ai/flows/generate-resource-plan.ts';
+import '@/ai/flows/analyze-business-idea.ts';

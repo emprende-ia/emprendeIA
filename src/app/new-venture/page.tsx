@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   idea: z.string().min(10, { message: 'Describe tu idea con un poco más de detalle.' }),
@@ -38,23 +39,24 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const publicoObjetivoOptions = [
-    { id: 'mujeres', label: 'Mujeres' },
-    { id: 'hombres', label: 'Hombres' },
-    { id: 'jovenes', label: 'Jóvenes' },
-    { id: 'adultos', label: 'Adultos' },
-    { id: 'familias', label: 'Familias / Niños' },
-    { id: 'general', label: 'Público en general' },
-    { id: 'no-seguro', label: '🤔 No estoy seguro' },
+    { id: 'Mujeres', label: 'Mujeres' },
+    { id: 'Hombres', label: 'Hombres' },
+    { id: 'Jóvenes', label: 'Jóvenes' },
+    { id: 'Adultos', label: 'Adultos' },
+    { id: 'Familias / Niños', label: 'Familias / Niños' },
+    { id: 'Público en general', label: 'Público en general' },
+    { id: 'No estoy seguro', label: '🤔 No estoy seguro' },
 ];
 
 const objetivoPrincipalOptions = [
-    { id: 'organizar', label: 'Organizar gastos e ingresos' },
-    { id: 'marca', label: 'Crear mi marca (nombre, logo, redes sociales)' },
-    { id: 'clientes', label: 'Conseguir más clientes y vender más' },
-    { id: 'todo', label: 'Todo lo anterior' },
+    { id: 'Organizar gastos e ingresos', label: 'Organizar gastos e ingresos' },
+    { id: 'Crear mi marca', label: 'Crear mi marca (nombre, logo, redes sociales)' },
+    { id: 'Conseguir más clientes', label: 'Conseguir más clientes y vender más' },
+    { id: 'Todo lo anterior', label: 'Todo lo anterior' },
 ];
 
 export default function NewVenturePage() {
+  const router = useRouter();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -67,9 +69,13 @@ export default function NewVenturePage() {
   });
 
   function onSubmit(data: FormValues) {
-    console.log(data);
-    // Here you would navigate to the next page, passing the data
-    // For now, we just log it.
+    const transformedData = {
+        ...data,
+        publicoObjetivo: data.publicoObjetivo.join(', '),
+        objetivoPrincipal: data.objetivoPrincipal.join(', '),
+    };
+    const params = new URLSearchParams(transformedData);
+    router.push(`/analysis?${params.toString()}`);
   }
 
   return (
@@ -311,7 +317,7 @@ export default function NewVenturePage() {
                         />
 
                         <Button type="submit" className="w-full font-bold text-lg" size="lg">
-                            Generar Perfil
+                            Generar Perfil y Analizar
                             <ArrowRight className="ml-2 h-5 w-5" />
                         </Button>
                     </form>
