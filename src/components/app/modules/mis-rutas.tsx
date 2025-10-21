@@ -54,23 +54,30 @@ const motivationalMessages = {
 
 // Simple function to play a success sound
 const playSuccessSound = () => {
-    // Check if window is defined (runs only in browser)
     if (typeof window !== 'undefined') {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         if (!audioContext) return;
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        
-        oscillator.start(audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
-        oscillator.stop(audioContext.currentTime + 0.5);
+        const playNote = (frequency: number, startTime: number, duration: number) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+            gainNode.gain.setValueAtTime(0.2, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, startTime + duration);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
+
+        const now = audioContext.currentTime;
+        playNote(523.25, now, 0.1); // C5
+        playNote(659.25, now + 0.1, 0.1); // E5
+        playNote(783.99, now + 0.2, 0.15); // G5
     }
 };
 
@@ -323,3 +330,5 @@ export function MisRutasModule() {
     </Dialog>
   );
 }
+
+    
