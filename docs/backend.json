@@ -112,6 +112,30 @@
         }
       },
       "required": ["description", "amount", "type", "timestamp"]
+    },
+    "LearningPath": {
+      "title": "Learning Path",
+      "description": "A personalized micro-learning path generated for a user.",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the learning path was saved."
+        },
+        "pathData": {
+          "type": "object",
+          "description": "The full JSON data of the generated learning path."
+        },
+        "completedTasks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of task titles that have been marked as completed."
+        }
+      },
+      "required": ["createdAt", "pathData"]
     }
   },
   "auth": {
@@ -152,6 +176,14 @@
           "entityName": "Transaction",
           "schema": { "$ref": "#/entities/Transaction" },
           "description": "Stores a user's financial transactions."
+        }
+      },
+      {
+        "path": "/users/{userId}/learningPaths/{pathId}",
+        "definition": {
+          "entityName": "LearningPath",
+          "schema": { "$ref": "#/entities/LearningPath" },
+          "description": "Stores a user's saved learning paths."
         }
       }
     ]

@@ -5,13 +5,14 @@ import { HistorySidebar } from "@/components/app/history-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppFooter } from "@/components/app/footer";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Lightbulb, BookOpen, Palette, Megaphone, DollarSign, Search } from "lucide-react";
+import { Lightbulb, BookOpen, Palette, Megaphone, DollarSign, Search, Route } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
 import { CampanasMarketingModule } from "@/components/app/modules/campanas-marketing";
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
 import { Button } from "@/components/ui/button";
+import { MisRutasModule } from "@/components/app/modules/mis-rutas";
 
 export default function DashboardPage() {
   return (
@@ -119,6 +120,25 @@ export default function DashboardPage() {
                       </CardHeader>
                       <CardFooter>
                           <AdministracionRecursosModule />
+                      </CardFooter>
+                  </div>
+              </Card>
+              
+              <Card 
+                  className="flex flex-col hover:border-primary transition-colors relative bg-cover bg-center overflow-hidden"
+                  style={{ backgroundImage: "url('https://i.postimg.cc/d1j3v8g2/Premium-Photo-Road-trip-with-a-car-in-a-sunny-day.jpg')" }}
+              >
+                  <div className="absolute inset-0 bg-black/60 z-0" />
+                  <div className="relative z-10 flex flex-col h-full">
+                      <CardHeader className="flex-grow">
+                          <div className="flex items-center gap-3">
+                              <Route className="h-8 w-8 text-primary" />
+                              <CardTitle>Mis Rutas</CardTitle>
+                          </div>
+                          <CardDescription>Consulta y da seguimiento a tus planes de aprendizaje.</CardDescription>
+                      </CardHeader>
+                      <CardFooter>
+                          <MisRutasModule />
                       </CardFooter>
                   </div>
               </Card>

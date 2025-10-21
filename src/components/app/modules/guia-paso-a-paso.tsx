@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, BookOpen, GraduationCap, Calendar, Target, Clock, Bot, Info, Video, FileText, BarChart2 } from "lucide-react";
+import { Loader2, Sparkles, BookOpen, GraduationCap, Calendar, Target, Clock, Bot, Info, Video, FileText, BarChart2, PlusCircle, RefreshCw } from "lucide-react";
 import { generateActionPlan, type GenerateActionPlanOutput } from '@/ai/flows/generate-action-plan';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { useUser, useFirestore } from '@/firebase';
+import { saveLearningPath } from '@/lib/firestore/learning-paths';
 
 const formSchema = z.object({
   giro: z.string().min(10, { message: 'Describe tu idea/negocio con más detalle.' }),
@@ -57,6 +59,8 @@ const getIconForType = (type: string) => {
 }
 
 export function GuiaPasoAPasoModule() {
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [learningPath, setLearningPath] = useState<GenerateActionPlanOutput | null>(null);
@@ -92,6 +96,20 @@ export function GuiaPasoAPasoModule() {
     }
   };
 
+  const handleSavePath = () => {
+    if (!user || !firestore || !learningPath) {
+      toast({ title: 'Error', description: 'No se pudo guardar la guía. Asegúrate de haber iniciado sesión.', variant: 'destructive' });
+      return;
+    }
+    saveLearningPath(firestore, user.uid, learningPath);
+    toast({ title: '¡Guía guardada!', description: 'Puedes ver tus guías guardadas en "Mis Rutas".' });
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+  }
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
@@ -99,6 +117,11 @@ export function GuiaPasoAPasoModule() {
       setLearningPath(null);
       setIsLoading(false);
     }
+  }
+
+  const resetForm = () => {
+    form.reset();
+    setLearningPath(null);
   }
 
   return (
@@ -114,43 +137,49 @@ export function GuiaPasoAPasoModule() {
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField name="giro" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>1. Describe tu idea o negocio actual</FormLabel><FormControl><Textarea placeholder="Ej: 'Una tienda en línea de joyería artesanal' o 'Servicio de consultoría para PyMEs'" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField name="etapa" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>2. ¿En qué etapa te encuentras?</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona tu etapa" /></SelectTrigger></FormControl>
-                        <SelectContent>{etapaOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
-                      </Select><FormMessage />
-                    </FormItem>
-                 )}/>
-                  <FormField name="objetivo" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>3. ¿Cuál es tu objetivo prioritario?</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona tu objetivo" /></SelectTrigger></FormControl>
-                        <SelectContent>{objetivoOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
-                      </Select><FormMessage />
-                    </FormItem>
+          {!learningPath && (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField name="giro" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>1. Describe tu idea o negocio actual</FormLabel><FormControl><Textarea placeholder="Ej: 'Una tienda en línea de joyería artesanal' o 'Servicio de consultoría para PyMEs'" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField name="etapa" control={form.control} render={({ field }) => (
+                      <FormItem><FormLabel>2. ¿En qué etapa te encuentras?</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona tu etapa" /></SelectTrigger></FormControl>
+                          <SelectContent>{etapaOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                        </Select><FormMessage />
+                      </FormItem>
                   )}/>
-               </div>
-               <FormField name="tiempo_y_formato" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>4. ¿Cuánto tiempo diario tienes y qué formato prefieres?</FormLabel><FormControl><Input placeholder="Ej: '20 min/día, prefiero leer guías'" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              
-              <Button type="submit" className="w-full font-bold" disabled={isLoading}>
-                {isLoading ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando ruta...</>
-                ) : (
-                  <><Sparkles className="mr-2 h-4 w-4" /> Crear Mi Guía</>
-                )}
-              </Button>
-            </form>
-          </Form>
+                    <FormField name="objetivo" control={form.control} render={({ field }) => (
+                      <FormItem><FormLabel>3. ¿Cuál es tu objetivo prioritario?</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona tu objetivo" /></SelectTrigger></FormControl>
+                          <SelectContent>{objetivoOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                        </Select><FormMessage />
+                      </FormItem>
+                    )}/>
+                </div>
+                <FormField name="tiempo_y_formato" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>4. ¿Cuánto tiempo diario tienes y qué formato prefieres?</FormLabel><FormControl><Input placeholder="Ej: '20 min/día, prefiero leer guías'" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                
+                <Button type="submit" className="w-full font-bold" disabled={isLoading}>
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando ruta...</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-4 w-4" /> Crear Mi Guía</>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          )}
 
           {learningPath && (
-            <div className="max-h-[65vh] overflow-y-auto p-1 pt-4 space-y-6">
+            <div className="max-h-[65vh] overflow-y-auto p-1 space-y-6 pt-4">
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <Button onClick={handleSavePath}><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
+                    <Button onClick={resetForm} variant="outline"><RefreshCw className="mr-2 h-4 w-4" /> Generar otra guía</Button>
+                </div>
                 <Alert className="bg-primary/5">
                     <Bot className="h-4 w-4" />
                     <AlertTitle className="font-bold">Razonamiento de la IA</AlertTitle>
@@ -169,7 +198,7 @@ export function GuiaPasoAPasoModule() {
                                     <div className="flex-1">
                                        <CardTitle className="text-base">{step.titulo}</CardTitle>
                                        <CardDescription className="text-xs">
-                                            {step.tipo.replace('_', ' ')} • {step.duracion_estimada}
+                                            {step.tipo.replace(/_/g, ' ')} • {step.duracion_estimada}
                                        </CardDescription>
                                     </div>
                                </CardHeader>
@@ -257,5 +286,3 @@ export function GuiaPasoAPasoModule() {
     </Dialog>
   );
 }
-
-    
