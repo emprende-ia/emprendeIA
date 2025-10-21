@@ -158,7 +158,7 @@ function ExistingAnalysisPageContent() {
                     <div className="text-center p-4 bg-secondary rounded-lg">
                         <p className="font-semibold mb-4">{analysisResult.analysis.recommendation}</p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Button onClick={() => router.push('/dashboard')} size="lg">
+                            <Button onClick={() => router.push('/admin')} size="lg">
                                 <Milestone className="mr-2 h-5 w-5" />
                                 Ir a mi Panel de Control
                             </Button>
