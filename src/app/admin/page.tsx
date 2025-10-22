@@ -27,8 +27,6 @@ export default function AdminPage() {
         setBrandName(savedBrandName);
       }
       if (colorPalette && colorPalette[0] && colorPalette[2]) {
-        // Simple mapping: first color to primary, third to accent
-        // This is a basic example; a more robust solution might map specific color roles.
         document.documentElement.style.setProperty('--primary', colorPalette[0].hex);
         document.documentElement.style.setProperty('--accent', colorPalette[2].hex);
       }
