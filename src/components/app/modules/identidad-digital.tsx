@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, PlayCircle } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2 } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
@@ -208,6 +208,15 @@ export function IdentidadDigitalModule() {
       window.location.reload();
     }
   };
+
+  const handleResetIdentity = () => {
+    localStorage.removeItem('brandIdentity');
+    toast({
+        title: 'Identidad Restaurada',
+        description: 'Se ha restaurado la identidad por defecto.',
+    });
+    window.location.reload();
+  };
   
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -232,19 +241,25 @@ export function IdentidadDigitalModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                 <div>
                     <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
                     <DialogDescription>
                         Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y hasta un borrador de tu logo.
                     </DialogDescription>
                 </div>
-                {identityResult && (
-                    <Button onClick={handleApplyIdentity} size="sm" variant="outline">
-                        <Heart className="mr-2 h-4 w-4" />
-                        Quiero que esta sea mi identidad
+                <div className="flex gap-2 flex-shrink-0">
+                    {identityResult && (
+                        <Button onClick={handleApplyIdentity} size="sm">
+                            <Heart className="mr-2 h-4 w-4" />
+                            Quiero que esta sea mi identidad
+                        </Button>
+                    )}
+                    <Button onClick={handleResetIdentity} size="sm" variant="destructive" >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Restaurar Identidad
                     </Button>
-                )}
+                </div>
             </div>
         </DialogHeader>
         <div className="py-4 space-y-6 overflow-y-auto pr-4">
