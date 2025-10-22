@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Sparkles, LogOut, User as UserIcon, Gem } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
@@ -17,11 +18,30 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
+import Image from 'next/image';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const [brandName, setBrandName] = useState("EmprendeIA");
+  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/9FpL9r6c/logo-emprende-ia.png");
+
+
+  useEffect(() => {
+    // Apply theme from localStorage on client-side
+    const savedIdentity = localStorage.getItem('brandIdentity');
+    if (savedIdentity) {
+      try {
+        const { brandName: savedBrandName } = JSON.parse(savedIdentity);
+        if (savedBrandName) {
+          setBrandName(savedBrandName);
+        }
+      } catch (e) {
+        console.error("Failed to parse brand identity from localStorage", e);
+      }
+    }
+  }, []);
 
   const handleLogout = async () => {
     if (auth) {
@@ -33,12 +53,24 @@ export function AppHeader() {
   const getInitials = (name: string | null | undefined) => {
     if (!name) return '';
     const names = name.split(' ');
-    return names.map(n => n[0]).join('');
+    return names.map(n => n[0]).join('').toUpperCase();
   }
 
   return (
-    <header className="relative flex flex-col items-center justify-center space-y-4 text-center">
-      <div className="absolute top-4 right-4 flex items-center gap-4">
+    <header className="relative flex w-full items-center justify-between">
+      <Link href="/start" className="flex items-center gap-3">
+        <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+        <div>
+            <h1 className="font-headline text-2xl font-bold tracking-tighter text-foreground sm:text-3xl">
+            {brandName}
+            </h1>
+            <p className="text-sm text-foreground/80 hidden sm:block">
+                Convierte tus ideas en negocios reales.
+            </p>
+        </div>
+      </Link>
+      
+      <div className="flex items-center gap-4">
         {!isUserLoading && !user && (
           <Button asChild variant="outline" size="sm">
             <Link href="/pricing">
@@ -55,9 +87,9 @@ export function AppHeader() {
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
+                <Avatar className="h-10 w-10 border-2 border-primary/50">
                   <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'Usuario'} />
-                  <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                  <AvatarFallback className='bg-primary/20'>{getInitials(user.displayName)}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -93,18 +125,8 @@ export function AppHeader() {
           </Button>
         )}
       </div>
-
-      <div className="flex items-center gap-3">
-        <div className="rounded-full bg-primary p-3 shadow-lg">
-          <Sparkles className="h-8 w-8 text-primary-foreground" />
-        </div>
-        <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl">
-          Emprende Fácil
-        </h1>
-      </div>
-      <p className="max-w-2xl text-xl text-foreground/90">
-        Tu idea, tu futuro. El asistente inteligente para tu emprendimiento.
-      </p>
     </header>
   );
 }
+
+    

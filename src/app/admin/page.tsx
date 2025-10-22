@@ -13,6 +13,8 @@ import { MisRutasModule } from "@/components/app/modules/mis-rutas";
 import { MisCampanasModule } from "@/components/app/modules/mis-campanas";
 import { useUser } from "@/firebase";
 import { Loader2 } from "lucide-react";
+import { AppHeader } from "@/components/app/header";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -26,12 +28,16 @@ export default function AdminPage() {
       if (savedBrandName) {
         setBrandName(savedBrandName);
       }
-      if (colorPalette && colorPalette[0] && colorPalette[2]) {
-        document.documentElement.style.setProperty('--primary', colorPalette[0].hex);
-        document.documentElement.style.setProperty('--accent', colorPalette[2].hex);
+      if (colorPalette && colorPalette.length > 0) {
+        const root = document.documentElement;
+        root.style.setProperty('--primary', colorPalette[0].hex);
+        if (colorPalette.length > 2) {
+            root.style.setProperty('--accent', colorPalette[2].hex);
+        }
       }
     }
   }, []);
+
 
   if (isUserLoading) {
     return (
@@ -44,6 +50,10 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
       <div className="space-y-8">
+        
+        <AppHeader />
+        <Separator className="my-8" />
+        
         <div className="text-center">
           <h1 className="font-headline text-4xl font-bold">Panel de {brandName}</h1>
           <p className="text-muted-foreground mt-2 text-lg">Tus herramientas de IA para lanzar y crecer tu negocio.</p>
@@ -168,3 +178,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
