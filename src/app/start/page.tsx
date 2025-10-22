@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, LayoutDashboard } from 'lucide-react';
+import { Building, LayoutDashboard, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -21,11 +21,12 @@ export default function StartPage() {
             <Card className="hover:border-primary transition-all cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 group">
                  <Link href="/new-venture" className="block h-full p-8">
                     <CardHeader className="p-0 items-center text-center">
-                        <div className="mb-4 h-24 w-24 relative group-hover:scale-110 transition-transform">
+                        <div className="mb-4 relative group-hover:scale-110 transition-transform">
                              <Image 
                                 src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" 
                                 alt="Empezar nuevo emprendimiento" 
-                                fill
+                                width={96}
+                                height={96}
                                 className="object-contain"
                             />
                         </div>
