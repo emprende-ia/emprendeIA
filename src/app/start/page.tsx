@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 export default function StartPage() {
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4">
+    <main className="flex min-h-screen w-full flex-col items-center justify-center p-4">
       <div className="flex flex-col items-center space-y-8 text-center max-w-4xl">
         <h1 className="font-headline text-4xl font-bold tracking-tighter text-foreground sm:text-5xl">
             Elige tu camino
@@ -16,12 +16,12 @@ export default function StartPage() {
             Cuéntanos sobre tu situación actual para darte las herramientas que necesitas.
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full pt-4">
-            <Card className="hover:border-primary transition-all cursor-pointer">
-                <Link href="/new-venture" className="block h-full p-6">
-                    <CardHeader className="p-0">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <Sparkles className="h-8 w-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full pt-4">
+            <Card className="hover:border-primary transition-all cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 group">
+                 <Link href="/new-venture" className="block h-full p-8">
+                    <CardHeader className="p-0 items-center text-center">
+                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/30 group-hover:scale-110 transition-transform">
+                            <Sparkles className="h-10 w-10" />
                         </div>
                         <CardTitle className="font-headline text-2xl">Quiero empezar un emprendimiento nuevo</CardTitle>
                     </CardHeader>
@@ -33,11 +33,11 @@ export default function StartPage() {
                 </Link>
             </Card>
 
-            <Card className="hover:border-primary transition-all cursor-pointer">
-                 <Link href="/existing-venture" className="block h-full p-6">
-                    <CardHeader className="p-0">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <Building className="h-8 w-8" />
+            <Card className="hover:border-primary transition-all cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 group">
+                 <Link href="/existing-venture" className="block h-full p-8">
+                    <CardHeader className="p-0 items-center text-center">
+                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/30 group-hover:scale-110 transition-transform">
+                            <Building className="h-10 w-10" />
                         </div>
                         <CardTitle className="font-headline text-2xl">Ya tengo un emprendimiento pero quiero potenciarlo</CardTitle>
                     </CardHeader>

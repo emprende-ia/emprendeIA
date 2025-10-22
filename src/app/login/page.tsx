@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Loader2, Mail, KeyRound } from 'lucide-react';
+import { Loader2, Mail, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import Image from 'next/image';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -217,10 +218,8 @@ function LoginPageContent() {
             </div>
             <div className="flex w-full flex-col items-center gap-4 pt-6 border-t">
                 <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105">
-                        <Sparkles className="h-8 w-8 text-primary-foreground" />
-                    </div>
-                    <span className="font-headline text-xl font-semibold">Emprende Fácil</span>
+                    <Image src="https://i.postimg.cc/9FpL9r6c/logo-emprende-ia.png" alt="EmprendeIA Logo" width={64} height={64} />
+                    <span className="font-headline text-xl font-semibold">EmprendeIA</span>
                 </Link>
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground">
@@ -239,5 +238,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-
-    
