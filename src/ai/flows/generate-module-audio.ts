@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -61,7 +62,7 @@ const generateModuleAudioFlow = ai.defineFlow(
             responseModalities: ['AUDIO'],
             speechConfig: {
                 voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: 'Callisto' }, // A professional and clear female voice
+                    prebuiltVoiceConfig: { voiceName: 'vindemiatrix' }, // A professional and clear female voice
                 },
             },
         },
