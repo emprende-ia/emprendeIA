@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Sparkles, User, Bot } from 'lucide-react';
+import { Loader2, Send, Sparkles, User, Bot, MessageSquare } from 'lucide-react';
 import { askLuminar, type AskLuminarOutput } from '@/ai/flows/ask-luminar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
+import { useUser } from '@/firebase';
 
 
 type Message = {
@@ -21,7 +22,6 @@ type Message = {
 
 const LUMINAR_AVATAR_URL = "https://i.postimg.cc/qBLMXpYM/luminar.png";
 
-// Custom SVG Icon component based on the provided image
 const LuminarIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <Image src={LUMINAR_AVATAR_URL} alt="Luminar Asesor" width={32} height={32} {...props} className="rounded-full" />
 );
@@ -56,6 +56,8 @@ function AssistantChat() {
                 description: "No se pudo obtener una respuesta. Inténtalo de nuevo.",
                 variant: "destructive"
             });
+            // Restore user input on error
+            setMessages(prev => prev.slice(0, -1));
         } finally {
             setIsLoading(false);
         }
@@ -120,7 +122,7 @@ function AssistantChat() {
                     <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ej: ¿Cómo puedo validar mi idea de negocio?"
+                        placeholder="Ej: ¿Cómo puedo validar mi idea?"
                         onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
                         disabled={isLoading}
                     />
@@ -133,13 +135,25 @@ function AssistantChat() {
     );
 }
 
-function LuminarAssistantRoot() {
+function FloatingLuminarRoot() {
     const [isOpen, setIsOpen] = useState(false);
+    const { user, isUserLoading } = useUser();
 
+    // Do not render the button if the user is not logged in or auth state is loading.
+    if (isUserLoading || !user) {
+        return null;
+    }
+    
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Consultar Asesor</Button>
+                <Button 
+                    variant="default"
+                    className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center animate-in fade-in zoom-in-50"
+                >
+                    <LuminarIcon className="h-8 w-8" />
+                    <span className="sr-only">Abrir Asesor Luminar</span>
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg h-[80vh] flex flex-col p-0 gap-0">
                 <DialogHeader className="p-4 border-b">
@@ -157,6 +171,6 @@ function LuminarAssistantRoot() {
 }
 
 export const LuminarAssistantModule = {
-    Root: LuminarAssistantRoot,
+    Root: FloatingLuminarRoot,
     Icon: LuminarIcon
 };

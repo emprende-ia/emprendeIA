@@ -11,7 +11,6 @@ import { CampanasMarketingModule } from "@/components/app/modules/campanas-marke
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
 import { MisRutasModule } from "@/components/app/modules/mis-rutas";
 import { MisCampanasModule } from "@/components/app/modules/mis-campanas";
-import { LuminarAssistantModule } from "@/components/app/modules/luminar-assistant";
 import { useUser } from "@/firebase";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
@@ -140,25 +139,6 @@ export default function AdminPage() {
                   </CardFooter>
               </div>
           </Card>
-          
-           <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-              <div className="relative z-10 flex flex-col h-full p-6">
-                  <CardHeader className="flex-grow p-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-primary/10 p-2 rounded-lg border border-primary/20">
-                          <LuminarAssistantModule.Icon className="h-8 w-8" />
-                        </div>
-                        <CardTitle className="text-2xl">Asesor Luminar</CardTitle>
-                      </div>
-                      <CardDescription>Habla con tu asesor de negocios personal para obtener ayuda.</CardDescription>
-                  </CardHeader>
-                  <CardFooter className="p-0 pt-6">
-                      <LuminarAssistantModule.Root />
-                  </CardFooter>
-              </div>
-          </Card>
-
 
           <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>

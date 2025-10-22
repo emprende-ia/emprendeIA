@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import Script from 'next/script';
+import { LuminarAssistantModule } from '@/components/app/modules/luminar-assistant';
 
 export const metadata: Metadata = {
   title: 'EmprendeIA',
@@ -42,6 +43,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>
           {children}
+          <LuminarAssistantModule.Root />
         </FirebaseClientProvider>
         <Toaster />
       </body>
