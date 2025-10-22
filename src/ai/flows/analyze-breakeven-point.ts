@@ -14,7 +14,7 @@ const TransactionSchema = z.object({
     amount: z.number(),
     type: z.enum(['income', 'expense']),
     category: z.string(),
-    timestamp: z.date(),
+    timestamp: z.string().datetime(),
 });
 
 const AnalyzeBreakevenPointInputSchema = z.object({
@@ -73,13 +73,7 @@ const analyzeBreakevenPointFlow = ai.defineFlow(
     outputSchema: AnalyzeBreakevenPointOutputSchema,
   },
   async (input) => {
-    // The AI can't handle date objects directly in the prompt, so we convert them to strings.
-    const sanitizedTransactions = input.transactions.map(t => ({
-        ...t,
-        timestamp: t.timestamp.toISOString(),
-    }));
-
-    const { output } = await analyzeBreakevenPointPrompt({ ...input, transactions: sanitizedTransactions as any });
+    const { output } = await analyzeBreakevenPointPrompt(input);
     if (!output) {
       throw new Error("The AI model failed to return a valid break-even analysis.");
     }

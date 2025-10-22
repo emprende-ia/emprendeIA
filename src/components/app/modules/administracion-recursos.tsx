@@ -248,8 +248,9 @@ function FinancialAssistant() {
         setIsBreakevenAnalysisLoading(true);
         setBreakevenResult(null);
         try {
+            const sanitizedTransactions = transactions.map(t => ({ ...t, timestamp: t.timestamp.toISOString() }));
             const result = await analyzeBreakevenPoint({
-                transactions: transactions,
+                transactions: sanitizedTransactions as any,
                 averageSalePrice: data.averageSalePrice,
             });
             setBreakevenResult(result);
