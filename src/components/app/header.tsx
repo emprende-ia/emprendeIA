@@ -19,6 +19,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import Image from 'next/image';
+import { SettingsMenu } from './settings-menu';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
@@ -70,15 +71,9 @@ export function AppHeader() {
         </div>
       </Link>
       
-      <div className="flex items-center gap-4">
-        {!isUserLoading && !user && (
-          <Button asChild variant="outline" size="sm">
-            <Link href="/pricing">
-              <Gem className="mr-2 h-4 w-4" />
-              Ver Planes
-            </Link>
-          </Button>
-        )}
+      <div className="flex items-center gap-2">
+        <SettingsMenu />
+        
         {isUserLoading ? (
           <Button variant="outline" size="icon" disabled>
             <UserIcon className="h-4 w-4" />
@@ -117,12 +112,20 @@ export function AppHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button asChild variant="outline">
-            <Link href="/login">
-              <UserIcon className="mr-2 h-4 w-4" />
-              Iniciar Sesión
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline" size="sm">
+                <Link href="/pricing">
+                <Gem className="mr-2 h-4 w-4" />
+                Ver Planes
+                </Link>
+            </Button>
+            <Button asChild variant="outline">
+                <Link href="/login">
+                <UserIcon className="mr-2 h-4 w-4" />
+                Iniciar Sesión
+                </Link>
+            </Button>
+          </>
         )}
       </div>
     </header>
