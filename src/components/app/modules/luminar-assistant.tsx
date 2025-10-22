@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -6,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Sparkles, User, Bot, MessageSquare } from 'lucide-react';
-import { askLuminar, type AskLuminarOutput } from '@/ai/flows/ask-luminar';
+import { Loader2, Send, Bot, User } from 'lucide-react';
+import { askLuminar } from '@/ai/flows/ask-luminar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ReactMarkdown from 'react-markdown';
@@ -22,8 +21,8 @@ type Message = {
 
 const LUMINAR_AVATAR_URL = "https://i.postimg.cc/qBLMXpYM/luminar.png";
 
-const LuminarIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <Image src={LUMINAR_AVATAR_URL} alt="Luminar Asesor" width={32} height={32} {...props} className="rounded-full" />
+export const LuminarIcon = (props: React.SVGProps<SVGSVGElement> & { width?: number, height?: number }) => (
+    <Image src={LUMINAR_AVATAR_URL} alt="Luminar Asesor" width={props.width || 32} height={props.height || 32} {...props} className="rounded-full" />
 );
 
 
@@ -32,7 +31,7 @@ function AssistantChat() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const scrollAreaViewport = useRef<HTMLDivElement>(null);
 
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -56,30 +55,30 @@ function AssistantChat() {
                 description: "No se pudo obtener una respuesta. Inténtalo de nuevo.",
                 variant: "destructive"
             });
-            // Restore user input on error
-            setMessages(prev => prev.slice(0, -1));
+            // Don't remove the user's message on error, so they can retry.
+            // setMessages(prev => prev.slice(0, -1));
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTo({
-                top: scrollAreaRef.current.scrollHeight,
+        if (scrollAreaViewport.current) {
+            scrollAreaViewport.current.scrollTo({
+                top: scrollAreaViewport.current.scrollHeight,
                 behavior: 'smooth'
             });
         }
-    }, [messages]);
+    }, [messages, isLoading]);
 
 
     return (
         <div className="flex flex-col h-full">
-            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-                <div className="space-y-4">
+            <ScrollArea className="flex-1" viewportRef={scrollAreaViewport}>
+                <div className="space-y-4 p-4">
                     {messages.length === 0 && (
                         <div className="text-center text-muted-foreground p-8">
-                            <LuminarIcon className="h-16 w-16 mx-auto mb-4" />
+                            <LuminarIcon className="mx-auto mb-4" width={64} height={64} />
                             <h3 className="font-semibold">Soy Luminar, tu asesor de IA.</h3>
                             <p className="text-sm">¿En qué puedo ayudarte a emprender hoy?</p>
                         </div>
@@ -135,7 +134,7 @@ function AssistantChat() {
     );
 }
 
-function FloatingLuminarRoot() {
+export function LuminarAssistantModule() {
     const [isOpen, setIsOpen] = useState(false);
     const { user, isUserLoading } = useUser();
 
@@ -169,8 +168,3 @@ function FloatingLuminarRoot() {
         </Dialog>
     );
 }
-
-export const LuminarAssistantModule = {
-    Root: FloatingLuminarRoot,
-    Icon: LuminarIcon
-};
