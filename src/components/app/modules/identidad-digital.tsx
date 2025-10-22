@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, PlayCircle } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
@@ -38,6 +39,7 @@ Exploraremos los elementos visuales que harán única a tu marca, como el logoti
 Finalmente, trabajaremos en la voz y el tono de tu marca, para que cada mensaje tenga una identidad clara y reconocible, y logres transmitir lo que tu negocio realmente representa.
 
 Prepárate para sentar las bases de una marca sólida, auténtica y memorable. ¡Comencemos!`;
+const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 
 export function IdentidadDigitalModule() {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
@@ -56,6 +58,16 @@ export function IdentidadDigitalModule() {
 
   const { toast } = useToast();
 
+  useEffect(() => {
+    // On module open, check if audio is already in localStorage
+    if (isOpen) {
+        const cachedAudio = localStorage.getItem(AUDIO_CACHE_KEY);
+        if (cachedAudio) {
+            setGeneratedAudio(cachedAudio);
+        }
+    }
+  }, [isOpen]);
+
   const businessForm = useForm<IdentityFormValues>({
     resolver: zodResolver(identityFormSchema),
     defaultValues: { businessDescription: '' },
@@ -73,6 +85,8 @@ export function IdentidadDigitalModule() {
     try {
         const { audioUrl } = await generateModuleAudio({ textToSpeak: moduleIntroductionText });
         setGeneratedAudio(audioUrl);
+        // Save the generated audio to localStorage to avoid re-generating
+        localStorage.setItem(AUDIO_CACHE_KEY, audioUrl);
     } catch (e) {
         console.error(e);
         toast({
@@ -202,10 +216,11 @@ export function IdentidadDigitalModule() {
       brandForm.reset();
       setIdentityResult(null);
       setGeneratedImage(null);
-      setGeneratedAudio(null);
+      // Do not clear audio, it's cached.
+      // setGeneratedAudio(null);
       setIsIdentityLoading(false);
       setIsImageLoading(false);
-      setIsAudioLoading(false);
+      // setIsAudioLoading(false);
       setLogoPrompt('');
     }
   }
@@ -396,3 +411,5 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
+
+    
