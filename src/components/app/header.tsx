@@ -60,7 +60,7 @@ export function AppHeader() {
   return (
     <header className="relative flex w-full items-center justify-between">
       <Link href="/start" className="flex items-center gap-3">
-        <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+        <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="rounded-full object-cover drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
         <div>
             <h1 className="font-headline text-2xl font-bold tracking-tighter text-foreground sm:text-3xl">
             {brandName}
