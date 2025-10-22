@@ -146,8 +146,10 @@ export default function AdminPage() {
               <div className="relative z-10 flex flex-col h-full p-6">
                   <CardHeader className="flex-grow p-0">
                       <div className="flex items-center gap-3 mb-2">
-                          <LuminarAssistantModule.Icon className="h-8 w-8 text-primary" />
-                          <CardTitle className="text-2xl">Asesor Luminar</CardTitle>
+                        <div className="bg-primary/10 p-2 rounded-lg border border-primary/20">
+                          <LuminarAssistantModule.Icon className="h-8 w-8" />
+                        </div>
+                        <CardTitle className="text-2xl">Asesor Luminar</CardTitle>
                       </div>
                       <CardDescription>Habla con tu asesor de negocios personal para obtener ayuda.</CardDescription>
                   </CardHeader>
