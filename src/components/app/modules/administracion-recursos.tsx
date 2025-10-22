@@ -251,7 +251,7 @@ function FinancialAssistant() {
                        {expenseByCategory.length > 0 ? (
                         <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
                             <PieChart>
-                                <ChartTooltip content={<ChartTooltipContent nameKey="value" hideLabel />} />
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                                 <Pie data={expenseByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={60} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
                                       const RADIAN = Math.PI / 180;
                                       const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -390,5 +390,3 @@ export function AdministracionRecursosModule() {
     </Dialog>
   );
 }
-
-    
