@@ -88,7 +88,7 @@ export default function LandingPage() {
                     {/* Placeholder video - replace with your actual video URL */}
                     <iframe
                       className="w-full h-full"
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                      src="https://www.youtube.com/embed/_qCaSlJr8xc"
                       title="YouTube video player"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
