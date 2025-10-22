@@ -25,7 +25,7 @@ export function AppHeader() {
   const auth = useAuth();
   const router = useRouter();
   const [brandName, setBrandName] = useState("EmprendeIA");
-  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/9FpL9r6c/logo-emprende-ia.png");
+  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/nL97WX7C/Emprende.png");
 
 
   useEffect(() => {
@@ -128,5 +128,3 @@ export function AppHeader() {
     </header>
   );
 }
-
-    
