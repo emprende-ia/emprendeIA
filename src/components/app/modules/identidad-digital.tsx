@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
+import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -30,11 +31,21 @@ const brandElementsSchema = z.object({
 });
 type BrandElementsFormValues = z.infer<typeof brandElementsSchema>;
 
+const moduleIntroductionText = `Bienvenido al Modulo "Identidad digital" En este apartado descubrirás cómo construir la esencia de tu negocio, más allá de un simple logotipo. Aquí aprenderás a definir los valores y el propósito de tu marca, a identificar a tu público ideal y a crear una personalidad que conecte con las personas correctas.
+
+Exploraremos los elementos visuales que harán única a tu marca, como el logotipo, la paleta de colores, la tipografía y los recursos gráficos que darán coherencia a toda tu comunicación.
+
+Finalmente, trabajaremos en la voz y el tono de tu marca, para que cada mensaje tenga una identidad clara y reconocible, y logres transmitir lo que tu negocio realmente representa.
+
+Prepárate para sentar las bases de una marca sólida, auténtica y memorable. ¡Comencemos!`;
+
 export function IdentidadDigitalModule() {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
   const [generatedImage, setGeneratedImage] = useState<GenerateOptimizedImageOutput | null>(null);
+  const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [logoPrompt, setLogoPrompt] = useState<string>('');
   
@@ -56,6 +67,24 @@ export function IdentidadDigitalModule() {
   });
 
   const isBrandDirty = brandForm.formState.isDirty;
+
+  const handleGenerateAudio = async () => {
+    setIsAudioLoading(true);
+    try {
+        const { audioUrl } = await generateModuleAudio({ textToSpeak: moduleIntroductionText });
+        setGeneratedAudio(audioUrl);
+    } catch (e) {
+        console.error(e);
+        toast({
+            title: "Error al generar audio",
+            description: "No se pudo generar la introducción en audio.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsAudioLoading(false);
+    }
+  };
+
 
   const onBusinessSubmit: SubmitHandler<IdentityFormValues> = async (data) => {
     setIsIdentityLoading(true);
@@ -173,8 +202,10 @@ export function IdentidadDigitalModule() {
       brandForm.reset();
       setIdentityResult(null);
       setGeneratedImage(null);
+      setGeneratedAudio(null);
       setIsIdentityLoading(false);
       setIsImageLoading(false);
+      setIsAudioLoading(false);
       setLogoPrompt('');
     }
   }
@@ -202,6 +233,23 @@ export function IdentidadDigitalModule() {
             </div>
         </DialogHeader>
         <div className="py-4 space-y-6">
+            <div className="space-y-4">
+                {generatedAudio ? (
+                    <div className="flex flex-col items-center gap-2">
+                        <audio src={generatedAudio} controls className="w-full h-10" />
+                        <p className="text-xs text-muted-foreground">Reproduce la introducción al módulo.</p>
+                    </div>
+                ) : (
+                    <Button variant="outline" className="w-full" onClick={handleGenerateAudio} disabled={isAudioLoading}>
+                        {isAudioLoading ? (
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando audio...</>
+                        ) : (
+                            <><AudioWaveform className="mr-2 h-4 w-4" /> Introducción al módulo</>
+                        )}
+                    </Button>
+                )}
+            </div>
+            
             <Form {...businessForm}>
                 <form onSubmit={businessForm.handleSubmit(onBusinessSubmit)} className="space-y-4">
                     <FormField
