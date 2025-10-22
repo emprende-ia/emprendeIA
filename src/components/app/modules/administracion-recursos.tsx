@@ -189,7 +189,7 @@ function FinancialAssistant() {
                 return acc;
             }, {} as Record<string, number>);
 
-        const expenseByCategoryChartData = Object.entries(expenseCat).map(([name, value]) => ({ name, value, fill: `hsl(var(--chart-${Object.keys(expenseCat).indexOf(name) + 1}))`}));
+        const expenseByCategoryChartData = Object.entries(expenseCat).map(([name, value], index) => ({ name, value, fill: `hsl(var(--chart-${index + 1}))`}));
 
         return {
             totalIncome: income,
@@ -390,3 +390,5 @@ export function AdministracionRecursosModule() {
     </Dialog>
   );
 }
+
+    
