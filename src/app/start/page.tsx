@@ -43,8 +43,14 @@ export default function StartPage() {
             <Card className="hover:border-primary transition-all cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 group">
                  <Link href="/existing-venture" className="block h-full p-8">
                     <CardHeader className="p-0 items-center text-center">
-                        <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/30 group-hover:scale-110 transition-transform">
-                            <Building className="h-12 w-12" />
+                        <div className="mb-4 relative group-hover:scale-110 transition-transform">
+                             <Image 
+                                src="https://i.postimg.cc/TY70xNBB/boton2.jpg" 
+                                alt="Potenciar mi emprendimiento" 
+                                width={96}
+                                height={96}
+                                className="object-cover rounded-full border-2 border-primary/30"
+                            />
                         </div>
                         <CardTitle className="font-headline text-2xl">Ya tengo un emprendimiento pero quiero potenciarlo</CardTitle>
                     </CardHeader>
