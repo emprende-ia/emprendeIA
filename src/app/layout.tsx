@@ -44,8 +44,8 @@ export default function RootLayout({
         <FirebaseClientProvider>
           {children}
           <LuminarAssistantModule />
+          <Toaster />
         </FirebaseClientProvider>
-        <Toaster />
       </body>
     </html>
   );
