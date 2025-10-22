@@ -15,3 +15,4 @@ import '@/ai/flows/generate-resource-plan.ts';
 import '@/ai/flows/analyze-existing-business.ts';
 import '@/ai/flows/generate-task-audio.ts';
 import '@/ai/flows/generate-campaign-plan.ts';
+import '@/ai/flows/analyze-breakeven-point.ts';

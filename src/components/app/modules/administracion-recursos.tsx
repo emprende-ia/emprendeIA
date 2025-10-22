@@ -3,10 +3,11 @@
 
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet, MoreHorizontal, Edit, Trash2, PiggyBank } from "lucide-react";
+import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet, MoreHorizontal, Edit, Trash2, PiggyBank, Calculator } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateResourcePlan } from '@/ai/flows/generate-resource-plan';
+import { analyzeBreakevenPoint } from '@/ai/flows/analyze-breakeven-point';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -28,6 +29,7 @@ import { z } from 'zod';
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { GenerateResourcePlanOutput } from '@/ai/flows/generate-resource-plan';
+import type { AnalyzeBreakevenPointOutput } from '@/ai/flows/analyze-breakeven-point';
 
 
 const resourceFormSchema = z.object({
@@ -41,6 +43,11 @@ const capitalFormSchema = z.object({
   amount: z.coerce.number().positive({ message: 'El capital debe ser un número positivo.' }),
 });
 type CapitalFormValues = z.infer<typeof capitalFormSchema>;
+
+const breakevenFormSchema = z.object({
+  averageSalePrice: z.coerce.number().positive({ message: 'El precio debe ser un número positivo.' }),
+});
+type BreakevenFormValues = z.infer<typeof breakevenFormSchema>;
 
 
 function InitialCapitalForm({ setOpen }: { setOpen: (open: boolean) => void }) {
@@ -205,12 +212,23 @@ function FinancialAssistant() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
+    
+    // State for Break-even Point analysis
+    const [isBreakevenAnalysisLoading, setIsBreakevenAnalysisLoading] = useState(false);
+    const [breakevenResult, setBreakevenResult] = useState<AnalyzeBreakevenPointOutput | null>(null);
+    const [isBreakevenDialogOpen, setIsBreakevenDialogOpen] = useState(false);
+
     const { toast } = useToast();
+
+    const breakevenForm = useForm<BreakevenFormValues>({
+        resolver: zodResolver(breakevenFormSchema),
+        defaultValues: { averageSalePrice: '' as any },
+    });
 
     React.useEffect(() => {
         if (user && firestore) {
           setIsLoading(true);
-          const unsubscribe = getTransactions(firestore, user.uid, 50, (newTransactions) => {
+          const unsubscribe = getTransactions(firestore, user.uid, 100, (newTransactions) => {
             setTransactions(newTransactions);
             setIsLoading(false);
           });
@@ -220,6 +238,29 @@ function FinancialAssistant() {
           setTransactions([]);
         }
     }, [user, firestore]);
+
+    const handleBreakevenSubmit = async (data: BreakevenFormValues) => {
+        if (transactions.length < 2) {
+            toast({ title: "Datos insuficientes", description: "Necesitas registrar más transacciones de ingresos y gastos para un análisis preciso.", variant: "destructive"});
+            return;
+        }
+
+        setIsBreakevenAnalysisLoading(true);
+        setBreakevenResult(null);
+        try {
+            const result = await analyzeBreakevenPoint({
+                transactions: transactions,
+                averageSalePrice: data.averageSalePrice,
+            });
+            setBreakevenResult(result);
+        } catch (error) {
+            console.error("Break-even analysis error:", error);
+            toast({ title: "Error en el Análisis", description: "La IA no pudo completar el análisis del punto de equilibrio.", variant: "destructive" });
+        } finally {
+            setIsBreakevenAnalysisLoading(false);
+        }
+    };
+
 
     const handleAddNew = () => {
         setEditingTransaction(null);
@@ -412,6 +453,53 @@ function FinancialAssistant() {
                                 <p>Aún no has registrado transacciones.</p>
                             </div>
                         )}
+                        <Dialog open={isBreakevenDialogOpen} onOpenChange={setIsBreakevenDialogOpen}>
+                            <DialogTrigger asChild>
+                                 <Button variant="outline" className="w-full font-bold">
+                                    <Calculator className="mr-2 h-4 w-4" /> Calcular Punto de Equilibrio
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Análisis de Punto de Equilibrio</DialogTitle>
+                                    <DialogDescription>
+                                        Ingresa el precio de venta promedio de tu producto/servicio para que la IA analice tus finanzas.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <Form {...breakevenForm}>
+                                    <form onSubmit={breakevenForm.handleSubmit(handleBreakevenSubmit)} className="space-y-4">
+                                         <FormField
+                                            control={breakevenForm.control}
+                                            name="averageSalePrice"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Precio de Venta Promedio por Unidad (MXN)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" step="0.01" placeholder="250.00" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <Button type="submit" disabled={isBreakevenAnalysisLoading} className="w-full">
+                                            {isBreakevenAnalysisLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                            Analizar Ahora
+                                        </Button>
+                                    </form>
+                                </Form>
+                                {breakevenResult && (
+                                     <Alert className="mt-4">
+                                        <Calculator className="h-4 w-4" />
+                                        <AlertTitle className="font-bold">Resultado del Análisis</AlertTitle>
+                                        <AlertDescription className="space-y-2">
+                                            <p>Necesitas vender <span className="font-bold text-primary">{breakevenResult.breakEvenUnits.toFixed(2)} unidades</span> para alcanzar tu punto de equilibrio.</p>
+                                            <p>Esto equivale a <span className="font-bold text-primary">${breakevenResult.breakEvenRevenue.toLocaleString('es-MX')}</span> en ingresos.</p>
+                                            <p className="pt-2 text-xs text-muted-foreground">Análisis de la IA: {breakevenResult.analysis}</p>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
 
@@ -475,5 +563,3 @@ export function AdministracionRecursosModule() {
     </Dialog>
   );
 }
-
-    
