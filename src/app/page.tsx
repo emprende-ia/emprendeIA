@@ -37,7 +37,7 @@ export default function LandingPage() {
         <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
           <div className="flex flex-col items-center space-y-8 text-center">
             
-            <Image src="https://i.postimg.cc/nL97WX7C/Emprende.png" alt="EmprendeIA Logo" width={128} height={128} className="drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+            <Image src="https://i.postimg.cc/nhbtm52x/Emprende.png" alt="EmprendeIA Logo" width={128} height={128} className="drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
 
             <div className="space-y-2">
                 <h1 className="font-headline text-6xl font-bold tracking-tighter text-foreground sm:text-7xl">

@@ -25,7 +25,7 @@ export function AppHeader() {
   const auth = useAuth();
   const router = useRouter();
   const [brandName, setBrandName] = useState("EmprendeIA");
-  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/nL97WX7C/Emprende.png");
+  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/nhbtm52x/Emprende.png");
 
 
   useEffect(() => {
