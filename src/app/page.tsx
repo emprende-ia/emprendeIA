@@ -1,14 +1,14 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { User, LogIn } from 'lucide-react';
+import { User, LogIn, PlayCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -65,7 +65,33 @@ export default function LandingPage() {
                     Iniciar Sesión
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full text-lg font-bold">
+              <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="lg" className="w-full text-lg font-bold">
+                        <PlayCircle className="mr-2 h-5 w-5" />
+                        Tutorial de uso de la app
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Tutorial de EmprendeIA</DialogTitle>
+                    <DialogDescription>
+                      Descubre cómo aprovechar al máximo todas las herramientas.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="aspect-video w-full rounded-lg overflow-hidden border">
+                    {/* Placeholder video - replace with your actual video URL */}
+                    <iframe
+                      className="w-full h-full"
+                      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                      title="YouTube video player"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </DialogContent>
+              </Dialog>
+               <Button asChild variant="outline" size="lg" className="w-full text-lg font-bold">
                 <Link href="/start">
                     Continuar como invitado
                 </Link>
