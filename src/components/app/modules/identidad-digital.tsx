@@ -230,7 +230,7 @@ export function IdentidadDigitalModule() {
       <DialogTrigger asChild>
         <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Crear Identidad</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
             <div className="flex justify-between items-start">
                 <div>
@@ -247,7 +247,7 @@ export function IdentidadDigitalModule() {
                 )}
             </div>
         </DialogHeader>
-        <div className="py-4 space-y-6">
+        <div className="py-4 space-y-6 overflow-y-auto pr-4">
             <div className="space-y-4">
                 {generatedAudio ? (
                     <div className="flex flex-col items-center gap-2">
@@ -290,7 +290,7 @@ export function IdentidadDigitalModule() {
             </Form>
 
             {identityResult && (
-                <div className="space-y-4 pt-4 max-h-[55vh] overflow-y-auto pr-2">
+                <div className="space-y-4 pt-4">
                      <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
