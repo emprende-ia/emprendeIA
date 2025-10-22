@@ -65,11 +65,16 @@ export default function LandingPage() {
                     Iniciar Sesión
                 </Link>
               </Button>
+               <Button asChild variant="outline" size="lg" className="w-full text-lg font-bold">
+                <Link href="/start">
+                    Continuar como invitado
+                </Link>
+              </Button>
               <Dialog>
                 <DialogTrigger asChild>
                     <Button variant="outline" size="lg" className="w-full text-lg font-bold">
                         <PlayCircle className="mr-2 h-5 w-5" />
-                        Tutorial de uso de la app
+                        Tutorial de bienvenida
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-3xl">
@@ -91,11 +96,6 @@ export default function LandingPage() {
                   </div>
                 </DialogContent>
               </Dialog>
-               <Button asChild variant="outline" size="lg" className="w-full text-lg font-bold">
-                <Link href="/start">
-                    Continuar como invitado
-                </Link>
-              </Button>
             </div>
 
           </div>
