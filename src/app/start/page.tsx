@@ -1,9 +1,10 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Building, LayoutDashboard } from 'lucide-react';
+import { Building, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 export default function StartPage() {
   return (
@@ -20,8 +21,13 @@ export default function StartPage() {
             <Card className="hover:border-primary transition-all cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 group">
                  <Link href="/new-venture" className="block h-full p-8">
                     <CardHeader className="p-0 items-center text-center">
-                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/30 group-hover:scale-110 transition-transform">
-                            <Sparkles className="h-10 w-10" />
+                        <div className="mb-4 h-24 w-24 relative group-hover:scale-110 transition-transform">
+                             <Image 
+                                src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" 
+                                alt="Empezar nuevo emprendimiento" 
+                                fill
+                                className="object-contain"
+                            />
                         </div>
                         <CardTitle className="font-headline text-2xl">Quiero empezar un emprendimiento nuevo</CardTitle>
                     </CardHeader>
@@ -36,8 +42,8 @@ export default function StartPage() {
             <Card className="hover:border-primary transition-all cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 group">
                  <Link href="/existing-venture" className="block h-full p-8">
                     <CardHeader className="p-0 items-center text-center">
-                        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/30 group-hover:scale-110 transition-transform">
-                            <Building className="h-10 w-10" />
+                        <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/30 group-hover:scale-110 transition-transform">
+                            <Building className="h-12 w-12" />
                         </div>
                         <CardTitle className="font-headline text-2xl">Ya tengo un emprendimiento pero quiero potenciarlo</CardTitle>
                     </CardHeader>
