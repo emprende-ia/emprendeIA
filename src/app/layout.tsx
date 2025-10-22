@@ -29,6 +29,8 @@ export default function RootLayout({
                 const theme = localStorage.getItem('theme');
                 if (theme) {
                   document.documentElement.className = theme;
+                } else {
+                  document.documentElement.className = 'theme-futuristic';
                 }
               } catch (e) {
                 console.error('Failed to apply theme from localStorage', e);
@@ -37,7 +39,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className="font-body antialiased bg-gradient-to-br from-gray-900 via-gray-950 to-black">
+      <body className="font-body antialiased">
         <FirebaseClientProvider>
           {children}
         </FirebaseClientProvider>

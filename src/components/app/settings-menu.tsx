@@ -5,30 +5,32 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Monitor, Sun, Moon, Palette } from "lucide-react";
+import { Settings, Monitor, Sun, Moon, Palette, Zap, Wind } from "lucide-react";
 
-type Theme = 'theme-default' | 'theme-light' | 'theme-vibrant';
+type Theme = 'theme-futuristic' | 'theme-warm-pastel' | 'theme-vibrant';
 
 const themes: { value: Theme; label: string; icon: React.ReactNode }[] = [
-  { value: 'theme-default', label: 'Futuristic Dark', icon: <Moon className="mr-2 h-4 w-4" /> },
-  { value: 'theme-light', label: 'Minimalist Light', icon: <Sun className="mr-2 h-4 w-4" /> },
-  { value: 'theme-vibrant', label: 'Vibrant', icon: <Palette className="mr-2 h-4 w-4" /> },
+  { value: 'theme-futuristic', label: 'Futurista', icon: <Zap className="mr-2 h-4 w-4" /> },
+  { value: 'theme-warm-pastel', label: 'Cálido Pastel', icon: <Wind className="mr-2 h-4 w-4" /> },
+  { value: 'theme-vibrant', label: 'Vibrante', icon: <Palette className="mr-2 h-4 w-4" /> },
 ];
 
 export function SettingsMenu() {
-  const [currentTheme, setCurrentTheme] = useState<Theme>('theme-default');
+  const [currentTheme, setCurrentTheme] = useState<Theme>('theme-futuristic');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     if (savedTheme && themes.some(t => t.value === savedTheme)) {
       setCurrentTheme(savedTheme);
+      document.documentElement.className = savedTheme;
+    } else {
+       document.documentElement.className = 'theme-futuristic';
     }
   }, []);
 
