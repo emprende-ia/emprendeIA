@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet, MoreHorizontal, Edit, Trash2, PiggyBank } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateResourcePlan } from '@/ai/flows/generate-resource-plan';
@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser, useFirestore } from '@/firebase';
-import { getTransactions, deleteTransaction, Transaction } from '@/lib/firestore/transactions';
+import { getTransactions, deleteTransaction, Transaction, addTransaction } from '@/lib/firestore/transactions';
 import { TransactionForm } from './transaction-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -20,12 +20,13 @@ import { es } from 'date-fns/locale';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from "@/components/ui/input";
 
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { GenerateResourcePlanOutput } from '@/ai/flows/generate-resource-plan';
 
 
@@ -36,6 +37,70 @@ const resourceFormSchema = z.object({
 });
 type ResourceFormValues = z.infer<typeof resourceFormSchema>;
 
+const capitalFormSchema = z.object({
+  amount: z.coerce.number().positive({ message: 'El capital debe ser un número positivo.' }),
+});
+type CapitalFormValues = z.infer<typeof capitalFormSchema>;
+
+
+function InitialCapitalForm({ setOpen }: { setOpen: (open: boolean) => void }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const form = useForm<CapitalFormValues>({
+        resolver: zodResolver(capitalFormSchema),
+        defaultValues: { amount: '' as any },
+    });
+
+    const onSubmit: SubmitHandler<CapitalFormValues> = async (data) => {
+        if (!user || !firestore) {
+            toast({ title: "Error", description: "Debes iniciar sesión para realizar esta acción.", variant: "destructive" });
+            return;
+        }
+        setIsLoading(true);
+        try {
+            addTransaction(firestore, user.uid, {
+                description: 'Capital Inicial',
+                amount: data.amount,
+                type: 'income',
+                category: 'Inversión',
+            });
+            toast({ title: '¡Capital Inicial establecido!', description: 'Tu balance ha sido actualizado.' });
+            setOpen(false);
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "No se pudo establecer el capital inicial.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Monto del Capital Inicial (MXN)</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.01" placeholder="5000.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" disabled={isLoading} className="w-full">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Guardar Capital
+                </Button>
+            </form>
+        </Form>
+    );
+}
 
 function BudgetPlanner() {
     const [isLoading, setIsLoading] = useState(false);
@@ -136,6 +201,7 @@ function FinancialAssistant() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isCapitalFormOpen, setIsCapitalFormOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -277,9 +343,28 @@ function FinancialAssistant() {
                     </CardContent>
                 </Card>
                  <div className="space-y-4">
-                    <Button variant="outline" className="font-bold py-6 text-sm w-full" onClick={handleAddNew}>
-                        <PlusCircle className="mr-2 h-5 w-5"/> Registrar Nueva Transacción
-                    </Button>
+                    <div className='flex items-center gap-2'>
+                        <Button variant="outline" className="font-bold py-6 text-sm w-full" onClick={handleAddNew}>
+                            <PlusCircle className="mr-2 h-5 w-5"/> Registrar Nueva Transacción
+                        </Button>
+                        <Dialog open={isCapitalFormOpen} onOpenChange={setIsCapitalFormOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="secondary" className="font-bold py-6 text-sm">
+                                    <PiggyBank className="mr-2 h-5 w-5"/> Capital
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Establecer Capital Inicial</DialogTitle>
+                                    <DialogDescription>
+                                        Ingresa el monto con el que estás iniciando tu emprendimiento. Esto se registrará como un ingreso de tipo "Inversión".
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <InitialCapitalForm setOpen={setIsCapitalFormOpen} />
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+
                      <div className="space-y-2">
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <History className="h-5 w-5" />
