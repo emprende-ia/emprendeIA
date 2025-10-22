@@ -216,7 +216,7 @@ function LoginPageContent() {
                     </Link>
                 </p>
             </div>
-            <div className="flex w-full flex-col items-center gap-4 pt-6 border-t">
+            <div className="flex w-full flex-col items-center gap-2 pt-6 border-t">
                 <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
                     <Image src="https://i.postimg.cc/nhbtm52x/Emprende.png" alt="EmprendeIA Logo" width={64} height={64} />
                     <span className="font-headline text-xl font-semibold">EmprendeIA</span>
