@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -134,25 +135,22 @@ function AssistantChat() {
     );
 }
 
-
-export default function LuminarAssistantModule() {
-    const [isOpen, setIsOpen] = useState(false);
-    const { user, isUserLoading } = useUser();
-
-    // Do not render the button if the user is not logged in or auth state is loading.
-    if (isUserLoading || !user) {
+// Reverted to a simple dialog-based module
+export function LuminarAssistantModule() {
+    const { user } = useUser();
+    
+    // Original module logic, can be used inside a page if needed.
+    // For now, it's just a placeholder as the floating logic is in layout.
+    if (!user) {
         return null;
     }
     
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog>
             <DialogTrigger asChild>
-                <Button 
-                    variant="default"
-                    className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center animate-in fade-in zoom-in-50"
-                >
-                    <LuminarIcon className="h-8 w-8" />
-                    <span className="sr-only">Abrir Asesor Luminar</span>
+                 <Button className="w-full font-bold">
+                    <LuminarIcon className="mr-2 h-5 w-5" />
+                    Asesor Luminar
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg h-[80vh] flex flex-col p-0 gap-0">
