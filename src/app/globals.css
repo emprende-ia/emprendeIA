@@ -12,25 +12,25 @@ body {
 @layer base {
   /* Default Theme: Futuristic */
   :root {
-    --background: 224 71.4% 4.1%;
+    --background: 210 100% 12%;
     --foreground: 210 20% 98%;
     --card: 224 71.4% 4.1% / 0.6;
     --card-foreground: 210 20% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
+    --primary: 330 100% 55%;
+    --primary-foreground: 330 20% 98%;
+    --secondary: 200 80% 25%;
     --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 263.4 70% 50.4%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
+    --muted: 200 80% 25%;
+    --muted-foreground: 210 20% 70%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 45 30% 10%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 20% 98%;
+    --border: 200 80% 30%;
+    --input: 200 80% 25%;
+    --ring: 330 100% 55%;
     --radius: 0.8rem;
   }
 
@@ -125,6 +125,6 @@ body {
   }
 
   :root {
-     background-image: linear-gradient(to bottom right, #020418, #0f172a, #1f2937);
+     background-image: linear-gradient(to bottom right, #001f3f, #004d40, #d81b60, #ffc107);
   }
 }
