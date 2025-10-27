@@ -19,15 +19,6 @@ import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
 
-// Metadata needs to be defined outside the component for Next.js to pick it up.
-// Note: Since this is now a client component, Metadata object needs to be handled differently if it were dynamic.
-// For now, static metadata is fine.
-// export const metadata: Metadata = {
-//   title: 'EmprendeIA',
-//   description: 'Convierte tus ideas en negocios reales.',
-// };
-
-
 // --- Start of Luminar Assistant Component Logic ---
 
 const LUMINAR_AVATAR_URL = "https://i.postimg.cc/qBLMXpYM/luminar.png";
@@ -181,8 +172,6 @@ function FloatingLuminarAssistant() {
     );
 }
 
-// --- End of Luminar Assistant Component Logic ---
-
 
 export default function RootLayout({
   children,
@@ -206,7 +195,8 @@ export default function RootLayout({
                 if (theme) {
                   document.documentElement.className = theme;
                 } else {
-                  document.documentElement.className = 'theme-futuristic';
+                  // Force the vibrant theme by default
+                  document.documentElement.className = 'theme-vibrant';
                 }
               } catch (e) {
                 console.error('Failed to apply theme from localStorage', e);
