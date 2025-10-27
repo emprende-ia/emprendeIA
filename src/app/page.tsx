@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { User, LogIn, PlayCircle } from 'lucide-react';
+import { User, LogIn, PlayCircle, Gem } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useEffect } from 'react';
@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { SettingsMenu } from '@/components/app/settings-menu';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -35,7 +36,18 @@ export default function LandingPage() {
   // If loading is finished and there's no user, show the landing page.
   if (!isUserLoading && !user) {
     return (
-        <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
+        <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
+          
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <SettingsMenu />
+            <Button asChild variant="outline" size="sm">
+                <Link href="/pricing">
+                <Gem className="mr-2 h-4 w-4" />
+                Ver Planes
+                </Link>
+            </Button>
+          </div>
+
           <div className="flex flex-col items-center space-y-8 text-center">
             
             <Image src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" alt="EmprendeIA Logo" width={128} height={128} className="rounded-full object-cover border-4 border-primary/50 drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
