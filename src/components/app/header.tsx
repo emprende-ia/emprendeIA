@@ -26,7 +26,7 @@ export function AppHeader() {
   const auth = useAuth();
   const router = useRouter();
   const [brandName, setBrandName] = useState("EmprendeIA");
-  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png");
+  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png");
 
 
   useEffect(() => {

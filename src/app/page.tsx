@@ -50,7 +50,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col items-center space-y-8 text-center">
             
-            <Image src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" alt="EmprendeIA Logo" width={128} height={128} className="rounded-full object-cover border-4 border-primary/50 drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+            <Image src="https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png" alt="EmprendeIA Logo" width={128} height={128} className="rounded-full object-cover border-4 border-primary/50 drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
 
             <div className="space-y-2">
                 <h1 className="font-headline text-6xl font-bold tracking-tighter text-foreground sm:text-7xl">
