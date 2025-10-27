@@ -74,6 +74,13 @@ export function AppHeader() {
       <div className="flex items-center gap-2">
         <SettingsMenu />
         
+         <Button asChild variant="outline" size="sm">
+            <Link href="/pricing">
+            <Gem className="mr-2 h-4 w-4" />
+            Ver Planes
+            </Link>
+        </Button>
+
         {isUserLoading ? (
           <Button variant="outline" size="icon" disabled>
             <UserIcon className="h-4 w-4" />
@@ -98,13 +105,6 @@ export function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-               <DropdownMenuItem asChild>
-                <Link href="/pricing">
-                  <Gem className="mr-2 h-4 w-4" />
-                  <span>Ver Planes</span>
-                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Cerrar sesión</span>
@@ -112,20 +112,12 @@ export function AppHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <>
-            <Button asChild variant="outline" size="sm">
-                <Link href="/pricing">
-                <Gem className="mr-2 h-4 w-4" />
-                Ver Planes
-                </Link>
-            </Button>
-            <Button asChild variant="outline">
-                <Link href="/login">
-                <UserIcon className="mr-2 h-4 w-4" />
-                Iniciar Sesión
-                </Link>
-            </Button>
-          </>
+          <Button asChild variant="outline">
+            <Link href="/login">
+            <UserIcon className="mr-2 h-4 w-4" />
+            Iniciar Sesión
+            </Link>
+        </Button>
         )}
       </div>
     </header>
