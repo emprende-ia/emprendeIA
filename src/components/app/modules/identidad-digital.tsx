@@ -32,13 +32,7 @@ const brandElementsSchema = z.object({
 });
 type BrandElementsFormValues = z.infer<typeof brandElementsSchema>;
 
-const moduleIntroductionText = `Bienvenido al Modulo "Identidad digital" En este apartado descubrirás cómo construir la esencia de tu negocio, más allá de un simple logotipo. Aquí aprenderás a definir los valores y el propósito de tu marca, a identificar a tu público ideal y a crear una personalidad que conecte con las personas correctas.
-
-Exploraremos los elementos visuales que harán única a tu marca, como el logotipo, la paleta de colores, la tipografía y los recursos gráficos que darán coherencia a toda tu comunicación.
-
-Finalmente, trabajaremos en la voz y el tono de tu marca, para que cada mensaje tenga una identidad clara y reconocible, y logres transmitir lo que tu negocio realmente representa.
-
-Prepárate para sentar las bases de una marca sólida, auténtica y memorable. ¡Comencemos!`;
+const moduleIntroductionText = `Bienvenido al módulo "Identidad Digital". Aquí descubrirás cómo construir la esencia de tu negocio, desde el nombre y el logo hasta la voz de tu marca. ¡Comencemos!`;
 const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 
 export function IdentidadDigitalModule() {
@@ -426,5 +420,3 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
-
-    
