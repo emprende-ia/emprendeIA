@@ -183,7 +183,7 @@ export function GuiaPasoAPasoModule() {
                 <Alert className="bg-primary/5">
                     <Bot className="h-4 w-4" />
                     <AlertTitle className="font-bold">Razonamiento de la IA</AlertTitle>
-                    <AlertDescription>{learningPath.perfil_usuario.razonamiento_breve}</AlertDescription>
+                    <AlertDescription className="text-muted-foreground">{learningPath.perfil_usuario.razonamiento_breve}</AlertDescription>
                 </Alert>
                 
                 <Separator />

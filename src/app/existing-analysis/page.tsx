@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { Suspense, useState, useMemo } from 'react';
@@ -116,7 +117,7 @@ function ExistingAnalysisPageContent() {
                     <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">Diagnóstico General de la IA</AlertTitle>
-                        <AlertDescription>{analysisResult.analysis.comment}</AlertDescription>
+                        <AlertDescription className="text-muted-foreground">{analysisResult.analysis.comment}</AlertDescription>
                     </Alert>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,7 +149,7 @@ function ExistingAnalysisPageContent() {
                                     {getViabilityIcon(analysisResult.analysis.growthViability.level)}
                                     <AlertTitle className="font-bold text-lg">Nivel: {analysisResult.analysis.growthViability.level}</AlertTitle>
                                 </div>
-                                <AlertDescription className="pt-2">{analysisResult.analysis.growthViability.feedback}</AlertDescription>
+                                <AlertDescription className="pt-2 text-muted-foreground">{analysisResult.analysis.growthViability.feedback}</AlertDescription>
                             </Alert>
                         </div>
                     </div>

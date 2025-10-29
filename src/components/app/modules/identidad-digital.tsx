@@ -32,7 +32,7 @@ const brandElementsSchema = z.object({
 });
 type BrandElementsFormValues = z.infer<typeof brandElementsSchema>;
 
-const moduleIntroductionText = `Bienvenido al módulo "Identidad Digital". Aquí descubrirás cómo construir la esencia de tu negocio, desde el nombre y el logo hasta la voz de tu marca. ¡Comencemos!`;
+const moduleIntroductionText = "Bienvenido a Identidad Digital. Aquí crearemos el nombre, logo y voz de tu marca.";
 const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 
 export function IdentidadDigitalModule() {
@@ -303,7 +303,7 @@ export function IdentidadDigitalModule() {
                      <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
-                        <AlertDescription>Puedes editar o regenerar cualquier elemento para ajustarlo a tu gusto.</AlertDescription>
+                        <AlertDescription className="text-muted-foreground">Puedes editar o regenerar cualquier elemento para ajustarlo a tu gusto.</AlertDescription>
                     </Alert>
 
                     {generatedImage ? (

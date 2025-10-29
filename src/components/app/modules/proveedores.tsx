@@ -159,7 +159,7 @@ export function ProveedoresModule() {
                         <Alert className="border-accent bg-accent/10">
                         <Lightbulb className="h-4 w-4 text-accent" />
                         <AlertTitle className="font-headline text-accent">Recomendación Estratégica</AlertTitle>
-                        <AlertDescription>
+                        <AlertDescription className="text-muted-foreground">
                             {recommendations.combinedRecommendation}
                         </AlertDescription>
                         </Alert>

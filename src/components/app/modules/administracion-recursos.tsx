@@ -171,8 +171,8 @@ function BudgetPlanner() {
                     <Alert>
                         <DollarSign className="h-4 w-4" />
                         <AlertTitle className="font-bold">Resumen Financiero</AlertTitle>
-                        <AlertDescription>
-                            <p className="font-semibold">Costo Total Estimado: {resourcePlan.totalEstimatedCost}</p>
+                        <AlertDescription className="text-muted-foreground">
+                            <p className="font-semibold text-foreground">Costo Total Estimado: {resourcePlan.totalEstimatedCost}</p>
                             <p className="mt-1">{resourcePlan.summary}</p>
                         </AlertDescription>
                     </Alert>
@@ -492,10 +492,10 @@ function FinancialAssistant() {
                                      <Alert className="mt-4">
                                         <Calculator className="h-4 w-4" />
                                         <AlertTitle className="font-bold">Resultado del Análisis</AlertTitle>
-                                        <AlertDescription className="space-y-2">
+                                        <AlertDescription className="space-y-2 text-muted-foreground">
                                             <p>Necesitas vender <span className="font-bold text-primary">{breakevenResult.breakEvenUnits.toFixed(2)} unidades</span> para alcanzar tu punto de equilibrio.</p>
                                             <p>Esto equivale a <span className="font-bold text-primary">${breakevenResult.breakEvenRevenue.toLocaleString('es-MX')}</span> en ingresos.</p>
-                                            <p className="pt-2 text-xs text-muted-foreground">Análisis de la IA: {breakevenResult.analysis}</p>
+                                            <p className="pt-2 text-xs">Análisis de la IA: {breakevenResult.analysis}</p>
                                         </AlertDescription>
                                     </Alert>
                                 )}
