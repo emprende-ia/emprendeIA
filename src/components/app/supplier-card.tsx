@@ -50,7 +50,7 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
         )}
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
-        <div className="rounded-md border-l-4 border-primary bg-primary/10 p-3 text-sm italic text-primary-foreground/80">
+        <div className="rounded-md border-l-4 border-primary bg-primary/10 p-3 text-sm italic text-muted-foreground">
            <div className="flex items-start gap-3">
               <Quote className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{supplier.summaryIA}</span>
