@@ -50,7 +50,7 @@ export interface Theme {
         '--secondary-foreground': '0 0% 98%',
         '--muted': '240 3.7% 15.9%',
         '--muted-foreground': '240 5% 64.9%',
-        '--accent': '346.8 77.2% 49.8%',
+        '--accent': '260 95% 70%',
         '--accent-foreground': '355.7 100% 97.3%',
         '--destructive': '0 62.8% 30.6%',
         '--destructive-foreground': '0 0% 98%',

@@ -26,7 +26,7 @@ export function SettingsMenu() {
 
   useEffect(() => {
     const savedThemeName = localStorage.getItem('theme') as Theme['name'] | null;
-    const theme = themes.find(t => t.name === savedThemeName) ?? themes[2]; // Default to 'default-dark'
+    const theme = themes.find(t => t.name === savedThemeName) ?? themes.find(t => t.name === 'vibrant-sunset')!;
     
     setCurrentTheme(theme.name);
     applyTheme(theme);
@@ -34,7 +34,7 @@ export function SettingsMenu() {
   }, []);
 
   const applyTheme = (theme: Theme) => {
-    const root = document.body;
+    const root = document.documentElement; // Use documentElement for global scope
     Object.entries(theme.colors).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });

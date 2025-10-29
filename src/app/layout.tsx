@@ -8,7 +8,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import Script from 'next/script';
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Bot, User } from 'lucide-react';
@@ -189,7 +189,8 @@ export default function RootLayout({
                 if (theme) {
                   // The settings-menu component will apply the theme from local storage
                 } else {
-                  // By default, we don't set a class, so it uses the 'default-dark' from the new theme structure
+                  // By default, we set a default theme if none is found.
+                  localStorage.setItem('theme', 'vibrant-sunset');
                 }
               } catch (e) {
                 console.error('Failed to access localStorage for theme', e);
