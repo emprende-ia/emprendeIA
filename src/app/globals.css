@@ -1,130 +1,23 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
-}
-
 @layer base {
-  /* Default Theme: Futuristic */
-  :root {
-    --background: 210 100% 12%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1% / 0.6;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 330 100% 55%;
-    --primary-foreground: 330 20% 98%;
-    --secondary: 200 80% 25%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 200 80% 25%;
-    --muted-foreground: 210 20% 70%;
-    --accent: 45 100% 55%;
-    --accent-foreground: 45 30% 10%;
-    --destructive: 0 80% 60%;
-    --destructive-foreground: 0 20% 98%;
-    --border: 200 80% 30%;
-    --input: 200 80% 25%;
-    --ring: 330 100% 55%;
-    --radius: 0.8rem;
-  }
+  body {
+    background-color: var(--background-gradient-start);
+    background-image: var(--background-gradient-end);
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
 
-  .theme-futuristic {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1% / 0.6;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 263.4 70% 50.4%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
-    --radius: 0.8rem;
-  }
-
-  .theme-warm-pastel {
-    --background: 35 100% 91%;
-    --foreground: 25 55% 25%;
-    --card: 25 84% 88% / 0.7;
-    --card-foreground: 25 55% 25%;
-    --popover: 35 100% 91%;
-    --popover-foreground: 25 55% 25%;
-    --primary: 15 85% 60%;
-    --primary-foreground: 25 55% 98%;
-    --secondary: 35 90% 85%;
-    --secondary-foreground: 15 85% 40%;
-    --muted: 35 90% 85%;
-    --muted-foreground: 25 55% 45%;
-    --accent: 340 80% 70%;
-    --accent-foreground: 25 55% 25%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 25 55% 98%;
-    --border: 15 80% 75%;
-    --input: 35 90% 85%;
-    --ring: 15 85% 60%;
-    --radius: 0.8rem;
-  }
-
-  .theme-vibrant {
-    --background: 210 100% 12%;
-    --foreground: 210 20% 98%;
-    --card: 195 90% 20% / 0.5;
-    --card-foreground: 210 20% 98%;
-    --popover: 210 100% 12%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 330 100% 55%;
-    --primary-foreground: 330 20% 98%;
-    --secondary: 200 80% 25%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 200 80% 25%;
-    --muted-foreground: 210 20% 70%;
-    --accent: 45 100% 55%;
-    --accent-foreground: 45 30% 10%;
-    --destructive: 0 80% 60%;
-    --destructive-foreground: 0 20% 98%;
-    --border: 200 80% 30%;
-    --input: 200 80% 25%;
-    --ring: 330 100% 55%;
-    --radius: 1rem;
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
   }
 }
 
 @layer base {
   * {
     @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  .theme-futuristic {
-    background-image: linear-gradient(to bottom right, #020418, #0f172a, #1f2937);
-  }
-
-  .theme-warm-pastel {
-     background-image: linear-gradient(to bottom right, #ffefd5, #ffe4e1, #e6e6fa);
-  }
-  
-  .theme-vibrant {
-     background-image: linear-gradient(to bottom right, #001f3f, #004d40, #d81b60, #ffc107);
-  }
-
-  :root {
-     background-image: linear-gradient(to bottom right, #001f3f, #004d40, #d81b60, #ffc107);
   }
 }

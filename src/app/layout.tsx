@@ -18,14 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
 import { useUser } from '@/firebase';
+import { LuminarIcon } from '@/components/app/modules/luminar-assistant';
 
-// --- Start of Luminar Assistant Component Logic ---
-
-const LUMINAR_AVATAR_URL = "https://i.postimg.cc/qBLMXpYM/luminar.png";
-
-const LuminarIcon = (props: React.SVGProps<SVGSVGElement> & { width?: number, height?: number }) => (
-    <Image src={LUMINAR_AVATAR_URL} alt="Luminar Asesor" width={props.width || 32} height={props.height || 32} {...props} className="rounded-full" />
-);
 
 type Message = {
     role: 'user' | 'model';
@@ -91,7 +85,7 @@ function AssistantChat() {
                         <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                              {message.role === 'model' && (
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={LUMINAR_AVATAR_URL} alt="Luminar" />
+                                    <AvatarImage src={"https://i.postimg.cc/qBLMXpYM/luminar.png"} alt="Luminar" />
                                     <AvatarFallback className="bg-primary/10 border-2 border-primary/50 text-primary"><Bot className="h-5 w-5" /></AvatarFallback>
                                 </Avatar>
                              )}
@@ -110,7 +104,7 @@ function AssistantChat() {
                     {isLoading && (
                         <div className="flex items-start gap-3">
                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={LUMINAR_AVATAR_URL} alt="Luminar" />
+                                <AvatarImage src={"https://i.postimg.cc/qBLMXpYM/luminar.png"} alt="Luminar" />
                                 <AvatarFallback className="bg-primary/10 border-2 border-primary/50 text-primary"><Loader2 className="h-5 w-5 animate-spin" /></AvatarFallback>
                             </Avatar>
                             <div className="rounded-lg p-3 bg-secondary">
@@ -193,13 +187,12 @@ export default function RootLayout({
               try {
                 const theme = localStorage.getItem('theme');
                 if (theme) {
-                  document.documentElement.className = theme;
+                  // The settings-menu component will apply the theme from local storage
                 } else {
-                  // Force the vibrant theme by default
-                  document.documentElement.className = 'theme-vibrant';
+                  // By default, we don't set a class, so it uses the 'default-dark' from the new theme structure
                 }
               } catch (e) {
-                console.error('Failed to apply theme from localStorage', e);
+                console.error('Failed to access localStorage for theme', e);
               }
             })();
           `}

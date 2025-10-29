@@ -12,34 +12,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Monitor, Sun, Moon, Palette, Zap, Wind } from "lucide-react";
+import { Settings, Zap, Wind, Palette as PaletteIcon } from "lucide-react";
+import { themes, type Theme } from '@/lib/themes';
 
-type Theme = 'theme-futuristic' | 'theme-warm-pastel' | 'theme-vibrant';
-
-const themes: { value: Theme; label: string; icon: React.ReactNode }[] = [
-  { value: 'theme-futuristic', label: 'Futurista', icon: <Zap className="mr-2 h-4 w-4" /> },
-  { value: 'theme-warm-pastel', label: 'Cálido Pastel', icon: <Wind className="mr-2 h-4 w-4" /> },
-  { value: 'theme-vibrant', label: 'Vibrante', icon: <Palette className="mr-2 h-4 w-4" /> },
-];
+const themeIcons: Record<Theme['name'], React.ReactNode> = {
+    'vibrant-sunset': <Zap className="mr-2 h-4 w-4" />,
+    'pastel-warm': <Wind className="mr-2 h-4 w-4" />,
+    'default-dark': <PaletteIcon className="mr-2 h-4 w-4" />,
+}
 
 export function SettingsMenu() {
-  const [currentTheme, setCurrentTheme] = useState<Theme>('theme-futuristic');
+  const [currentTheme, setCurrentTheme] = useState<Theme['name']>('default-dark');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    if (savedTheme && themes.some(t => t.value === savedTheme)) {
-      setCurrentTheme(savedTheme);
-      document.documentElement.className = savedTheme;
-    } else {
-       document.documentElement.className = 'theme-futuristic';
-    }
+    const savedThemeName = localStorage.getItem('theme') as Theme['name'] | null;
+    const theme = themes.find(t => t.name === savedThemeName) ?? themes[2]; // Default to 'default-dark'
+    
+    setCurrentTheme(theme.name);
+    applyTheme(theme);
+
   }, []);
 
-  const handleThemeChange = (themeValue: string) => {
-    const theme = themeValue as Theme;
-    setCurrentTheme(theme);
-    document.documentElement.className = theme;
-    localStorage.setItem('theme', theme);
+  const applyTheme = (theme: Theme) => {
+    const root = document.body;
+    Object.entries(theme.colors).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+    localStorage.setItem('theme', theme.name);
+  };
+
+  const handleThemeChange = (themeName: string) => {
+    const theme = themes.find(t => t.name === themeName);
+    if(theme){
+        setCurrentTheme(theme.name);
+        applyTheme(theme);
+    }
   };
 
   return (
@@ -55,9 +62,9 @@ export function SettingsMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value={currentTheme} onValueChange={handleThemeChange}>
           {themes.map((theme) => (
-            <DropdownMenuRadioItem key={theme.value} value={theme.value} className="cursor-pointer">
-              {theme.icon}
-              <span>{theme.label}</span>
+            <DropdownMenuRadioItem key={theme.name} value={theme.name} className="cursor-pointer">
+              {themeIcons[theme.name]}
+              <span>{theme.displayName}</span>
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
