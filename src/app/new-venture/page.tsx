@@ -69,6 +69,9 @@ export default function NewVenturePage() {
   });
 
   function onSubmit(data: FormValues) {
+    // Save the entire business profile to localStorage
+    localStorage.setItem('businessProfile', JSON.stringify(data));
+    
     const transformedData = {
         ...data,
         publicoObjetivo: data.publicoObjetivo.join(', '),

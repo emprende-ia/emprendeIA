@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,6 +36,20 @@ export function CampanasMarketingModule() {
     resolver: zodResolver(formSchema),
     defaultValues: { productDescription: '' },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      const savedProfile = localStorage.getItem('businessProfile');
+      if (savedProfile) {
+        try {
+          const profile = JSON.parse(savedProfile);
+          form.setValue('productDescription', profile.idea || profile.situacionActual || '');
+        } catch (e) {
+            console.error("Failed to parse business profile from localStorage", e);
+        }
+      }
+    }
+  }, [isOpen, form]);
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);

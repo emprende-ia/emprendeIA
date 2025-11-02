@@ -89,6 +89,10 @@ export default function ExistingVenturePage() {
   });
 
   function onSubmit(data: FormValues) {
+    // Save the entire business profile to localStorage
+    const profileToSave = { idea: data.situacionActual, ...data };
+    localStorage.setItem('businessProfile', JSON.stringify(profileToSave));
+
     const transformedData = {
         ...data,
         canalesVenta: data.canalesVenta.join(', '),

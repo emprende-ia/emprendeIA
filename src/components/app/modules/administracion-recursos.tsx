@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sparkles, DollarSign, Loader2, PlusCircle, MinusCircle, History, TrendingUp, TrendingDown, Wallet, MoreHorizontal, Edit, Trash2, PiggyBank, Calculator } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
@@ -10,7 +9,7 @@ import { generateResourcePlan } from '@/ai/flows/generate-resource-plan';
 import { analyzeBreakevenPoint } from '@/ai/flows/analyze-breakeven-point';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/componentsui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser, useFirestore } from '@/firebase';
 import { getTransactions, deleteTransaction, Transaction, addTransaction } from '@/lib/firestore/transactions';
@@ -109,7 +108,7 @@ function InitialCapitalForm({ setOpen }: { setOpen: (open: boolean) => void }) {
     );
 }
 
-function BudgetPlanner() {
+function BudgetPlanner({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
     const [isLoading, setIsLoading] = useState(false);
     const [resourcePlan, setResourcePlan] = useState<GenerateResourcePlanOutput | null>(null);
     const { toast } = useToast();
@@ -118,6 +117,17 @@ function BudgetPlanner() {
         resolver: zodResolver(resourceFormSchema),
         defaultValues: { businessDescription: '' },
     });
+     useEffect(() => {
+        const savedProfile = localStorage.getItem('businessProfile');
+        if (savedProfile) {
+            try {
+                const profile = JSON.parse(savedProfile);
+                form.setValue('businessDescription', profile.idea || profile.situacionActual || '');
+            } catch (e) {
+                console.error("Failed to parse business profile from localStorage", e);
+            }
+        }
+    }, [form]);
 
     const onSubmit: SubmitHandler<ResourceFormValues> = async (data) => {
         setIsLoading(true);
@@ -556,7 +566,7 @@ export function AdministracionRecursosModule() {
                    <FinancialAssistant />
                 </TabsContent>
                 <TabsContent value="budget" className="mt-4 max-h-[65vh] overflow-y-auto p-1">
-                    <BudgetPlanner />
+                    <BudgetPlanner onOpenChange={setIsOpen} />
                 </TabsContent>
             </Tabs>
         </div>

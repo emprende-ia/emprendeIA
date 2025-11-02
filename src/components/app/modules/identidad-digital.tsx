@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -58,6 +57,15 @@ export function IdentidadDigitalModule() {
         const cachedAudio = localStorage.getItem(AUDIO_CACHE_KEY);
         if (cachedAudio) {
             setGeneratedAudio(cachedAudio);
+        }
+        const savedProfile = localStorage.getItem('businessProfile');
+        if (savedProfile) {
+            try {
+                const profile = JSON.parse(savedProfile);
+                businessForm.setValue('businessDescription', profile.idea || profile.situacionActual || '');
+            } catch (e) {
+                console.error("Failed to parse business profile from localStorage", e);
+            }
         }
     }
   }, [isOpen]);
