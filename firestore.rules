@@ -1,3 +1,4 @@
+
 /**
  * @file Firestore Security Rules
  * @core-philosophy This ruleset enforces a strict user-ownership model for user-generated content and public read access for supplier data.
@@ -8,6 +9,7 @@
  *   - /users/{userId}/transactions/{transactionId}: Private financial transactions for each user.
  *   - /users/{userId}/learningPaths/{pathId}: Private learning paths saved by each user.
  *   - /users/{userId}/marketingCampaigns/{campaignId}: Private marketing campaigns saved by each user.
+ *   - /users/{userId}/notes/{noteId}: Private notes for each user.
  * @key-security-decisions
  *   - User listing is disallowed to protect privacy.
  *   - Supplier data is publicly readable.
@@ -75,6 +77,20 @@ service cloud.firestore {
       allow get, list: if isOwner(userId);
       allow update, delete: if isExistingOwner(userId);
     }
+    
+    /**
+     * @description Enforces that only the authenticated user can access their own notes.
+     * @path /users/{userId}/notes/{noteId}
+     * @allow (create): The user can create a note if the userId matches their auth UID.
+     * @allow (get, list): The user can read their own notes if the userId matches their auth UID.
+     * @allow (update, delete): The user can update or delete their own notes if the userId matches their auth UID and the document exists.
+     * @deny (create, get, list, update, delete): Denies operations if the user is not authenticated or the user ID does not match the authenticated user's ID.
+     * @principle Enforces user-ownership for notes.
+     */
+    match /users/{userId}/notes/{noteId} {
+      allow create: if isOwner(userId);
+      allow get, list, update, delete: if isExistingOwner(userId);
+    }
 
     /**
      * @description Enforces that only the authenticated user can access their own learning paths.
@@ -120,3 +136,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -19,6 +20,23 @@
         }
       },
       "required": ["displayName", "email"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "A user-created note or reminder.",
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "The text content of the note."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the note was created."
+        }
+      },
+      "required": ["content", "createdAt"]
     },
     "SearchHistory": {
       "title": "Search History",
@@ -207,6 +225,14 @@
         }
       },
       {
+        "path": "/users/{userId}/notes/{noteId}",
+        "definition": {
+          "entityName": "Note",
+          "schema": { "$ref": "#/entities/Note" },
+          "description": "Stores a user's notes."
+        }
+      },
+      {
         "path": "/users/{userId}/learningPaths/{pathId}",
         "definition": {
           "entityName": "LearningPath",
@@ -225,3 +251,5 @@
     ]
   }
 }
+
+    

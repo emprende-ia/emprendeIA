@@ -65,7 +65,7 @@ export default function StartPage() {
         </div>
         <div className="pt-6 w-full max-w-sm">
             <Button asChild variant="outline" size="lg" className="w-full text-lg">
-                <Link href="/admin">
+                <Link href="/dashboard">
                     <LayoutDashboard className="mr-2 h-5 w-5" />
                     Ir a mi Panel de Control
                 </Link>
@@ -75,3 +75,5 @@ export default function StartPage() {
     </main>
   );
 }
+
+    
