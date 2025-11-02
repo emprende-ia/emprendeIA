@@ -38,10 +38,10 @@ export interface Theme {
       name: 'vibrant-sunset',
       displayName: 'Atardecer Vibrante',
       colors: {
-        '--background': '350 100% 98%',
+        '--background': '0 0% 100%',
         '--foreground': '240 10% 3.9%',
-        '--card': '350 100% 98%',
-        '--card-foreground': '240 10% 3.9%', // Corregido para contraste
+        '--card': '0 0% 98%',
+        '--card-foreground': '240 10% 3.9%',
         '--popover': '0 0% 100%',
         '--popover-foreground': '240 10% 3.9%',
         '--primary': '262 84% 59%',
@@ -49,7 +49,7 @@ export interface Theme {
         '--secondary': '240 4.8% 95.9%',
         '--secondary-foreground': '240 5.9% 10%',
         '--muted': '240 4.8% 95.9%',
-        '--muted-foreground': '240 3.8% 46.1%', // Aclarado para mejor legibilidad
+        '--muted-foreground': '240 5.9% 25%',
         '--accent': '275 85% 65%',
         '--accent-foreground': '0 0% 98%',
         '--destructive': '0 84.2% 60.2%',
@@ -73,8 +73,8 @@ export interface Theme {
       colors: {
         '--background': '39 100% 97.5%',
         '--foreground': '24 9.8% 10%',
-        '--card': '30 100% 95%',
-        '--card-foreground': '24 9.8% 10%', // Corregido para contraste
+        '--card': '30 100% 96%',
+        '--card-foreground': '24 9.8% 10%',
         '--popover': '0 0% 100%',
         '--popover-foreground': '24 9.8% 10%',
         '--primary': '346.8 77.2% 49.8%',
@@ -82,8 +82,8 @@ export interface Theme {
         '--secondary': '35.6 100% 96.3%',
         '--secondary-foreground': '24 9.8% 10%',
         '--muted': '35.6 100% 96.3%',
-        '--muted-foreground': '24 9.8% 40%', // Oscurecido para mejor legibilidad
-        '--accent': '35.6 100% 96.3%',
+        '--muted-foreground': '24 9.8% 25%',
+        '--accent': '35.6 100% 90%',
         '--accent-foreground': '24 9.8% 10%',
         '--destructive': '0 84.2% 60.2%',
         '--destructive-foreground': '0 0% 98%',
