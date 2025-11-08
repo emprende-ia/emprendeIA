@@ -48,12 +48,16 @@ export async function saveCampaign(
   }
 
   // Step 1: Generate the detailed campaign plan from the idea.
-  const campaignPlan = await generateCampaignPlan({
+  const { plan: campaignPlan } = await generateCampaignPlan({
       campaignTitle: campaignIdea.title,
       campaignChannel: campaignIdea.channel,
       campaignMessage: campaignIdea.keyMessage,
       campaignAudience: campaignIdea.targetAudience,
   });
+
+  if (!campaignPlan) {
+    throw new Error("Failed to generate a campaign plan from the AI service.");
+  }
 
   // Step 2: Save the complete campaign data to Firestore.
   const campaignsCollection = collection(firestore, `users/${userId}/marketingCampaigns`);
