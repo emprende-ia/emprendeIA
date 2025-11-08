@@ -37,6 +37,9 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  devIndicators: {
+    hotModuleReplacement: false,
+  },
 };
 
 export default nextConfig;
