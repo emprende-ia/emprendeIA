@@ -3,8 +3,8 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth, useFirestore, useUser } from '@/firebase';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, KeyRound } from 'lucide-react';
@@ -17,6 +17,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
+import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -66,8 +67,14 @@ function LoginPageContent() {
     setIsSigningIn(true);
 
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      // On successful sign-in, the useEffect for user status will redirect.
+      initiateEmailSignIn(auth, values.email, values.password);
+      // The onAuthStateChanged listener in the provider will handle redirection
+      // on successful login. This approach provides a better UX.
+      // We can show a toast here to inform the user.
+      toast({
+        title: "Iniciando sesión...",
+        description: "Serás redirigido en un momento.",
+      });
     } catch (error: any) {
       let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -78,8 +85,7 @@ function LoginPageContent() {
         description: description,
         variant: "destructive",
       });
-    } finally {
-      setIsSigningIn(false);
+      setIsSigningIn(false); // Only stop loading on error
     }
   };
 
@@ -92,20 +98,24 @@ function LoginPageContent() {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        // Check if user profile already exists in Firestore
+        // Redirect immediately for better UX. Profile creation will happen in the background.
+        router.push('/start');
+        
         const userDocRef = doc(firestore, 'users', user.uid);
         const docSnap = await getDoc(userDocRef);
 
+        // Non-blocking write: Create user profile if it doesn't exist.
         if (!docSnap.exists()) {
-            // If it's a new user, create their profile in Firestore
-            await setDoc(userDocRef, {
+            setDoc(userDocRef, {
                 displayName: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
-                createdAt: new Date(),
+                createdAt: serverTimestamp(),
+            }).catch(e => {
+                // Optional: Log background write error to a monitoring service
+                console.error("Failed to create user profile in background:", e);
             });
         }
-        // On successful sign-in, the useEffect will handle redirection.
     } catch (error: any) {
         let description = "Ocurrió un error inesperado.";
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -115,9 +125,9 @@ function LoginPageContent() {
                 variant: "destructive",
             });
         }
-    } finally {
-        setIsGoogleSigningIn(false);
+        setIsGoogleSigningIn(false); // Stop loading on error
     }
+    // Don't set isGoogleSigningIn to false on success, as redirection will happen.
   };
   
   useEffect(() => {
@@ -238,3 +248,5 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+    
