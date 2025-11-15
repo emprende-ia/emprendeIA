@@ -101,21 +101,23 @@ function LoginPageContent() {
         // Redirect immediately for better UX. Profile creation will happen in the background.
         router.push('/start');
         
+        // Asynchronously check and create user profile without blocking the UI.
         const userDocRef = doc(firestore, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
+        getDoc(userDocRef).then(docSnap => {
+            if (!docSnap.exists()) {
+                // Non-blocking write: Create user profile if it doesn't exist.
+                setDoc(userDocRef, {
+                    displayName: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    createdAt: serverTimestamp(),
+                }).catch(e => {
+                    // Optional: Log background write error to a monitoring service
+                    console.error("Failed to create user profile in background:", e);
+                });
+            }
+        });
 
-        // Non-blocking write: Create user profile if it doesn't exist.
-        if (!docSnap.exists()) {
-            setDoc(userDocRef, {
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                createdAt: serverTimestamp(),
-            }).catch(e => {
-                // Optional: Log background write error to a monitoring service
-                console.error("Failed to create user profile in background:", e);
-            });
-        }
     } catch (error: any) {
         let description = "Ocurrió un error inesperado.";
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -248,5 +250,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-
-    
