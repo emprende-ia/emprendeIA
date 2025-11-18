@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Sparkles, LogOut, User as UserIcon, Gem } from 'lucide-react';
+import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -20,6 +20,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import Image from 'next/image';
 import { SettingsMenu } from './settings-menu';
+import { NotesModule } from './modules/notes-module';
+import { LuminarAssistantModule } from './modules/luminar-assistant';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
@@ -80,6 +82,25 @@ export function AppHeader() {
             Ver Planes
             </Link>
         </Button>
+
+         <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <EllipsisVertical className="h-4 w-4" />
+                    <span className="sr-only">Herramientas rápidas</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Herramientas Rápidas</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                    <NotesModule isMenuItem={true}/>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                    <LuminarAssistantModule isMenuItem={true} />
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
 
         {isUserLoading ? (
           <Button variant="outline" size="icon" disabled>

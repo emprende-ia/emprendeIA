@@ -136,14 +136,25 @@ function NewNoteForm({ onNoteAdded }: { onNoteAdded: () => void }) {
     )
 }
 
-export function NotesModule() {
+interface NotesModuleProps {
+    isMenuItem?: boolean;
+}
+
+export function NotesModule({ isMenuItem = false }: NotesModuleProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("view");
+
+  const TriggerComponent = isMenuItem ? 'div' : Button;
+  const triggerProps = isMenuItem 
+    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" } 
+    : { className: "w-full font-bold" };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold">Ver Notas</Button>
+        <TriggerComponent {...triggerProps}>
+            <StickyNote className="mr-2 h-4 w-4" /> Bloc de Notas
+        </TriggerComponent>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -166,5 +177,3 @@ export function NotesModule() {
     </Dialog>
   );
 }
-
-    

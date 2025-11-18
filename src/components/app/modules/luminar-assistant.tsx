@@ -135,23 +135,26 @@ function AssistantChat() {
     );
 }
 
-// Reverted to a simple dialog-based module
-export function LuminarAssistantModule() {
+interface LuminarAssistantModuleProps {
+    isMenuItem?: boolean;
+}
+
+export function LuminarAssistantModule({ isMenuItem = false }: LuminarAssistantModuleProps) {
+    const [isOpen, setIsOpen] = useState(false);
     const { user } = useUser();
-    
-    // Original module logic, can be used inside a page if needed.
-    // For now, it's just a placeholder as the floating logic is in layout.
-    if (!user) {
-        return null;
-    }
-    
+
+    const TriggerComponent = isMenuItem ? 'div' : Button;
+    const triggerProps = isMenuItem 
+        ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" } 
+        : { variant: "default" as any, className: "w-full font-bold" };
+
+
     return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                 <Button className="w-full font-bold">
-                    <LuminarIcon className="mr-2 h-5 w-5" />
-                    Asesor Luminar
-                </Button>
+                <TriggerComponent {...triggerProps}>
+                    <Bot className="mr-2 h-4 w-4" /> Asesor Luminar
+                </TriggerComponent>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg h-[80vh] flex flex-col p-0 gap-0">
                 <DialogHeader className="p-4 border-b">
