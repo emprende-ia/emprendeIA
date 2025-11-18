@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -67,7 +68,7 @@ const generateOptimizedImageFlow = ai.defineFlow(
     
     // Step 2: Generate the image using the optimized prompt.
     const { media } = await ai.generate({
-        model: 'googleai/imagen-3.0-generate-002',
+        model: 'googleai/imagen-4.0-fast-generate-001',
         prompt: optimizedPrompt,
     });
 
