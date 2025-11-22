@@ -41,7 +41,7 @@ const ViabilityAnalysisSchema = z.object({
         reasons: z.array(z.string().max(120)).describe('A list of 2-3 reasons for the given viability level.'),
         nextSteps: z.array(z.string().max(120)).describe('A list of 2 concrete next steps for the user.'),
         howToGetToGreen: z.array(z.string().max(120)).describe('A list of 2-3 actions to improve or maintain viability.'),
-        alternatives: z.array(z.string().max(120)).optional().describe('A list of 2 pivot ideas, only if the level is "Rojo".'),
+        alternatives: z.array(z.string().max(120)).describe('A list of 2 pivot ideas, only if the level is "Rojo".'),
     }).describe('The viability summary with a traffic light indicator and actionable steps.'),
 });
 
