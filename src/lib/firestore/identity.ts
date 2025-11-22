@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
@@ -45,6 +45,28 @@ export function saveBrandIdentity(
       });
       errorEmitter.emit('permission-error', permissionError);
     });
+}
+
+/**
+ * Deletes a user's brand identity document from Firestore.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ */
+export function deleteBrandIdentity(firestore: Firestore, userId: string): void {
+    if (!userId) {
+        console.error("User ID is required to delete brand identity.");
+        return;
+    }
+    const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
+
+    deleteDoc(identityDoc)
+        .catch((error) => {
+            const permissionError = new FirestorePermissionError({
+                path: identityDoc.path,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
 }
 
 /**

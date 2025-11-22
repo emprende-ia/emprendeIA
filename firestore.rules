@@ -126,13 +126,11 @@ service cloud.firestore {
     /**
      * @description Enforces user-ownership for their brand identity document.
      * @path /users/{userId}/brandIdentity/main
-     * @allow (read, create, update): The user can manage their own brand identity if the userId matches their auth UID.
-     * @deny (delete): Deletion is disallowed to prevent accidental loss of brand data.
+     * @allow (read, create, update, delete): The user can manage their own brand identity if the userId matches their auth UID.
      * @principle Enforces strict user-ownership for a singleton brand identity document.
      */
     match /users/{userId}/brandIdentity/main {
-        allow read, create, update: if isOwner(userId);
-        allow delete: if false;
+        allow read, create, update, delete: if isOwner(userId);
     }
 
     // --- Helper functions ---
