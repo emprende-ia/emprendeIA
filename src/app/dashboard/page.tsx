@@ -11,13 +11,14 @@ import { CampanasMarketingModule } from "@/components/app/modules/campanas-marke
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
 import { MisRutasModule } from "@/components/app/modules/mis-rutas";
 import { MisCampanasModule } from "@/components/app/modules/mis-campanas";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore } from "@/firebase";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { BrandCampaign } from "@/components/app/modules/brand-campaign";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from "@/components/ui/button";
+import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
 
 function SuggestedNextStep() {
     const [suggestion, setSuggestion] = useState<{title: string, description: string, module: React.ReactNode} | null>(null);
@@ -72,25 +73,42 @@ function SuggestedNextStep() {
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
-  const [brandName, setBrandName] = useState("EmprendeIA");
+  const firestore = useFirestore();
+  
+  const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
+  const [isIdentityLoading, setIsIdentityLoading] = useState(true);
+
+  const brandName = brandIdentity?.brandName || "EmprendeIA";
 
   useEffect(() => {
     // Apply theme from localStorage on client-side
-    const savedIdentity = localStorage.getItem('brandIdentity');
-    if (savedIdentity) {
-      try {
-        const { brandName: savedBrandName } = JSON.parse(savedIdentity);
-        if (savedBrandName) {
-          setBrandName(savedBrandName);
-        }
-      } catch (e) {
-        console.error("Failed to parse brand identity from localStorage", e);
-      }
+    const theme = localStorage.getItem('theme');
+    if (!theme) {
+      localStorage.setItem('theme', 'vibrant-sunset');
     }
-  }, []);
+
+    if (user && firestore) {
+      setIsIdentityLoading(true);
+      const unsubscribe = getBrandIdentity(firestore, user.uid, (identity) => {
+        setBrandIdentity(identity);
+        setIsIdentityLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      const savedIdentity = localStorage.getItem('brandIdentity');
+      if (savedIdentity) {
+        try {
+          setBrandIdentity(JSON.parse(savedIdentity));
+        } catch (e) {
+          console.error("Failed to parse brand identity from localStorage", e);
+        }
+      }
+      setIsIdentityLoading(false);
+    }
+  }, [user, firestore]);
 
 
-  if (isUserLoading) {
+  if (isUserLoading || isIdentityLoading) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
