@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const formSchema = z.object({
   idea: z.string().min(10, { message: 'Describe tu idea con un poco más de detalle.' }),
@@ -71,6 +72,8 @@ const publicoObjetivoOptions = [
     { id: 'Otro', label: 'Otro' },
 ];
 
+const publicoExclusivoOptions = ['Público en general', '🤔 No estoy seguro', 'Otro'];
+
 const objetivoPrincipalOptions = [
     { id: 'Organizar gastos para la inversión inicial', label: 'Organizar gastos para la inversión inicial' },
     { id: 'Crear mi marca (nombre, logo, redes sociales)', label: 'Crear mi marca (nombre, logo, redes sociales)' },
@@ -99,7 +102,36 @@ export default function NewVenturePage() {
   });
 
   const publicoObjetivoValue = form.watch('publicoObjetivo');
+  const objetivoPrincipalValue = form.watch('objetivoPrincipal');
   const tieneInsumosValue = form.watch('tieneInsumos');
+
+  useEffect(() => {
+    if (!publicoObjetivoValue || publicoObjetivoValue.length === 0) return;
+
+    const lastSelected = publicoObjetivoValue[publicoObjetivoValue.length - 1];
+
+    if (publicoExclusivoOptions.includes(lastSelected) && publicoObjetivoValue.length > 1) {
+      form.setValue('publicoObjetivo', [lastSelected]);
+    } else if (!publicoExclusivoOptions.includes(lastSelected)) {
+      const filtered = publicoObjetivoValue.filter(p => !publicoExclusivoOptions.includes(p));
+      if (filtered.length !== publicoObjetivoValue.length) {
+        form.setValue('publicoObjetivo', filtered);
+      }
+    }
+  }, [publicoObjetivoValue, form]);
+
+  useEffect(() => {
+      if (!objetivoPrincipalValue || objetivoPrincipalValue.length === 0) return;
+      
+      const lastSelected = objetivoPrincipalValue[objetivoPrincipalValue.length - 1];
+
+      if (lastSelected === 'Todo lo anterior' && objetivoPrincipalValue.length > 1) {
+          form.setValue('objetivoPrincipal', ['Todo lo anterior']);
+      } else if (lastSelected !== 'Todo lo anterior' && objetivoPrincipalValue.includes('Todo lo anterior')) {
+          form.setValue('objetivoPrincipal', objetivoPrincipalValue.filter(o => o !== 'Todo lo anterior'));
+      }
+  }, [objetivoPrincipalValue, form]);
+
 
   function onSubmit(data: FormValues) {
     const publicoFinal = data.publicoObjetivo
