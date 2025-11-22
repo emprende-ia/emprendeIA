@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { Suspense, useState, useEffect, useMemo } from 'react';
@@ -22,13 +21,12 @@ const labelMapping: Record<string, string> = {
     necesidad: 'Necesidad que Resuelve',
     competencia: 'Competencia',
     disponibilidadTiempo: 'Disponibilidad de Tiempo',
+    ubicacionNegocio: 'Ubicación del Negocio',
 };
 
 const valueMapping: Record<string, Record<string, string>> = {
     'tipoNegocio': { 'fisico': 'Físico', 'en-linea': 'En Línea', 'ambos': 'Ambos' },
-    'capitalInicial': { 'bajo': 'Bajo (< $5,000 MXN)', 'medio': 'Medio ($5,000 - $20,000 MXN)', 'alto': 'Alto (> $20,000 MXN)'},
-    'experienciaPrevia': { 'principiante': 'Principiante', 'intermedio': 'Intermedio', 'avanzado': 'Avanzado' },
-    'disponibilidadTiempo': { 'menos-10': 'Menos de 10h/semana', '10-20': '10-20h/semana', 'mas-20': 'Más de 20h/semana' },
+    'disponibilidadTiempo': { 'menos-20': 'Menos de 20h/semana', '20-40': '20-40h/semana', 'mas-40': 'Más de 40h/semana' },
 };
 
 function AnalysisPageContent() {
@@ -73,6 +71,16 @@ function AnalysisPageContent() {
       default: return <Bot className="h-5 w-5" />;
     }
   };
+  
+  // Filter out 'necesidad' from the display data if it's the same as 'idea'
+  const displayFormData = useMemo(() => {
+      const { necesidad, ...rest } = formData;
+      if (formData.idea === necesidad) {
+          return rest;
+      }
+      return formData;
+  }, [formData]);
+
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
@@ -83,7 +91,7 @@ function AnalysisPageContent() {
             <CardDescription>Este es el resumen de tu idea de negocio. Revisa que todo esté correcto.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {Object.entries(formData).map(([key, value]) => (
+            {Object.entries(displayFormData).map(([key, value]) => (
                 <div key={key} className="flex flex-col rounded-lg bg-secondary/50 p-3">
                     <span className="font-semibold text-muted-foreground">{labelMapping[key] || key}</span>
                     <span className="text-foreground">
@@ -193,5 +201,3 @@ export default function AnalysisPage() {
         </Suspense>
     )
 }
-
-    

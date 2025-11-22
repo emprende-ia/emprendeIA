@@ -16,6 +16,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -23,18 +24,29 @@ import { useRouter } from 'next/navigation';
 const formSchema = z.object({
   idea: z.string().min(10, { message: 'Describe tu idea con un poco más de detalle.' }),
   tipoNegocio: z.enum(['fisico', 'en-linea', 'ambos'], { required_error: 'Debes seleccionar un tipo de negocio.' }),
-  capitalInicial: z.enum(['bajo', 'medio', 'alto'], { required_error: 'Debes seleccionar un rango de capital.' }),
-  experienciaPrevia: z.enum(['principiante', 'intermedio', 'avanzado'], { required_error: 'Debes seleccionar tu nivel de experiencia.' }),
+  capitalInicial: z.string().optional(),
+  experienciaPrevia: z.string().optional(),
   publicoObjetivo: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Tienes que seleccionar al menos un público objetivo.',
   }),
+  otroPublico: z.string().optional(),
   objetivoPrincipal: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Tienes que seleccionar al menos un objetivo.',
   }),
-  necesidad: z.string().min(10, { message: 'Describe la necesidad que resuelves con más detalle.' }),
+  ubicacionNegocio: z.string().optional(),
   competencia: z.string().optional(),
-  disponibilidadTiempo: z.enum(['menos-10', '10-20', 'mas-20'], { required_error: 'Debes seleccionar tu disponibilidad de tiempo.' }),
+  disponibilidadTiempo: z.enum(['menos-20', '20-40', 'mas-40'], { required_error: 'Debes seleccionar tu disponibilidad de tiempo.' }),
+}).refine(data => {
+    // Si 'Otro' está seleccionado en publicoObjetivo, entonces otroPublico no debe estar vacío.
+    if (data.publicoObjetivo.includes('Otro') && (!data.otroPublico || data.otroPublico.trim() === '')) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Debes especificar el otro público objetivo.',
+    path: ['otroPublico'], // Asocia el error con el campo 'otroPublico'.
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -45,13 +57,14 @@ const publicoObjetivoOptions = [
     { id: 'Adultos', label: 'Adultos' },
     { id: 'Familias / Niños', label: 'Familias / Niños' },
     { id: 'Público en general', label: 'Público en general' },
-    { id: 'No estoy seguro', label: '🤔 No estoy seguro' },
+    { id: '🤔 No estoy seguro', label: '🤔 No estoy seguro' },
+    { id: 'Otro', label: 'Otro' },
 ];
 
 const objetivoPrincipalOptions = [
-    { id: 'Organizar gastos e ingresos', label: 'Organizar gastos e ingresos' },
-    { id: 'Crear mi marca', label: 'Crear mi marca (nombre, logo, redes sociales)' },
-    { id: 'Conseguir más clientes', label: 'Conseguir más clientes y vender más' },
+    { id: 'Organizar gastos para la inversión inicial', label: 'Organizar gastos para la inversión inicial' },
+    { id: 'Crear mi marca (nombre, logo, redes sociales)', label: 'Crear mi marca (nombre, logo, redes sociales)' },
+    { id: 'Conseguir mis primeros clientes', label: 'Conseguir mis primeros clientes' },
     { id: 'Todo lo anterior', label: 'Todo lo anterior' },
 ];
 
@@ -63,20 +76,40 @@ export default function NewVenturePage() {
         idea: '',
         publicoObjetivo: [],
         objetivoPrincipal: [],
-        necesidad: '',
+        capitalInicial: '',
+        experienciaPrevia: '',
+        otroPublico: '',
+        ubicacionNegocio: '',
         competencia: '',
     },
   });
 
+  const publicoObjetivoValue = form.watch('publicoObjetivo');
+
   function onSubmit(data: FormValues) {
-    // Save the entire business profile to localStorage
-    localStorage.setItem('businessProfile', JSON.stringify(data));
-    
+    // Combine 'otroPublico' into the main publicoObjetivo string if present
+    const publicoFinal = data.publicoObjetivo
+      .filter(p => p !== 'Otro')
+      .concat(data.otroPublico && data.otroPublico.trim() !== '' ? [data.otroPublico] : [])
+      .join(', ');
+
     const transformedData = {
-        ...data,
-        publicoObjetivo: data.publicoObjetivo.join(', '),
+        idea: data.idea,
+        tipoNegocio: data.tipoNegocio,
+        capitalInicial: data.capitalInicial || 'No especificado',
+        experienciaPrevia: data.experienciaPrevia || 'No especificada',
+        publicoObjetivo: publicoFinal,
         objetivoPrincipal: data.objetivoPrincipal.join(', '),
+        // The original `necesidad` field is gone, we'll map `idea` to it for the AI flow.
+        necesidad: data.idea, 
+        ubicacionNegocio: data.ubicacionNegocio || 'No especificada',
+        competencia: data.competencia || 'No especificada',
+        disponibilidadTiempo: data.disponibilidadTiempo,
     };
+    
+    // Save the entire business profile to localStorage for other modules to use
+    localStorage.setItem('businessProfile', JSON.stringify({ ...data, publicoObjetivo: publicoFinal }));
+
     const params = new URLSearchParams(transformedData);
     router.push(`/analysis?${params.toString()}`);
   }
@@ -114,7 +147,7 @@ export default function NewVenturePage() {
                             name="tipoNegocio"
                             render={({ field }) => (
                                 <FormItem className="space-y-3">
-                                <FormLabel className="text-lg font-semibold">Tipo de negocio</FormLabel>
+                                <FormLabel className="text-lg font-semibold">2. Tipo de negocio</FormLabel>
                                 <FormControl>
                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
                                     <FormItem className="flex items-center space-x-3 space-y-0">
@@ -136,27 +169,14 @@ export default function NewVenturePage() {
                             )}
                         />
 
-                         <FormField
+                        <FormField
                             control={form.control}
                             name="capitalInicial"
                             render={({ field }) => (
-                                <FormItem className="space-y-3">
-                                <FormLabel className="text-lg font-semibold">Capital inicial</FormLabel>
+                                <FormItem>
+                                <FormLabel className="text-lg font-semibold">3. ¿Cuál es tu capital inicial aproximado en MXN? (Opcional)</FormLabel>
                                 <FormControl>
-                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="bajo" /></FormControl>
-                                        <FormLabel className="font-normal">Bajo (menos de $5,000 MXN)</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="medio" /></FormControl>
-                                        <FormLabel className="font-normal">Medio ($5,000 – $20,000 MXN)</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="alto" /></FormControl>
-                                        <FormLabel className="font-normal">Alto (más de $20,000 MXN)</FormLabel>
-                                    </FormItem>
-                                    </RadioGroup>
+                                    <Input placeholder="Ej: $15,000 MXN" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -167,111 +187,65 @@ export default function NewVenturePage() {
                             control={form.control}
                             name="experienciaPrevia"
                             render={({ field }) => (
-                                <FormItem className="space-y-3">
-                                <FormLabel className="text-lg font-semibold">Experiencia previa</FormLabel>
+                                <FormItem>
+                                <FormLabel className="text-lg font-semibold">4. ¿Tienes alguna experiencia previa en el emprendimiento? (Opcional)</FormLabel>
                                 <FormControl>
-                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="principiante" /></FormControl>
-                                        <FormLabel className="font-normal">Principiante (nunca he tenido negocio)</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="intermedio" /></FormControl>
-                                        <FormLabel className="font-normal">Intermedio (ya he vendido algo antes)</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="avanzado" /></FormControl>
-                                        <FormLabel className="font-normal">Avanzado (manejo o he manejado un negocio)</FormLabel>
-                                    </FormItem>
-                                    </RadioGroup>
+                                    <Textarea placeholder="Ej: Trabajé en una cafetería por 2 años, he vendido postres por redes sociales, etc." {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="publicoObjetivo"
-                            render={() => (
-                                <FormItem>
-                                <div className="mb-4">
-                                    <FormLabel className="text-lg font-semibold">Público objetivo</FormLabel>
-                                </div>
+                        <FormField control={form.control} name="publicoObjetivo" render={() => (
+                            <FormItem>
+                                <FormLabel className="text-lg font-semibold">5. Público objetivo</FormLabel>
+                                <div className="space-y-2">
                                 {publicoObjetivoOptions.map((item) => (
-                                    <FormField
-                                    key={item.id}
-                                    control={form.control}
-                                    name="publicoObjetivo"
-                                    render={({ field }) => {
-                                        return (
+                                    <FormField key={item.id} control={form.control} name="publicoObjetivo" render={({ field }) => (
                                         <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                            <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(item.id)}
-                                                onCheckedChange={(checked) => {
-                                                return checked
-                                                    ? field.onChange([...field.value, item.id])
-                                                    : field.onChange(field.value?.filter((value) => value !== item.id));
-                                                }}
-                                            />
-                                            </FormControl>
+                                            <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((value) => value !== item.id)); }} /></FormControl>
                                             <FormLabel className="font-normal">{item.label}</FormLabel>
                                         </FormItem>
-                                        );
-                                    }}
-                                    />
+                                    )} />
                                 ))}
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="objetivoPrincipal"
-                            render={() => (
-                                <FormItem>
-                                <div className="mb-4">
-                                    <FormLabel className="text-lg font-semibold">Objetivo principal</FormLabel>
+                                {publicoObjetivoValue?.includes('Otro') && (
+                                     <FormField control={form.control} name="otroPublico" render={({ field }) => (
+                                        <FormItem className="pl-7 pt-2">
+                                            <FormControl><Input placeholder="Por favor, especifica" {...field} /></FormControl>
+                                        </FormItem>
+                                    )} />
+                                )}
                                 </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}/>
+                        
+                        <FormField control={form.control} name="objetivoPrincipal" render={() => (
+                            <FormItem>
+                                <FormLabel className="text-lg font-semibold">6. Objetivo principal</FormLabel>
+                                <div className="space-y-2">
                                 {objetivoPrincipalOptions.map((item) => (
-                                    <FormField
-                                    key={item.id}
-                                    control={form.control}
-                                    name="objetivoPrincipal"
-                                    render={({ field }) => {
-                                        return (
+                                    <FormField key={item.id} control={form.control} name="objetivoPrincipal" render={({ field }) => (
                                         <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                            <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(item.id)}
-                                                onCheckedChange={(checked) => {
-                                                return checked
-                                                    ? field.onChange([...field.value, item.id])
-                                                    : field.onChange(field.value?.filter((value) => value !== item.id));
-                                                }}
-                                            />
-                                            </FormControl>
+                                            <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((value) => value !== item.id)); }} /></FormControl>
                                             <FormLabel className="font-normal">{item.label}</FormLabel>
                                         </FormItem>
-                                        );
-                                    }}
-                                    />
+                                    )} />
                                 ))}
+                                </div>
                                 <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                            </FormItem>
+                        )}/>
 
                         <FormField
                             control={form.control}
-                            name="necesidad"
+                            name="ubicacionNegocio"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">👉 ¿Qué necesidad o problema resuelve tu negocio?</FormLabel>
+                                <FormLabel className="text-lg font-semibold">7. ¿Dónde has pensado establecer tu negocio? (Opcional)</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="Ej: Ofrecer un espacio tranquilo para leer y disfrutar de buen café, algo que falta en mi colonia." {...field} />
+                                    <Input placeholder="Ej: Colonia Roma, CDMX" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -283,9 +257,9 @@ export default function NewVenturePage() {
                             name="competencia"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">Competencia percibida</FormLabel>
+                                <FormLabel className="text-lg font-semibold">8. ¿Conoces algún negocio parecido al tuyo? (Opcional)</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="¿Conoces algún negocio parecido al tuyo? (Opcional)" {...field} />
+                                    <Textarea placeholder="Ej: Starbucks, o cafeterías locales como 'El Jarocho'" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -297,20 +271,20 @@ export default function NewVenturePage() {
                             name="disponibilidadTiempo"
                             render={({ field }) => (
                                 <FormItem className="space-y-3">
-                                <FormLabel className="text-lg font-semibold">Disponibilidad de tiempo</FormLabel>
+                                <FormLabel className="text-lg font-semibold">9. Disponibilidad de tiempo</FormLabel>
                                 <FormControl>
                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
                                     <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="menos-10" /></FormControl>
-                                        <FormLabel className="font-normal">Menos de 10h a la semana</FormLabel>
+                                        <FormControl><RadioGroupItem value="menos-20" /></FormControl>
+                                        <FormLabel className="font-normal">Menos de 20 horas a la semana</FormLabel>
                                     </FormItem>
                                     <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="10-20" /></FormControl>
-                                        <FormLabel className="font-normal">10–20h a la semana</FormLabel>
+                                        <FormControl><RadioGroupItem value="20-40" /></FormControl>
+                                        <FormLabel className="font-normal">Entre 20 y 40 horas a la semana</FormLabel>
                                     </FormItem>
                                     <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl><RadioGroupItem value="mas-20" /></FormControl>
-                                        <FormLabel className="font-normal">Más de 20h a la semana</FormLabel>
+                                        <FormControl><RadioGroupItem value="mas-40" /></FormControl>
+                                        <FormLabel className="font-normal">Más de 40 horas a la semana</FormLabel>
                                     </FormItem>
                                     </RadioGroup>
                                 </FormControl>

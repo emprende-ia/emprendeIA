@@ -12,12 +12,12 @@ import { z } from 'zod';
 const AnalyzeBusinessIdeaInputSchema = z.object({
   idea: z.string().describe('The user\'s business idea.'),
   tipoNegocio: z.string().describe('The type of business (physical, online, both).'),
-  capitalInicial: z.string().describe('The initial capital investment range.'),
-  experienciaPrevia: z.string().describe('The user\'s prior experience level.'),
+  capitalInicial: z.string().describe('The initial capital investment range. Can be "No especificado".'),
+  experienciaPrevia: z.string().describe('The user\'s prior experience level. Can be "No especificada".'),
   publicoObjetivo: z.string().describe('The target audience, comma-separated.'),
   objetivoPrincipal: z.string().describe('The primary goal of the venture, comma-separated.'),
-  necesidad: z.string().describe('The problem or need the business solves.'),
-  competencia: z.string().optional().describe('Any known competitors.'),
+  necesidad: z.string().describe('The problem or need the business solves. This is the same as the "idea" field.'),
+  competencia: z.string().optional().describe('Any known competitors. Can be "No especificada".'),
   disponibilidadTiempo: z.string().describe('The time commitment available per week.'),
 });
 // The type can still be exported.
@@ -64,7 +64,6 @@ const analyzeBusinessIdeaPrompt = ai.definePrompt({
     - **Experience:** {{{experienciaPrevia}}}
     - **Target Audience:** {{{publicoObjetivo}}}
     - **Main Goal:** {{{objetivoPrincipal}}}
-    - **Problem Solved:** {{{necesidad}}}
     - **Known Competition:** {{{competencia}}}
     - **Time Availability:** {{{disponibilidadTiempo}}}
 
