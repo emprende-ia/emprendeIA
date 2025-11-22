@@ -40,11 +40,12 @@ const handleStripeWebhookFlow = ai.defineFlow(
   },
   async ({ body, signature }) => {
     const stripe = getStripe();
+    // In production, App Hosting exposes secrets as environment variables.
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      console.error('STRIPE_WEBHOOK_SECRET is not set in environment variables.');
-      throw new Error('Stripe webhook secret is not configured.');
+      console.error('CRITICAL: STRIPE_WEBHOOK_SECRET is not set in the environment.');
+      throw new Error('Stripe webhook secret is not configured on the server.');
     }
 
     let event: Stripe.Event;
