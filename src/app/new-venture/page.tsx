@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +27,8 @@ const formSchema = z.object({
   tipoNegocio: z.enum(['fisico', 'en-linea', 'ambos'], { required_error: 'Debes seleccionar un tipo de negocio.' }),
   capitalInicial: z.string().optional(),
   experienciaPrevia: z.string().optional(),
+  tieneInsumos: z.enum(['si', 'no'], { required_error: 'Debes seleccionar si tienes insumos.' }),
+  insumosDetalle: z.string().optional(),
   publicoObjetivo: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Tienes que seleccionar al menos un público objetivo.',
   }),
@@ -37,14 +40,21 @@ const formSchema = z.object({
   competencia: z.string().optional(),
   disponibilidadTiempo: z.enum(['menos-20', '20-40', 'mas-40'], { required_error: 'Debes seleccionar tu disponibilidad de tiempo.' }),
 }).refine(data => {
-    // Si 'Otro' está seleccionado en publicoObjetivo, entonces otroPublico no debe estar vacío.
     if (data.publicoObjetivo.includes('Otro') && (!data.otroPublico || data.otroPublico.trim() === '')) {
         return false;
     }
     return true;
 }, {
     message: 'Debes especificar el otro público objetivo.',
-    path: ['otroPublico'], // Asocia el error con el campo 'otroPublico'.
+    path: ['otroPublico'],
+}).refine(data => {
+    if (data.tieneInsumos === 'si' && (!data.insumosDetalle || data.insumosDetalle.trim() === '')) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Debes detallar los insumos que ya tienes.',
+    path: ['insumosDetalle'],
 });
 
 
@@ -74,20 +84,24 @@ export default function NewVenturePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
         idea: '',
-        publicoObjetivo: [],
-        objetivoPrincipal: [],
+        tipoNegocio: 'fisico',
         capitalInicial: '',
         experienciaPrevia: '',
+        tieneInsumos: 'no',
+        insumosDetalle: '',
+        publicoObjetivo: ['🤔 No estoy seguro'],
+        objetivoPrincipal: ['Conseguir mis primeros clientes'],
         otroPublico: '',
         ubicacionNegocio: '',
         competencia: '',
+        disponibilidadTiempo: '20-40',
     },
   });
 
   const publicoObjetivoValue = form.watch('publicoObjetivo');
+  const tieneInsumosValue = form.watch('tieneInsumos');
 
   function onSubmit(data: FormValues) {
-    // Combine 'otroPublico' into the main publicoObjetivo string if present
     const publicoFinal = data.publicoObjetivo
       .filter(p => p !== 'Otro')
       .concat(data.otroPublico && data.otroPublico.trim() !== '' ? [data.otroPublico] : [])
@@ -98,16 +112,16 @@ export default function NewVenturePage() {
         tipoNegocio: data.tipoNegocio,
         capitalInicial: data.capitalInicial || 'No especificado',
         experienciaPrevia: data.experienciaPrevia || 'No especificada',
+        tieneInsumos: data.tieneInsumos,
+        insumosDetalle: data.insumosDetalle || '',
         publicoObjetivo: publicoFinal,
         objetivoPrincipal: data.objetivoPrincipal.join(', '),
-        // The original `necesidad` field is gone, we'll map `idea` to it for the AI flow.
         necesidad: data.idea, 
         ubicacionNegocio: data.ubicacionNegocio || 'No especificada',
         competencia: data.competencia || 'No especificada',
         disponibilidadTiempo: data.disponibilidadTiempo,
     };
     
-    // Save the entire business profile to localStorage for other modules to use
     localStorage.setItem('businessProfile', JSON.stringify({ ...data, publicoObjetivo: publicoFinal }));
 
     const params = new URLSearchParams(transformedData);
@@ -133,7 +147,7 @@ export default function NewVenturePage() {
                             name="idea"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">1. 👉 ¿Cuál es tu idea de emprendimiento?</FormLabel>
+                                <FormLabel className="text-lg font-semibold">1. ¿Cuál es tu idea de emprendimiento?</FormLabel>
                                 <FormControl>
                                     <Textarea placeholder="Ej: Una cafetería de especialidad con temática de libros..." {...field} />
                                 </FormControl>
@@ -174,7 +188,7 @@ export default function NewVenturePage() {
                             name="capitalInicial"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">3. ¿Cuál es tu capital inicial aproximado en MXN? (Opcional)</FormLabel>
+                                <FormLabel className="text-lg font-semibold">3. ¿Cuál es tu capital inicial aproximado en MXN?</FormLabel>
                                 <FormControl>
                                     <Input placeholder="Ej: $15,000 MXN" {...field} />
                                 </FormControl>
@@ -188,7 +202,7 @@ export default function NewVenturePage() {
                             name="experienciaPrevia"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">4. ¿Tienes alguna experiencia previa en el emprendimiento? (Opcional)</FormLabel>
+                                <FormLabel className="text-lg font-semibold">4. ¿Tienes alguna experiencia previa en el emprendimiento?</FormLabel>
                                 <FormControl>
                                     <Textarea placeholder="Ej: Trabajé en una cafetería por 2 años, he vendido postres por redes sociales, etc." {...field} />
                                 </FormControl>
@@ -197,9 +211,40 @@ export default function NewVenturePage() {
                             )}
                         />
 
+                        <FormField
+                            control={form.control}
+                            name="tieneInsumos"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                <FormLabel className="text-lg font-semibold">5. ¿Tienes insumos ya destinados para este emprendimiento?</FormLabel>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="si" /></FormControl>
+                                        <FormLabel className="font-normal">Sí</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="no" /></FormControl>
+                                        <FormLabel className="font-normal">No</FormLabel>
+                                    </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                {tieneInsumosValue === 'si' && (
+                                    <FormField control={form.control} name="insumosDetalle" render={({ field }) => (
+                                        <FormItem className="pl-7 pt-2">
+                                            <FormControl><Textarea placeholder="Ej: Máquina de espresso, un local pequeño, 10kg de café, etc." {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                )}
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         <FormField control={form.control} name="publicoObjetivo" render={() => (
                             <FormItem>
-                                <FormLabel className="text-lg font-semibold">5. Público objetivo</FormLabel>
+                                <FormLabel className="text-lg font-semibold">6. Público objetivo</FormLabel>
                                 <div className="space-y-2">
                                 {publicoObjetivoOptions.map((item) => (
                                     <FormField key={item.id} control={form.control} name="publicoObjetivo" render={({ field }) => (
@@ -213,6 +258,7 @@ export default function NewVenturePage() {
                                      <FormField control={form.control} name="otroPublico" render={({ field }) => (
                                         <FormItem className="pl-7 pt-2">
                                             <FormControl><Input placeholder="Por favor, especifica" {...field} /></FormControl>
+                                            <FormMessage />
                                         </FormItem>
                                     )} />
                                 )}
@@ -223,7 +269,7 @@ export default function NewVenturePage() {
                         
                         <FormField control={form.control} name="objetivoPrincipal" render={() => (
                             <FormItem>
-                                <FormLabel className="text-lg font-semibold">6. Objetivo principal</FormLabel>
+                                <FormLabel className="text-lg font-semibold">7. Objetivo principal</FormLabel>
                                 <div className="space-y-2">
                                 {objetivoPrincipalOptions.map((item) => (
                                     <FormField key={item.id} control={form.control} name="objetivoPrincipal" render={({ field }) => (
@@ -243,7 +289,7 @@ export default function NewVenturePage() {
                             name="ubicacionNegocio"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">7. ¿Dónde has pensado establecer tu negocio? (Opcional)</FormLabel>
+                                <FormLabel className="text-lg font-semibold">8. ¿Dónde has pensado establecer tu negocio?</FormLabel>
                                 <FormControl>
                                     <Input placeholder="Ej: Colonia Roma, CDMX" {...field} />
                                 </FormControl>
@@ -257,7 +303,7 @@ export default function NewVenturePage() {
                             name="competencia"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel className="text-lg font-semibold">8. ¿Conoces algún negocio parecido al tuyo? (Opcional)</FormLabel>
+                                <FormLabel className="text-lg font-semibold">9. ¿Conoces algún negocio parecido al tuyo?</FormLabel>
                                 <FormControl>
                                     <Textarea placeholder="Ej: Starbucks, o cafeterías locales como 'El Jarocho'" {...field} />
                                 </FormControl>
@@ -271,7 +317,7 @@ export default function NewVenturePage() {
                             name="disponibilidadTiempo"
                             render={({ field }) => (
                                 <FormItem className="space-y-3">
-                                <FormLabel className="text-lg font-semibold">9. Disponibilidad de tiempo</FormLabel>
+                                <FormLabel className="text-lg font-semibold">10. Disponibilidad de tiempo</FormLabel>
                                 <FormControl>
                                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
                                     <FormItem className="flex items-center space-x-3 space-y-0">
