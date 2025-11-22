@@ -37,8 +37,12 @@ const ViabilityAnalysisSchema = z.object({
     }).describe('A SWOT analysis of the business idea.'),
     viability: z.object({
         level: z.enum(['Verde', 'Amarillo', 'Rojo']).describe('The viability traffic light level.'),
-        feedback: z.string().describe('A summary explaining the viability level and suggesting next steps or improvements.'),
-    }).describe('The viability summary with a traffic light indicator.'),
+        phrase: z.string().max(80).describe('A brief phrase summarizing the viability level.'),
+        reasons: z.array(z.string().max(120)).describe('A list of 2-3 reasons for the given viability level.'),
+        nextSteps: z.array(z.string().max(120)).describe('A list of 2 concrete next steps for the user.'),
+        howToGetToGreen: z.array(z.string().max(120)).describe('A list of 2-3 actions to improve or maintain viability.'),
+        alternatives: z.array(z.string().max(120)).optional().describe('A list of 2 pivot ideas, only if the level is "Rojo".'),
+    }).describe('The viability summary with a traffic light indicator and actionable steps.'),
 });
 
 const AnalyzeBusinessIdeaOutputSchema = z.object({
@@ -77,12 +81,30 @@ const analyzeBusinessIdeaPrompt = ai.definePrompt({
 
     1.  **Comment on the idea:** Provide a quick, insightful commentary.
     2.  **SWOT Analysis:** Generate 2-3 bullet points for each category (Strengths, Weaknesses, Opportunities, Threats). Crucially, if the user already has supplies (tieneInsumos is "si"), list this as a key Strength and consider it when analyzing weaknesses related to initial investment.
-    3.  **Viability Summary:** Assign a traffic light status and provide feedback.
-        - 🟢 **Verde:** "Idea viable con ajustes mínimos." Explain why it's strong.
-        - 🟡 **Amarillo:** "Idea viable, pero requiere mejorar en X puntos." Explain the key areas that need work.
-        - 🔴 **Rojo:** "Idea con baja viabilidad." Be honest about the core issues and suggest potential pivots or alternative approaches.
+    3.  **Viability Summary:** Assign a traffic light status and provide feedback following these strict rules:
 
-    Structure your response strictly as a JSON object matching the defined output schema.
+        **For 🟢 Verde:**
+        - **phrase:** "Viable; solo ajustes menores."
+        - **reasons:** 2-3 reasons why it's a strong idea.
+        - **nextSteps:** 2 concrete next steps.
+        - **howToGetToGreen:** Title must be "Cómo mantenerlo en verde". Provide 2 consolidation actions (e.g., "Definir un canal de venta principal y probar precios", "Crear un perfil de Instagram y publicar 3 veces por semana").
+        - **alternatives:** MUST be an empty array.
+
+        **For 🟡 Amarillo:**
+        - **phrase:** "Prometedor; requiere mejorar puntos clave."
+        - **reasons:** 2-3 reasons explaining the potential and the risks.
+        - **nextSteps:** 2 concrete next steps.
+        - **howToGetToGreen:** Title must be "Cómo llegar a verde". Provide 2-3 concrete, measurable actions (e.g., "Validar el problema con 10 entrevistas a clientes potenciales", "Lanzar una prueba piloto de 1 semana con un producto básico").
+        - **alternatives:** MUST be an empty array.
+
+        **For 🔴 Rojo:**
+        - **phrase:** "Baja viabilidad hoy; indica bloqueos principales."
+        - **reasons:** 2-3 reasons explaining the main blockers (e.g., market saturation, high costs).
+        - **nextSteps:** 2 next steps focused on validating the most critical assumption.
+        - **howToGetToGreen:** Title must be "Cómo llegar a verde". Provide 2-3 minimal actions to clear the biggest risk.
+        - **alternatives:** Provide 2 realistic pivot ideas (e.g., "Enfocarse en un nicho más pequeño, como 'café para oficinas'", "Cambiar el canal de venta a marketplaces como Amazon").
+
+    Structure your response strictly as a JSON object matching the defined output schema. Do not add any text before or after the JSON object.
     `,
 });
 

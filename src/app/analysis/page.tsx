@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { Suspense, useState, useEffect, useMemo } from 'react';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lightbulb, ArrowRight, RefreshCw, Loader2, Bot, Milestone, BrainCircuit, ShieldAlert, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { Lightbulb, ArrowRight, RefreshCw, Loader2, Bot, Milestone, BrainCircuit, ShieldAlert, CheckCircle, AlertCircle, XCircle, BarChart, ListTodo, Star, Goal, AlertTriangle } from 'lucide-react';
 import { analyzeBusinessIdea, type AnalyzeBusinessIdeaInput, type AnalyzeBusinessIdeaOutput } from '@/ai/flows/analyze-business-idea';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -81,6 +82,8 @@ function AnalysisPageContent() {
       return formData;
   }, [formData]);
 
+  const viabilityData = analysisResult?.analysis.viability;
+
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
@@ -135,7 +138,7 @@ function AnalysisPageContent() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h3 className="font-semibold mb-2">Análisis FODA</h3>
+                            <h3 className="font-semibold mb-2 flex items-center gap-2"><BarChart className="h-5 w-5"/>Análisis FODA</h3>
                             <div className="space-y-3">
                                 <div className="space-y-1">
                                     <h4 className="text-sm font-medium text-green-500">Fortalezas</h4>
@@ -155,16 +158,60 @@ function AnalysisPageContent() {
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <h3 className="font-semibold mb-2">Semáforo de Viabilidad</h3>
-                             <Alert className={`border-${analysisResult.analysis.viability.level.toLowerCase()}-500/50`}>
+                        <div className="space-y-4">
+                            <h3 className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5"/>Semáforo de Viabilidad</h3>
+                             <Alert className={`border-${viabilityData.level.toLowerCase()}-500/50`}>
                                 <div className="flex items-center gap-2">
-                                    {getViabilityIcon(analysisResult.analysis.viability.level)}
-                                    <AlertTitle className="font-bold text-lg">Nivel: {analysisResult.analysis.viability.level}</AlertTitle>
+                                    {getViabilityIcon(viabilityData.level)}
+                                    <AlertTitle className="font-bold text-lg">{viabilityData.level}: <span className="font-normal">{viabilityData.phrase}</span></AlertTitle>
                                 </div>
-                                <AlertDescription className="pt-2 text-muted-foreground">{analysisResult.analysis.viability.feedback}</AlertDescription>
                             </Alert>
+                             <Card className="bg-secondary/50">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><ListTodo className="h-4 w-4"/>Razones</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {viabilityData.reasons.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
+                             <Card className="bg-secondary/50">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><Star className="h-4 w-4"/>Próximos Pasos</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {viabilityData.nextSteps.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
                         </div>
+                    </div>
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>{viabilityData.level === 'Verde' ? "Cómo Mantenerlo en Verde" : "Cómo Llegar a Verde"}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                    {viabilityData.howToGetToGreen.map((item, i) => <li key={i}>{item}</li>)}
+                                </ol>
+                            </CardContent>
+                        </Card>
+                        {viabilityData.level === 'Rojo' && viabilityData.alternatives && viabilityData.alternatives.length > 0 && (
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>Alternativas Dentro del Giro</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {viabilityData.alternatives.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                     
                     <Separator className="my-6" />
