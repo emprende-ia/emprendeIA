@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowRight, RefreshCw, Loader2, Bot, Milestone, BrainCircuit, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { RefreshCw, Loader2, Bot, Milestone, BrainCircuit, CheckCircle, AlertCircle, XCircle, BarChart, ListTodo, Star, Goal, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { analyzeExistingBusiness, type AnalyzeExistingBusinessInput, type AnalyzeExistingBusinessOutput } from '@/ai/flows/analyze-existing-business';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -69,6 +69,8 @@ function ExistingAnalysisPageContent() {
     }
   };
 
+  const growthViabilityData = analysisResult?.analysis.growthViability;
+
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
       <div className="w-full max-w-4xl space-y-8">
@@ -100,17 +102,17 @@ function ExistingAnalysisPageContent() {
                     ) : (
                         <>
                             <BrainCircuit className="mr-2 h-5 w-5" />
-                            Evaluar Potencial de Negocio
+                            Evaluar Potencial de Crecimiento
                         </>
                     )}
                 </Button>
             </div>
         )}
 
-        {analysisResult && (
+        {analysisResult && growthViabilityData && (
             <Card className="shadow-2xl animate-in fade-in-50 slide-in-from-bottom-5 duration-500">
                 <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Análisis de Potencial</CardTitle>
+                    <CardTitle className="font-headline text-3xl">Análisis de Potencial de Crecimiento</CardTitle>
                     <CardDescription>La IA ha analizado tu negocio. Aquí están los resultados.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -122,7 +124,7 @@ function ExistingAnalysisPageContent() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h3 className="font-semibold mb-2">Análisis FODA</h3>
+                            <h3 className="font-semibold mb-2 flex items-center gap-2"><BarChart className="h-5 w-5"/>Análisis FODA</h3>
                             <div className="space-y-3">
                                 <div className="space-y-1">
                                     <h4 className="text-sm font-medium text-green-500">Fortalezas</h4>
@@ -142,22 +144,66 @@ function ExistingAnalysisPageContent() {
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <h3 className="font-semibold mb-2">Semáforo de Crecimiento</h3>
-                             <Alert className={`border-${analysisResult.analysis.growthViability.level.toLowerCase()}-500/50`}>
+                        <div className="space-y-4">
+                            <h3 className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5"/>Semáforo de Crecimiento</h3>
+                             <Alert className={`border-${growthViabilityData.level.toLowerCase()}-500/50`}>
                                 <div className="flex items-center gap-2">
-                                    {getViabilityIcon(analysisResult.analysis.growthViability.level)}
-                                    <AlertTitle className="font-bold text-lg">Nivel: {analysisResult.analysis.growthViability.level}</AlertTitle>
+                                    {getViabilityIcon(growthViabilityData.level)}
+                                    <AlertTitle className="font-bold text-lg">{growthViabilityData.level}: <span className="font-normal">{growthViabilityData.phrase}</span></AlertTitle>
                                 </div>
-                                <AlertDescription className="pt-2 text-muted-foreground">{analysisResult.analysis.growthViability.feedback}</AlertDescription>
                             </Alert>
+                             <Card className="bg-secondary/50">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><ListTodo className="h-4 w-4"/>Razones</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {growthViabilityData.reasons.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
+                             <Card className="bg-secondary/50">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><Star className="h-4 w-4"/>Próximos Pasos</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {growthViabilityData.nextSteps.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
-                    
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>{growthViabilityData.level === 'Verde' ? "Cómo Acelerar el Crecimiento" : "Cómo Estabilizar/Pasar a Crecimiento"}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                    {growthViabilityData.howToGetToGreen.map((item, i) => <li key={i}>{item}</li>)}
+                                </ol>
+                            </CardContent>
+                        </Card>
+                        {growthViabilityData.level === 'Rojo' && growthViabilityData.alternatives && growthViabilityData.alternatives.length > 0 && (
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>Alternativas Estratégicas</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {growthViabilityData.alternatives.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+
                     <Separator className="my-6" />
 
                     <div className="text-center p-4 bg-secondary rounded-lg">
-                        <p className="font-semibold mb-4">{analysisResult.analysis.recommendation}</p>
+                        <p className="font-semibold mb-4 text-base">{analysisResult.analysis.recommendation}</p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Button onClick={() => router.push('/dashboard')} size="lg">
                                 <Milestone className="mr-2 h-5 w-5" />
@@ -188,5 +234,3 @@ export default function ExistingAnalysisPage() {
         </Suspense>
     )
 }
-
-    
