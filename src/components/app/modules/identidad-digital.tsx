@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2, Download } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
@@ -17,6 +18,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
+import { useUser, useFirestore } from '@/firebase';
+import { saveBrandIdentity, getBrandIdentity, BrandIdentity } from '@/lib/firestore/identity';
+
 
 const identityFormSchema = z.object({
   businessDescription: z.string().min(10, {
@@ -35,16 +39,20 @@ const moduleIntroductionText = "Bienvenido a Identidad Digital. Aquí crearemos 
 const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 
 export function IdentidadDigitalModule() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
+  
   const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
   const [generatedImage, setGeneratedImage] = useState<GenerateOptimizedImageOutput | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
+  
   const [isOpen, setIsOpen] = useState(false);
   const [logoPrompt, setLogoPrompt] = useState<string>('');
   
-  // State for individual loading
   const [isRegeneratingName, setIsRegeneratingName] = useState(false);
   const [isRegeneratingSlogan, setIsRegeneratingSlogan] = useState(false);
   const [isRegeneratingLogoPrompt, setIsRegeneratingLogoPrompt] = useState(false);
@@ -52,12 +60,36 @@ export function IdentidadDigitalModule() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // On module open, check if audio is already in localStorage
     if (isOpen) {
+        // Load intro audio from cache if available
         const cachedAudio = localStorage.getItem(AUDIO_CACHE_KEY);
         if (cachedAudio) {
             setGeneratedAudio(cachedAudio);
         }
+
+        // Load existing identity from Firestore if user is logged in
+        if(user && firestore) {
+          const unsubscribe = getBrandIdentity(firestore, user.uid, (identity) => {
+            if (identity) {
+              setIdentityResult(identity);
+              setGeneratedImage(identity.logoUrl ? { imageUrl: identity.logoUrl, optimizedPrompt: identity.logoPrompt || '' } : null);
+              brandForm.reset({ brandName: identity.brandName, slogan: identity.slogan });
+              setLogoPrompt(identity.logoPrompt || '');
+            }
+          });
+          return () => unsubscribe();
+        } else {
+          // Fallback to localStorage for guest users
+          const savedIdentity = localStorage.getItem('brandIdentity');
+          if (savedIdentity) {
+            const parsed = JSON.parse(savedIdentity);
+            setIdentityResult(parsed);
+            brandForm.reset({ brandName: parsed.brandName, slogan: parsed.slogan });
+            setLogoPrompt(parsed.logoPrompt);
+          }
+        }
+        
+        // Pre-fill business description from profile
         const savedProfile = localStorage.getItem('businessProfile');
         if (savedProfile) {
             try {
@@ -68,7 +100,7 @@ export function IdentidadDigitalModule() {
             }
         }
     }
-  }, [isOpen]);
+  }, [isOpen, user, firestore]);
 
   const businessForm = useForm<IdentityFormValues>({
     resolver: zodResolver(identityFormSchema),
@@ -87,7 +119,6 @@ export function IdentidadDigitalModule() {
     try {
         const { audioUrl } = await generateModuleAudio({ textToSpeak: moduleIntroductionText });
         setGeneratedAudio(audioUrl);
-        // Save the generated audio to localStorage to avoid re-generating
         localStorage.setItem(AUDIO_CACHE_KEY, audioUrl);
     } catch (e) {
         console.error(e);
@@ -155,12 +186,11 @@ export function IdentidadDigitalModule() {
     
     setIsRegeneratingLogoPrompt(true);
     try {
-        // We call the main flow again, but only use the logoPrompt from its result.
         const result = await generateDigitalIdentity({ 
             businessDescription: `${businessDescription} The brand name is '${brandName}' and the slogan is '${slogan}'`
         });
         setLogoPrompt(result.logoPrompt);
-        brandForm.reset(brandForm.getValues()); // Resets dirty state
+        brandForm.reset(brandForm.getValues());
         toast({ title: "Idea para logo actualizada" });
     } catch (e) {
         toast({ title: "Error al actualizar la idea para el logo", variant: "destructive" });
@@ -196,28 +226,40 @@ export function IdentidadDigitalModule() {
   };
 
   const handleApplyIdentity = () => {
-    if (identityResult) {
-      const currentBrandName = brandForm.getValues('brandName');
-      const finalIdentity = {
-          ...identityResult,
-          brandName: currentBrandName
-      };
-      localStorage.setItem('brandIdentity', JSON.stringify(finalIdentity));
-      toast({
-        title: '¡Identidad Aplicada!',
-        description: 'Tu panel de control ahora refleja tu nueva marca. Refresca la página para ver los cambios.',
-      });
-      window.location.reload();
+    if (!identityResult) return;
+    const identityToSave: BrandIdentity = {
+      ...identityResult,
+      brandName: brandForm.getValues('brandName'),
+      slogan: brandForm.getValues('slogan'),
+      logoPrompt: logoPrompt,
+      logoUrl: generatedImage?.imageUrl || null,
+    };
+    
+    if (user && firestore) {
+        saveBrandIdentity(firestore, user.uid, identityToSave);
+        toast({
+            title: '¡Identidad Sincronizada!',
+            description: 'Tu marca se ha guardado en tu cuenta.',
+        });
+    } else {
+        localStorage.setItem('brandIdentity', JSON.stringify(identityToSave));
+        toast({
+            title: '¡Identidad Guardada!',
+            description: 'Tu marca se ha guardado en este dispositivo.',
+        });
     }
+    setIsOpen(false);
   };
 
-  const handleResetIdentity = () => {
-    localStorage.removeItem('brandIdentity');
-    toast({
-        title: 'Identidad Restaurada',
-        description: 'Se ha restaurado la identidad por defecto.',
-    });
-    window.location.reload();
+  const handleDownloadLogo = () => {
+    if (!generatedImage?.imageUrl) return;
+    const link = document.createElement('a');
+    link.href = generatedImage.imageUrl;
+    const brandName = brandForm.getValues('brandName') || 'logo';
+    link.download = `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
   
   const handleOpenChange = (open: boolean) => {
@@ -227,11 +269,8 @@ export function IdentidadDigitalModule() {
       brandForm.reset();
       setIdentityResult(null);
       setGeneratedImage(null);
-      // Do not clear audio, it's cached.
-      // setGeneratedAudio(null);
       setIsIdentityLoading(false);
       setIsImageLoading(false);
-      // setIsAudioLoading(false);
       setLogoPrompt('');
     }
   }
@@ -249,18 +288,6 @@ export function IdentidadDigitalModule() {
                     <DialogDescription>
                         Describe tu negocio y la IA creará un nombre, eslogan, paleta de colores y hasta un borrador de tu logo.
                     </DialogDescription>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                    {identityResult && (
-                        <Button onClick={handleApplyIdentity} size="sm">
-                            <Heart className="mr-2 h-4 w-4" />
-                            Quiero que esta sea mi identidad
-                        </Button>
-                    )}
-                    <Button onClick={handleResetIdentity} size="sm" variant="destructive" >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Restaurar Identidad
-                    </Button>
                 </div>
             </div>
         </DialogHeader>
@@ -311,14 +338,20 @@ export function IdentidadDigitalModule() {
                      <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
-                        <AlertDescription className="text-muted-foreground">Puedes editar o regenerar cualquier elemento para ajustarlo a tu gusto.</AlertDescription>
+                        <AlertDescription className="text-muted-foreground">Puedes editar, regenerar y guardar los elementos para sincronizarlos con tu cuenta.</AlertDescription>
                     </Alert>
 
                     {generatedImage ? (
                         <Card className="overflow-hidden">
                             <CardContent className="p-0">
-                                <div className="aspect-video bg-muted flex items-center justify-center">
+                                <div className="aspect-video bg-muted flex items-center justify-center relative group">
                                     <Image src={generatedImage.imageUrl} alt="Logo generado por IA" width={512} height={288} className="object-contain"/>
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button onClick={handleDownloadLogo}>
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Descargar Logo
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="flex">
                                     {identityResult.colorPalette.map(color => (
@@ -424,6 +457,12 @@ export function IdentidadDigitalModule() {
                 </div>
             )}
         </div>
+        <DialogFooter className="border-t pt-4">
+            <Button onClick={handleApplyIdentity} size="lg">
+                <Heart className="mr-2 h-4 w-4" />
+                Guardar y Sincronizar Identidad
+            </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

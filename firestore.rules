@@ -10,6 +10,7 @@
  *   - /users/{userId}/learningPaths/{pathId}: Private learning paths saved by each user.
  *   - /users/{userId}/marketingCampaigns/{campaignId}: Private marketing campaigns saved by each user.
  *   - /users/{userId}/notes/{noteId}: Private notes for each user.
+ *   - /users/{userId}/brandIdentity/main: Private brand identity for each user.
  * @key-security-decisions
  *   - User listing is disallowed to protect privacy.
  *   - Supplier data is publicly readable.
@@ -120,6 +121,18 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow get, list: if isOwner(userId);
       allow update, delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for their brand identity document.
+     * @path /users/{userId}/brandIdentity/main
+     * @allow (read, create, update): The user can manage their own brand identity if the userId matches their auth UID.
+     * @deny (delete): Deletion is disallowed to prevent accidental loss of brand data.
+     * @principle Enforces strict user-ownership for a singleton brand identity document.
+     */
+    match /users/{userId}/brandIdentity/main {
+        allow read, create, update: if isOwner(userId);
+        allow delete: if false;
     }
 
     // --- Helper functions ---

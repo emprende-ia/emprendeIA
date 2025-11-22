@@ -155,7 +155,7 @@
       },
       "required": ["createdAt", "pathData"]
     },
-     "MarketingCampaign": {
+    "MarketingCampaign": {
       "title": "Marketing Campaign",
       "description": "An AI-generated marketing campaign plan saved by a user.",
       "type": "object",
@@ -182,6 +182,42 @@
         }
       },
       "required": ["createdAt", "campaignIdea", "campaignPlan"]
+    },
+    "BrandIdentity": {
+      "title": "Brand Identity",
+      "description": "A user's saved brand identity, including name, slogan, colors, and logo.",
+      "type": "object",
+      "properties": {
+        "brandName": {
+          "type": "string"
+        },
+        "slogan": {
+          "type": "string"
+        },
+        "colorPalette": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hex": {"type": "string"},
+              "name": {"type": "string"}
+            }
+          }
+        },
+        "logoPrompt": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "A data URI of the generated logo image."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["brandName", "slogan", "updatedAt"]
     }
   },
   "auth": {
@@ -246,6 +282,14 @@
           "entityName": "MarketingCampaign",
           "schema": { "$ref": "#/entities/MarketingCampaign" },
           "description": "Stores a user's saved marketing campaigns."
+        }
+      },
+      {
+        "path": "/users/{userId}/brandIdentity/main",
+        "definition": {
+          "entityName": "BrandIdentity",
+          "schema": { "$ref": "#/entities/BrandIdentity" },
+          "description": "Stores the user's primary brand identity."
         }
       }
     ]

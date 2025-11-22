@@ -3,7 +3,7 @@
 
 import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -22,29 +22,43 @@ import Image from 'next/image';
 import { SettingsMenu } from './settings-menu';
 import { NotesModule } from './modules/notes-module';
 import { LuminarAssistantModule } from './modules/luminar-assistant';
+import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import { Loader2 } from 'lucide-react';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
-  const [brandName, setBrandName] = useState("EmprendeIA");
-  const [logoUrl, setLogoUrl] = useState("https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png");
+
+  const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
+  const [isIdentityLoading, setIsIdentityLoading] = useState(true);
+
+  const brandName = brandIdentity?.brandName || "EmprendeIA";
+  const logoUrl = brandIdentity?.logoUrl || "https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png";
 
 
   useEffect(() => {
-    // Apply theme from localStorage on client-side
-    const savedIdentity = localStorage.getItem('brandIdentity');
-    if (savedIdentity) {
-      try {
-        const { brandName: savedBrandName } = JSON.parse(savedIdentity);
-        if (savedBrandName) {
-          setBrandName(savedBrandName);
+    if (user && firestore) {
+      setIsIdentityLoading(true);
+      const unsubscribe = getBrandIdentity(firestore, user.uid, (identity) => {
+        setBrandIdentity(identity);
+        setIsIdentityLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // If no user, check localStorage for a guest identity
+      const savedIdentity = localStorage.getItem('brandIdentity');
+      if (savedIdentity) {
+        try {
+          setBrandIdentity(JSON.parse(savedIdentity));
+        } catch (e) {
+          console.error("Failed to parse brand identity from localStorage", e);
         }
-      } catch (e) {
-        console.error("Failed to parse brand identity from localStorage", e);
       }
+      setIsIdentityLoading(false);
     }
-  }, []);
+  }, [user, firestore]);
 
   const handleLogout = async () => {
     if (auth) {
@@ -62,7 +76,11 @@ export function AppHeader() {
   return (
     <header className="relative flex w-full items-center justify-between">
       <Link href="/start" className="flex items-center gap-3">
-        <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="rounded-full object-cover drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+        {isIdentityLoading ? (
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        ) : (
+            <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="rounded-full object-cover drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+        )}
         <div>
             <h1 className="font-headline text-2xl font-bold tracking-tighter text-foreground sm:text-3xl">
             {brandName}
