@@ -1,16 +1,18 @@
 
 'use client';
 
-import React, { Suspense, useState, useEffect, useMemo } from 'react';
+import React, { Suspense, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lightbulb, ArrowRight, RefreshCw, Loader2, Bot, Milestone, BrainCircuit, ShieldAlert, CheckCircle, AlertCircle, XCircle, BarChart, ListTodo, Star, Goal, AlertTriangle } from 'lucide-react';
+import { Lightbulb, RefreshCw, Loader2, Bot, Milestone, BrainCircuit, ShieldAlert, CheckCircle, AlertCircle, XCircle, BarChart, ListTodo, Star, Goal, AlertTriangle, ShoppingCart, Info } from 'lucide-react';
 import { analyzeBusinessIdea, type AnalyzeBusinessIdeaInput, type AnalyzeBusinessIdeaOutput } from '@/ai/flows/analyze-business-idea';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const labelMapping: Record<string, string> = {
     idea: 'Tu Idea',
@@ -23,11 +25,14 @@ const labelMapping: Record<string, string> = {
     competencia: 'Competencia',
     disponibilidadTiempo: 'Disponibilidad de Tiempo',
     ubicacionNegocio: 'Ubicación del Negocio',
+    tieneInsumos: '¿Ya tienes insumos?',
+    insumosDetalle: 'Detalle de Insumos',
 };
 
 const valueMapping: Record<string, Record<string, string>> = {
     'tipoNegocio': { 'fisico': 'Físico', 'en-linea': 'En Línea', 'ambos': 'Ambos' },
     'disponibilidadTiempo': { 'menos-20': 'Menos de 20h/semana', '20-40': '20-40h/semana', 'mas-40': 'Más de 40h/semana' },
+    'tieneInsumos': { 'si': 'Sí', 'no': 'No' },
 };
 
 function AnalysisPageContent() {
@@ -41,7 +46,7 @@ function AnalysisPageContent() {
   const formData = useMemo(() => {
     const data: Record<string, string> = {};
     for (const [key, value] of searchParams.entries()) {
-      data[key] = value;
+      if (value) data[key] = value;
     }
     return data as unknown as AnalyzeBusinessIdeaInput;
   }, [searchParams]);
@@ -72,6 +77,15 @@ function AnalysisPageContent() {
       default: return <Bot className="h-5 w-5" />;
     }
   };
+
+  const getPriorityBadgeVariant = (priority: 'Alta' | 'Media' | 'Baja'): "destructive" | "secondary" | "outline" => {
+    switch (priority) {
+      case 'Alta': return 'destructive';
+      case 'Media': return 'secondary';
+      case 'Baja': return 'outline';
+      default: return 'outline';
+    }
+  }
   
   // Filter out 'necesidad' from the display data if it's the same as 'idea'
   const displayFormData = useMemo(() => {
@@ -83,25 +97,29 @@ function AnalysisPageContent() {
   }, [formData]);
 
   const viabilityData = analysisResult?.analysis.viability;
+  const costData = analysisResult?.analysis.costAnalysis;
 
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
-      <div className="w-full max-w-4xl space-y-8">
+      <div className="w-full max-w-5xl space-y-8">
         <Card className="shadow-2xl">
           <CardHeader>
             <CardTitle className="font-headline text-3xl">Confirmación de Perfil</CardTitle>
             <CardDescription>Este es el resumen de tu idea de negocio. Revisa que todo esté correcto.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {Object.entries(displayFormData).map(([key, value]) => (
-                <div key={key} className="flex flex-col rounded-lg bg-secondary/50 p-3">
-                    <span className="font-semibold text-muted-foreground">{labelMapping[key] || key}</span>
-                    <span className="text-foreground">
-                        {valueMapping[key]?.[value as string] || (value as string).split(',').map(v => v.trim()).join(', ')}
-                    </span>
-                </div>
-            ))}
+            {Object.entries(displayFormData).map(([key, value]) => {
+                if (!value) return null; // Don't render empty optional fields
+                return (
+                    <div key={key} className="flex flex-col rounded-lg bg-secondary/50 p-3">
+                        <span className="font-semibold text-muted-foreground">{labelMapping[key] || key}</span>
+                        <span className="text-foreground">
+                            {valueMapping[key]?.[value as string] || (value as string).split(',').map(v => v.trim()).join(', ')}
+                        </span>
+                    </div>
+                )
+            })}
           </CardContent>
         </Card>
         
@@ -136,7 +154,7 @@ function AnalysisPageContent() {
                         <AlertDescription className="text-muted-foreground">{analysisResult.analysis.comment}</AlertDescription>
                     </Alert>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
                             <h3 className="font-semibold mb-2 flex items-center gap-2"><BarChart className="h-5 w-5"/>Análisis FODA</h3>
                             <div className="space-y-3">
@@ -158,61 +176,104 @@ function AnalysisPageContent() {
                                 </div>
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <h3 className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5"/>Semáforo de Viabilidad</h3>
-                             <Alert className={`border-${viabilityData.level.toLowerCase()}-500/50`}>
-                                <div className="flex items-center gap-2">
-                                    {getViabilityIcon(viabilityData.level)}
-                                    <AlertTitle className="font-bold text-lg">{viabilityData.level}: <span className="font-normal">{viabilityData.phrase}</span></AlertTitle>
-                                </div>
-                            </Alert>
-                             <Card className="bg-secondary/50">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><ListTodo className="h-4 w-4"/>Razones</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-                                        {viabilityData.reasons.map((item, i) => <li key={i}>{item}</li>)}
-                                    </ol>
-                                </CardContent>
-                            </Card>
-                             <Card className="bg-secondary/50">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><Star className="h-4 w-4"/>Próximos Pasos</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-                                        {viabilityData.nextSteps.map((item, i) => <li key={i}>{item}</li>)}
-                                    </ol>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>{viabilityData.level === 'Verde' ? "Cómo Mantenerlo en Verde" : "Cómo Llegar a Verde"}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-                                    {viabilityData.howToGetToGreen.map((item, i) => <li key={i}>{item}</li>)}
-                                </ol>
-                            </CardContent>
-                        </Card>
-                        {viabilityData.level === 'Rojo' && viabilityData.alternatives && viabilityData.alternatives.length > 0 && (
-                            <Card>
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>Alternativas Dentro del Giro</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-                                        {viabilityData.alternatives.map((item, i) => <li key={i}>{item}</li>)}
-                                    </ol>
-                                </CardContent>
-                            </Card>
+                        {viabilityData && (
+                            <div className="space-y-4">
+                                <h3 className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5"/>Semáforo de Viabilidad</h3>
+                                <Alert className={cn(
+                                    viabilityData.level === 'Verde' && 'border-green-500/50',
+                                    viabilityData.level === 'Amarillo' && 'border-yellow-500/50',
+                                    viabilityData.level === 'Rojo' && 'border-red-500/50',
+                                )}>
+                                    <div className="flex items-center gap-2">
+                                        {getViabilityIcon(viabilityData.level)}
+                                        <AlertTitle className="font-bold text-lg">{viabilityData.level}: <span className="font-normal">{viabilityData.phrase}</span></AlertTitle>
+                                    </div>
+                                </Alert>
+                                <Card className="bg-secondary/50">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-semibold flex items-center gap-2"><ListTodo className="h-4 w-4"/>Razones</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                            {viabilityData.reasons.map((item, i) => <li key={i}>{item}</li>)}
+                                        </ol>
+                                    </CardContent>
+                                </Card>
+                                <Card className="bg-secondary/50">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-semibold flex items-center gap-2"><Star className="h-4 w-4"/>Próximos Pasos</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                            {viabilityData.nextSteps.map((item, i) => <li key={i}>{item}</li>)}
+                                        </ol>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         )}
                     </div>
+                     {viabilityData && (
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>{viabilityData.level === 'Verde' ? "Cómo Mantenerlo en Verde" : "Cómo Llegar a Verde"}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                        {viabilityData.howToGetToGreen.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ol>
+                                </CardContent>
+                            </Card>
+                            {viabilityData.level === 'Rojo' && viabilityData.alternatives && viabilityData.alternatives.length > 0 && (
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>Alternativas Dentro del Giro</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                                            {viabilityData.alternatives.map((item, i) => <li key={i}>{item}</li>)}
+                                        </ol>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
+                     )}
+
+                    {costData && (
+                        <div>
+                             <Separator className="my-6" />
+                             <h3 className="font-headline text-xl mb-4 flex items-center gap-2"><ShoppingCart /> Presupuesto de Inversión Inicial</h3>
+                             <Alert variant="default" className="mb-4">
+                                <Info className="h-4 w-4"/>
+                                <AlertTitle className="font-bold">Análisis de Inversión de la IA</AlertTitle>
+                                <AlertDescription>{costData.summary}</AlertDescription>
+                             </Alert>
+                             <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Prioridad</TableHead>
+                                            <TableHead>Insumo / Gasto</TableHead>
+                                            <TableHead>Categoría</TableHead>
+                                            <TableHead>Costo Estimado (MXN)</TableHead>
+                                            <TableHead>Justificación</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {costData.items.map((item, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell><Badge variant={getPriorityBadgeVariant(item.priority)}>{item.priority}</Badge></TableCell>
+                                                <TableCell className="font-medium">{item.item}</TableCell>
+                                                <TableCell>{item.category}</TableCell>
+                                                <TableCell>{item.costRange}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{item.justification}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                             </div>
+                        </div>
+                    )}
                     
                     <Separator className="my-6" />
 

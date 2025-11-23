@@ -37,12 +37,22 @@ const ViabilityAnalysisSchema = z.object({
     }).describe('A SWOT analysis of the business idea.'),
     viability: z.object({
         level: z.enum(['Verde', 'Amarillo', 'Rojo']).describe('The viability traffic light level.'),
-        phrase: z.string().max(80).describe('A brief phrase summarizing the viability level.'),
+        phrase: z.string().describe('A brief phrase summarizing the viability level.'),
         reasons: z.array(z.string()).describe('A list of 2-3 reasons for the given viability level.'),
         nextSteps: z.array(z.string()).describe('A list of 2 concrete next steps for the user.'),
         howToGetToGreen: z.array(z.string()).describe('A list of 2-3 actions to improve or maintain viability.'),
-        alternatives: z.array(z.string()).describe('A list of 2 pivot ideas, only if the level is "Rojo".'),
+        alternatives: z.array(z.string()).describe("A list of 2 pivot ideas, only if the level is 'Rojo'."),
     }).describe('The viability summary with a traffic light indicator and actionable steps.'),
+    costAnalysis: z.object({
+        summary: z.string().describe('A brief summary of the initial investment analysis, considering the user\'s existing supplies.'),
+        items: z.array(z.object({
+            item: z.string().describe('The specific supply or cost item.'),
+            category: z.string().describe('The category of the cost (e.g., Equipo, Materia Prima, Legales, Marketing).'),
+            priority: z.enum(['Alta', 'Media', 'Baja']).describe('Priority: Alta (essential for launch), Media (important but can be optimized), Baja (nice to have).'),
+            costRange: z.string().describe('Estimated cost range in MXN (e.g., "$5,000 - $8,000 MXN").'),
+            justification: z.string().describe('A brief explanation of why this item is needed.'),
+        })),
+    }).describe('A breakdown of estimated initial costs.'),
 });
 
 const AnalyzeBusinessIdeaOutputSchema = z.object({
@@ -77,34 +87,47 @@ const analyzeBusinessIdeaPrompt = ai.definePrompt({
     - **Time Availability:** {{{disponibilidadTiempo}}}
 
     **Your Task:**
-    Based on the profile, generate a brief but critical analysis.
+    Based on the profile, generate a comprehensive analysis covering three key areas.
 
-    1.  **Comment on the idea:** Provide a quick, insightful commentary.
-    2.  **SWOT Analysis:** Generate 2-3 bullet points for each category (Strengths, Weaknesses, Opportunities, Threats). Crucially, if the user already has supplies (tieneInsumos is "si"), list this as a key Strength and consider it when analyzing weaknesses related to initial investment.
-    3.  **Viability Summary:** Assign a traffic light status and provide feedback following these strict rules:
+    **1. General Commentary & SWOT Analysis:**
+    - **Comment:** Provide a quick, insightful commentary on the idea.
+    - **SWOT Analysis:** Generate 2-3 bullet points for each category (Strengths, Weaknesses, Opportunities, Threats). Crucially, if the user already has supplies (tieneInsumos is "si"), list this as a key Strength and mention it in the analysis.
+
+    **2. Initial Cost Analysis:**
+    - **Cost Breakdown:** Generate a list of 5-7 essential items needed to start. For each item, provide:
+        - **item:** The name of the supply/cost.
+        - **category:** (e.g., Equipo, Materia Prima, Marketing, Legales).
+        - **priority:** 'Alta' for essentials, 'Media' for important but optimizable, 'Baja' for nice-to-haves.
+        - **costRange:** A realistic estimated cost range in MXN.
+        - **justification:** A brief reason why it's needed.
+        - **IMPORTANT:** If the user mentioned having certain supplies, OMIT those from this list and mention it in the summary.
+    - **Summary:** Write a brief summary of the investment analysis, acknowledging the user's initial capital and existing supplies.
+
+    **3. Viability Summary:**
+    - Assign a traffic light status and provide feedback following these strict rules:
 
         **For 🟢 Verde:**
         - **phrase:** "Viable; solo ajustes menores."
         - **reasons:** 2-3 reasons why it's a strong idea.
         - **nextSteps:** 2 concrete next steps.
-        - **howToGetToGreen:** Title must be "Cómo mantenerlo en verde". Provide 2 consolidation actions (e.g., "Definir un canal de venta principal y probar precios", "Crear un perfil de Instagram y publicar 3 veces por semana").
+        - **howToGetToGreen:** Provide 2 consolidation actions (e.g., "Definir un canal de venta principal y probar precios", "Crear un perfil de Instagram y publicar 3 veces por semana").
         - **alternatives:** MUST be an empty array.
 
         **For 🟡 Amarillo:**
         - **phrase:** "Prometedor; requiere mejorar puntos clave."
         - **reasons:** 2-3 reasons explaining the potential and the risks.
         - **nextSteps:** 2 concrete next steps.
-        - **howToGetToGreen:** Title must be "Cómo llegar a verde". Provide 2-3 concrete, measurable actions (e.g., "Validar el problema con 10 entrevistas a clientes potenciales", "Lanzar una prueba piloto de 1 semana con un producto básico").
+        - **howToGetToGreen:** Provide 2-3 concrete, measurable actions (e.g., "Validar el problema con 10 entrevistas a clientes potenciales", "Lanzar una prueba piloto de 1 semana con un producto básico").
         - **alternatives:** MUST be an empty array.
 
         **For 🔴 Rojo:**
         - **phrase:** "Baja viabilidad hoy; indica bloqueos principales."
         - **reasons:** 2-3 reasons explaining the main blockers (e.g., market saturation, high costs).
         - **nextSteps:** 2 next steps focused on validating the most critical assumption.
-        - **howToGetToGreen:** Title must be "Cómo llegar a verde". Provide 2-3 minimal actions to clear the biggest risk.
+        - **howToGetToGreen:** Provide 2-3 minimal actions to clear the biggest risk.
         - **alternatives:** Provide 2 realistic pivot ideas (e.g., "Enfocarse en un nicho más pequeño, como 'café para oficinas'", "Cambiar el canal de venta a marketplaces como Amazon").
 
-    Structure your response strictly as a JSON object matching the defined output schema. Do not add any text before or after the JSON object.
+    Structure your entire response strictly as a single JSON object matching the defined output schema. Do not add any text before or after the JSON object.
     `,
 });
 
