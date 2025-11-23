@@ -87,7 +87,6 @@ function AnalysisPageContent() {
     }
   }
   
-  // Filter out 'necesidad' from the display data if it's the same as 'idea'
   const displayFormData = useMemo(() => {
       const { necesidad, ...rest } = formData;
       if (formData.idea === necesidad) {
@@ -99,6 +98,16 @@ function AnalysisPageContent() {
   const viabilityData = analysisResult?.analysis.viability;
   const costData = analysisResult?.analysis.costAnalysis;
 
+  const handleProceedToDashboard = () => {
+    if (analysisResult) {
+      localStorage.setItem('viabilityAnalysis', JSON.stringify(analysisResult));
+      toast({
+        title: "¡Análisis Guardado!",
+        description: "Puedes consultar este análisis en cualquier momento desde 'Herramientas Rápidas'.",
+      });
+    }
+    router.push('/dashboard');
+  };
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
@@ -282,7 +291,7 @@ function AnalysisPageContent() {
                     <div className="text-center p-4 bg-secondary rounded-lg">
                         <p className="font-semibold mb-4">¿Qué quieres hacer ahora?</p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Button onClick={() => router.push('/dashboard')} size="lg">
+                            <Button onClick={handleProceedToDashboard} size="lg">
                                 <Milestone className="mr-2 h-5 w-5" />
                                 Ir a mi Panel de Control
                             </Button>

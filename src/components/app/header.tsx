@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical } from 'lucide-react';
+import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -24,6 +24,7 @@ import { NotesModule } from './modules/notes-module';
 import { LuminarAssistantModule } from './modules/luminar-assistant';
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
 import { Loader2 } from 'lucide-react';
+import { ViabilityAnalysisViewer } from './modules/viability-analysis-viewer';
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
@@ -33,12 +34,18 @@ export function AppHeader() {
 
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
+  const [hasAnalysis, setHasAnalysis] = useState(false);
 
   const brandName = brandIdentity?.brandName || "EmprendeIA";
   const logoUrl = brandIdentity?.logoUrl || "https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png";
 
 
   useEffect(() => {
+    // Check for saved analysis in localStorage
+    if (localStorage.getItem('viabilityAnalysis')) {
+        setHasAnalysis(true);
+    }
+    
     if (user && firestore) {
       setIsIdentityLoading(true);
       const unsubscribe = getBrandIdentity(firestore, user.uid, (identity) => {
@@ -63,6 +70,9 @@ export function AppHeader() {
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
+      // Optional: Clear guest data on logout
+      localStorage.removeItem('viabilityAnalysis');
+      localStorage.removeItem('brandIdentity');
       router.push('/');
     }
   };
@@ -117,6 +127,14 @@ export function AppHeader() {
                 <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
                     <LuminarAssistantModule isMenuItem={true} />
                 </DropdownMenuItem>
+                 {hasAnalysis && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                           <ViabilityAnalysisViewer isMenuItem={true} />
+                        </DropdownMenuItem>
+                    </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
 
@@ -162,3 +180,5 @@ export function AppHeader() {
     </header>
   );
 }
+
+    
