@@ -61,7 +61,7 @@ export function IdentidadDigitalModule() {
   const [isRegeneratingLogoPrompt, setIsRegeneratingLogoPrompt] = useState(false);
 
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -211,29 +211,49 @@ export function IdentidadDigitalModule() {
   };
 
   const onImageGenerate = async () => {
-      if (!logoPrompt) return;
+    if (!logoPrompt) return;
+    if (!user || !storage) {
+        toast({
+            title: "Función para usuarios registrados",
+            description: "Para generar y guardar un logo con IA, necesitas una cuenta.",
+            variant: "destructive",
+        });
+        return;
+    }
 
-      setIsGeneratingLogo(true);
-      try {
-          const result = await generateOptimizedImage({
-              prompt: logoPrompt,
-              creativeType: 'LOGO',
-          });
-          setGeneratedImage(result);
-          toast({
-              title: "¡Logo generado!",
-              description: "Tu logo está listo para que lo veas."
-          });
-      } catch (e) {
-          console.error(e);
-          toast({
-              title: "Error al generar la imagen",
-              description: "No se pudo crear el logo. Inténtalo de nuevo.",
-              variant: "destructive",
-          });
-      } finally {
-          setIsGeneratingLogo(false);
-      }
+    setIsGeneratingLogo(true);
+    try {
+        const { imageUrl: dataUri, optimizedPrompt } = await generateOptimizedImage({
+            prompt: logoPrompt,
+            creativeType: 'LOGO',
+        });
+        
+        // Convert data URI to blob
+        const response = await fetch(dataUri);
+        const blob = await response.blob();
+
+        // Upload to Firebase Storage
+        const storageRef = ref(storage, `logos/${user.uid}/logo.png`);
+        const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/png' });
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt });
+
+        toast({
+            title: "¡Logo generado y listo!",
+            description: "Tu nuevo logo se ha subido a tu almacenamiento. Guárdalo para aplicarlo."
+        });
+
+    } catch (e) {
+        console.error(e);
+        toast({
+            title: "Error al generar el logo",
+            description: "No se pudo crear y subir el logo. Inténtalo de nuevo.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsGeneratingLogo(false);
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,13 +302,15 @@ export function IdentidadDigitalModule() {
 
   const handleApplyIdentity = () => {
     if (!identityResult) return;
+    const logoSource = generatedImage ? (generatedImage.optimizedPrompt === 'Logo subido por el usuario' ? 'user_uploaded' : 'ai_generated') : null;
+
     const identityToSave: BrandIdentity = {
       ...identityResult,
       brandName: brandForm.getValues('brandName'),
       slogan: brandForm.getValues('slogan'),
       logoPrompt: logoPrompt,
       logoUrl: generatedImage?.imageUrl || null,
-      logoSource: generatedImage ? (generatedImage.optimizedPrompt === 'Logo subido por el usuario' ? 'user_uploaded' : 'ai_generated') : null,
+      logoSource: logoSource,
     };
     
     if (user && firestore) {
@@ -571,3 +593,5 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
+
+    
