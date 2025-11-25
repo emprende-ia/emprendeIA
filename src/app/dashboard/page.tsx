@@ -21,12 +21,14 @@ import { Button } from "@/components/ui/button";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
 
 function SuggestedNextStep() {
+    const { user } = useUser();
     const [suggestion, setSuggestion] = useState<{title: string, description: string, module: React.ReactNode} | null>(null);
 
     useEffect(() => {
-        // This logic runs on the client and can be expanded.
+        // This logic runs on the client and can be expanded based on user progress.
+        // The dependency array makes it re-evaluate when the user state changes, or when the component is focused.
         const brandIdentity = localStorage.getItem('brandIdentity');
-        const learningPath = localStorage.getItem('learningPath'); // Assuming we might save this
+        const learningPath = localStorage.getItem('learningPath');
 
         if (!brandIdentity) {
             setSuggestion({
@@ -47,7 +49,7 @@ function SuggestedNextStep() {
                 module: <ProveedoresModule />
             });
         }
-    }, []);
+    }, [user]); // Reruns when user logs in/out, or can be tied to a more specific state management solution.
 
     if (!suggestion) {
         return null;
@@ -281,3 +283,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
