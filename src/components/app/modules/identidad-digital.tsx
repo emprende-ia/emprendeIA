@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2, Download } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
@@ -19,8 +18,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useStorage } from '@/firebase';
 import { saveBrandIdentity, getBrandIdentity, deleteBrandIdentity, BrandIdentity } from '@/lib/firestore/identity';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 
 const identityFormSchema = z.object({
@@ -42,9 +42,11 @@ const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 export function IdentidadDigitalModule() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
 
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
-  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isGeneratingLogo, setIsGeneratingLogo] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   
   const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
@@ -59,6 +61,7 @@ export function IdentidadDigitalModule() {
   const [isRegeneratingLogoPrompt, setIsRegeneratingLogoPrompt] = useState(false);
 
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -210,7 +213,7 @@ export function IdentidadDigitalModule() {
   const onImageGenerate = async () => {
       if (!logoPrompt) return;
 
-      setIsImageLoading(true);
+      setIsGeneratingLogo(true);
       try {
           const result = await generateOptimizedImage({
               prompt: logoPrompt,
@@ -229,9 +232,53 @@ export function IdentidadDigitalModule() {
               variant: "destructive",
           });
       } finally {
-          setIsImageLoading(false);
+          setIsGeneratingLogo(false);
       }
   };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !storage) {
+        toast({
+            title: "Debes iniciar sesión",
+            description: "Para subir tu propio logo, necesitas una cuenta.",
+            variant: "destructive",
+        });
+        return;
+    }
+    
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+        const storageRef = ref(storage, `logos/${user.uid}/logo.png`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        const identityToSave: BrandIdentity = {
+            ...(identityResult || { brandName: '', slogan: '', colorPalette: [], logoPrompt: '' }),
+            brandName: brandForm.getValues('brandName'),
+            slogan: brandForm.getValues('slogan'),
+            logoUrl: downloadURL,
+            logoSource: 'user_uploaded',
+        };
+
+        await saveBrandIdentity(firestore, user.uid, identityToSave);
+
+        setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt: 'Logo subido por el usuario' });
+        toast({ title: "¡Logo subido y guardado!", description: "Tu nuevo logo ya es parte de tu identidad de marca." });
+
+    } catch (error) {
+        console.error("Error uploading file:", error);
+        toast({
+            title: "Error al subir el logo",
+            description: "No se pudo completar la subida. Inténtalo de nuevo.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsUploadingLogo(false);
+    }
+};
 
   const handleApplyIdentity = () => {
     if (!identityResult) return;
@@ -241,6 +288,7 @@ export function IdentidadDigitalModule() {
       slogan: brandForm.getValues('slogan'),
       logoPrompt: logoPrompt,
       logoUrl: generatedImage?.imageUrl || null,
+      logoSource: generatedImage ? (generatedImage.optimizedPrompt === 'Logo subido por el usuario' ? 'user_uploaded' : 'ai_generated') : null,
     };
     
     if (user && firestore) {
@@ -291,7 +339,7 @@ export function IdentidadDigitalModule() {
       setIdentityResult(null);
       setGeneratedImage(null);
       setIsIdentityLoading(false);
-      setIsImageLoading(false);
+      setIsGeneratingLogo(false);
       setLogoPrompt('');
     }
   }
@@ -344,7 +392,7 @@ export function IdentidadDigitalModule() {
                         </FormItem>
                     )}
                     />
-                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isImageLoading}>
+                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isGeneratingLogo || isUploadingLogo}>
                     {isIdentityLoading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando Magia...</>
                     ) : (
@@ -450,10 +498,10 @@ export function IdentidadDigitalModule() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2"><PenTool className="h-5 w-5" /> Idea para tu Logo</CardTitle>
-                            <CardDescription>Usa esta descripción (prompt) en un generador de imágenes con IA.</CardDescription>
+                            <CardDescription>Edita esta descripción (prompt) para perfeccionar la idea de tu logo antes de generarlo.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                           <p className="text-sm italic p-4 bg-secondary rounded-md text-muted-foreground font-mono">"{logoPrompt}"</p>
+                           <Textarea value={logoPrompt} onChange={(e) => setLogoPrompt(e.target.value)} className="font-mono text-xs" rows={4} />
                            {isBrandDirty && (
                              <Button onClick={handleUpdateLogoPrompt} disabled={isRegeneratingLogoPrompt} className="w-full" variant="secondary">
                                 {isRegeneratingLogoPrompt ? (
@@ -464,17 +512,30 @@ export function IdentidadDigitalModule() {
                             </Button>
                            )}
                         </CardContent>
-                        <CardFooter>
-                            <Button onClick={onImageGenerate} disabled={isImageLoading || isIdentityLoading || isBrandDirty} className="w-full">
-                                {isImageLoading ? (
-                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo...</>
+                        <CardFooter className="flex flex-col sm:flex-row gap-2">
+                           <Button onClick={onImageGenerate} disabled={isGeneratingLogo || isIdentityLoading || isUploadingLogo} className="w-full">
+                                {isGeneratingLogo ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo con IA...</>
                                 ) : (
-                                    <><ImageIcon className="mr-2 h-4 w-4" /> Generar imagen con esta idea</>
+                                    <><ImageIcon className="mr-2 h-4 w-4" /> Generar Logo con IA</>
                                 )}
                             </Button>
+                            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isGeneratingLogo || isIdentityLoading || isUploadingLogo} className="w-full">
+                                {isUploadingLogo ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo...</>
+                                ) : (
+                                    <><Upload className="mr-2 h-4 w-4" /> Subir mi propio logo</>
+                                )}
+                            </Button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                            />
                         </CardFooter>
                     </Card>
-
                 </div>
             )}
         </div>
@@ -501,7 +562,7 @@ export function IdentidadDigitalModule() {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
-            <Button onClick={handleApplyIdentity} size="lg">
+            <Button onClick={handleApplyIdentity} size="lg" disabled={!identityResult}>
                 <Heart className="mr-2 h-4 w-4" />
                 Guardar y Sincronizar Identidad
             </Button>

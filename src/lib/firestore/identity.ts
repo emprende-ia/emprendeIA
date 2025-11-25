@@ -10,6 +10,7 @@ import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-
 export interface BrandIdentity extends GenerateDigitalIdentityOutput {
   logoUrl: string | null;
   updatedAt?: Date;
+  logoSource?: 'ai_generated' | 'user_uploaded' | null;
 }
 
 /**
@@ -23,10 +24,10 @@ export function saveBrandIdentity(
   firestore: Firestore,
   userId: string,
   identityData: Omit<BrandIdentity, 'updatedAt'>
-): void {
+): Promise<void> { // Return a promise
   if (!userId) {
     console.error("User ID is required to save brand identity.");
-    return;
+    return Promise.reject("User ID is required.");
   }
   
   // We use a fixed document ID 'main' to ensure there's only one identity doc per user.
@@ -36,7 +37,7 @@ export function saveBrandIdentity(
     updatedAt: serverTimestamp(),
   };
 
-  setDoc(identityDoc, dataToSave, { merge: true })
+  return setDoc(identityDoc, dataToSave, { merge: true })
     .catch((error) => {
       const permissionError = new FirestorePermissionError({
         path: identityDoc.path,
@@ -44,6 +45,8 @@ export function saveBrandIdentity(
         requestResourceData: dataToSave,
       });
       errorEmitter.emit('permission-error', permissionError);
+      // Re-throw to allow the caller to handle it
+      throw error;
     });
 }
 
