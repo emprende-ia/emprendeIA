@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -210,45 +211,53 @@ export function IdentidadDigitalModule() {
     }
   };
 
-  const onImageGenerate = async () => {
-    if (!logoPrompt) return;
-    if (!user || !storage) {
+  // FUNCIÓN 1: GENERAR CON IA
+  const handleGenerateLogo = async () => {
+    // 1. Validación de seguridad
+    if (!user || !user.uid) {
         toast({
-            title: "Función para usuarios registrados",
-            description: "Para generar y guardar un logo con IA, necesitas una cuenta.",
+            title: "Error de sesión",
+            description: "No estás identificado correctamente.",
             variant: "destructive",
         });
         return;
     }
 
     setIsGeneratingLogo(true);
+
     try {
+        // 2. Generar imagen (IA)
         const { imageUrl: dataUri, optimizedPrompt } = await generateOptimizedImage({
             prompt: logoPrompt,
             creativeType: 'LOGO',
         });
-        
-        // Convert data URI to blob
+
+        if (!dataUri) throw new Error("La IA no devolvió ninguna imagen.");
+
+        // 3. Convertir DataURI a Blob
         const response = await fetch(dataUri);
         const blob = await response.blob();
 
-        // Upload to Firebase Storage
-        const storageRef = ref(storage, `logos/${user.uid}/logo.png`);
+        // 4. Subir a Firebase con NOMBRE ÚNICO (para evitar caché)
+        const timestamp = Date.now();
+        const storageRef = ref(storage, `logos/${user.uid}/logo_${timestamp}.png`);
+        
         const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/png' });
         const downloadURL = await getDownloadURL(snapshot.ref);
 
+        // 5. Actualizar estado visual
         setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt });
 
         toast({
             title: "¡Logo generado y listo!",
-            description: "Tu nuevo logo se ha subido a tu almacenamiento. Guárdalo para aplicarlo."
+            description: "Tu nuevo logo se ha guardado correctamente."
         });
 
-    } catch (e) {
-        console.error(e);
+    } catch (e: any) {
+        console.error("Error generando logo:", e);
         toast({
             title: "Error al generar el logo",
-            description: "No se pudo crear y subir el logo. Inténtalo de nuevo.",
+            description: e.message || "Ocurrió un error inesperado.",
             variant: "destructive",
         });
     } finally {
@@ -256,8 +265,10 @@ export function IdentidadDigitalModule() {
     }
   };
 
+  // FUNCIÓN 2: SUBIR MANUALMENTE
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !storage) {
+    // 1. Validar sesión
+    if (!user || !storage || !user.uid) {
         toast({
             title: "Debes iniciar sesión",
             description: "Para subir tu propio logo, necesitas una cuenta.",
@@ -269,36 +280,53 @@ export function IdentidadDigitalModule() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // 2. Validar que sea imagen y tamaño (Max 5MB)
+    if (!file.type.startsWith('image/')) {
+        toast({ title: "Archivo inválido", description: "Solo puedes subir imágenes.", variant: "destructive" });
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "Archivo muy grande", description: "El logo debe pesar menos de 5MB.", variant: "destructive" });
+        return;
+    }
+
     setIsUploadingLogo(true);
+
     try {
-        const storageRef = ref(storage, `logos/${user.uid}/logo.png`);
+        // 3. Subir a Firebase con NOMBRE ÚNICO
+        const timestamp = Date.now();
+        // Nota: Usamos la extensión original del archivo o .png por defecto
+        const extension = file.name.split('.').pop() || 'png';
+        const storageRef = ref(storage, `logos/${user.uid}/logo_upload_${timestamp}.${extension}`);
+        
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        const identityToSave: BrandIdentity = {
-            ...(identityResult || { brandName: '', slogan: '', colorPalette: [], logoPrompt: '' }),
-            brandName: brandForm.getValues('brandName'),
-            slogan: brandForm.getValues('slogan'),
-            logoUrl: downloadURL,
-            logoSource: 'user_uploaded',
-        };
+        // 4. Actualizar estado visual (importante para que se vea en pantalla)
+        setGeneratedImage({ 
+            imageUrl: downloadURL, 
+            optimizedPrompt: "Logo subido manualmente" 
+        });
 
-        await saveBrandIdentity(firestore, user.uid, identityToSave);
-
-        setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt: 'Logo subido por el usuario' });
-        toast({ title: "¡Logo subido y guardado!", description: "Tu nuevo logo ya es parte de tu identidad de marca." });
+        toast({
+            title: "Logo subido",
+            description: "Tu imagen se ha cargado correctamente."
+        });
 
     } catch (error) {
-        console.error("Error uploading file:", error);
+        console.error("Error subiendo archivo:", error);
         toast({
-            title: "Error al subir el logo",
-            description: "No se pudo completar la subida. Inténtalo de nuevo.",
+            title: "Error al subir",
+            description: "No se pudo cargar tu imagen. Intenta de nuevo.",
             variant: "destructive",
         });
     } finally {
         setIsUploadingLogo(false);
+        // Limpiar el input para permitir subir el mismo archivo si falla
+        if(event.target) event.target.value = '';
     }
-};
+  };
+    
 
   const handleApplyIdentity = () => {
     if (!identityResult) return;
@@ -535,7 +563,7 @@ export function IdentidadDigitalModule() {
                            )}
                         </CardContent>
                         <CardFooter className="flex flex-col sm:flex-row gap-2">
-                           <Button onClick={onImageGenerate} disabled={isGeneratingLogo || isIdentityLoading || isUploadingLogo} className="w-full">
+                           <Button onClick={handleGenerateLogo} disabled={isGeneratingLogo || isIdentityLoading || isUploadingLogo} className="w-full">
                                 {isGeneratingLogo ? (
                                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo con IA...</>
                                 ) : (
