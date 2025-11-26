@@ -31,7 +31,11 @@ export async function generateOptimizedImage(input: GenerateOptimizedImageInput)
 
 const promptOptimizerPrompt = ai.definePrompt({
     name: 'promptOptimizerPrompt',
-    input: { schema: GenerateOptimizedImageInputSchema },
+    input: { schema: z.object({
+        prompt: z.string(),
+        isLogo: z.boolean(),
+        isBrandImage: z.boolean()
+    })},
     prompt: `You are a creative assistant that enhances user prompts for an AI image generator.
     Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
 
@@ -56,7 +60,6 @@ const generateOptimizedImageFlow = ai.defineFlow(
     // Step 1: Optimize the user's prompt with an LLM based on the creative type.
     const optimizerInput = {
       prompt,
-      creativeType,
       isLogo: creativeType === 'LOGO',
       isBrandImage: creativeType === 'BRAND_IMAGE',
     };
