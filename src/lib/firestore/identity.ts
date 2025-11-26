@@ -20,11 +20,11 @@ export interface BrandIdentity extends GenerateDigitalIdentityOutput {
  * @param userId - The ID of the user.
  * @param identityData - The brand identity data to save.
  */
-export function saveBrandIdentity(
+export async function saveBrandIdentity(
   firestore: Firestore,
   userId: string,
   identityData: Omit<BrandIdentity, 'updatedAt'>
-): Promise<void> { // Return a promise
+): Promise<void> { 
   if (!userId) {
     console.error("User ID is required to save brand identity.");
     return Promise.reject("User ID is required.");
@@ -37,17 +37,17 @@ export function saveBrandIdentity(
     updatedAt: serverTimestamp(),
   };
 
-  return setDoc(identityDoc, dataToSave, { merge: true })
-    .catch((error) => {
-      const permissionError = new FirestorePermissionError({
+  try {
+    await setDoc(identityDoc, dataToSave, { merge: true });
+  } catch (error) {
+    const permissionError = new FirestorePermissionError({
         path: identityDoc.path,
-        operation: 'write', // 'set' with merge is effectively a write/update
+        operation: 'write', 
         requestResourceData: dataToSave,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      // Re-throw to allow the caller to handle it
-      throw error;
     });
+    errorEmitter.emit('permission-error', permissionError);
+    throw error;
+  }
 }
 
 /**
@@ -109,3 +109,5 @@ export function getBrandIdentity(
 
   return unsubscribe;
 }
+
+    

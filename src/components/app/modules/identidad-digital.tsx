@@ -211,76 +211,47 @@ export function IdentidadDigitalModule() {
     }
   };
 
-  // FUNCIÓN 1: GENERAR CON IA
   const handleGenerateLogo = async () => {
-    // 1. Validación de seguridad
-    if (!user || !user.uid) {
-        toast({
-            title: "Error de sesión",
-            description: "No estás identificado correctamente.",
-            variant: "destructive",
-        });
+    if (!user || !user.uid || !storage) {
+        toast({ title: "Error de sesión", description: "Debes iniciar sesión para generar un logo.", variant: "destructive" });
         return;
     }
 
     setIsGeneratingLogo(true);
-
     try {
-        // 2. Generar imagen (IA)
-        const { imageUrl: dataUri, optimizedPrompt } = await generateOptimizedImage({
-            prompt: logoPrompt,
-            creativeType: 'LOGO',
-        });
-
+        const { imageUrl: dataUri, optimizedPrompt } = await generateOptimizedImage({ prompt: logoPrompt, creativeType: 'LOGO' });
         if (!dataUri) throw new Error("La IA no devolvió ninguna imagen.");
-
-        // 3. Convertir DataURI a Blob
+        
         const response = await fetch(dataUri);
         const blob = await response.blob();
-
-        // 4. Subir a Firebase con NOMBRE ÚNICO (para evitar caché)
+        
         const timestamp = Date.now();
-        const storageRef = ref(storage, `logos/${user.uid}/logo_${timestamp}.png`);
+        const storageRef = ref(storage, `logos/${user.uid}/logo_ai_${timestamp}.png`);
         
         const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/png' });
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        // 5. Actualizar estado visual
         setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt });
 
-        toast({
-            title: "¡Logo generado y listo!",
-            description: "Tu nuevo logo se ha guardado correctamente."
-        });
+        toast({ title: "¡Logo generado y listo!", description: "Puedes guardarlo en tu identidad." });
 
     } catch (e: any) {
         console.error("Error generando logo:", e);
-        toast({
-            title: "Error al generar el logo",
-            description: e.message || "Ocurrió un error inesperado.",
-            variant: "destructive",
-        });
+        toast({ title: "Error al generar el logo", description: e.message || "Ocurrió un error inesperado.", variant: "destructive" });
     } finally {
         setIsGeneratingLogo(false);
     }
   };
 
-  // FUNCIÓN 2: SUBIR MANUALMENTE
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    // 1. Validar sesión
     if (!user || !storage || !user.uid) {
-        toast({
-            title: "Debes iniciar sesión",
-            description: "Para subir tu propio logo, necesitas una cuenta.",
-            variant: "destructive",
-        });
+        toast({ title: "Debes iniciar sesión", description: "Para subir tu propio logo, necesitas una cuenta.", variant: "destructive" });
         return;
     }
     
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // 2. Validar que sea imagen y tamaño (Max 5MB)
     if (!file.type.startsWith('image/')) {
         toast({ title: "Archivo inválido", description: "Solo puedes subir imágenes.", variant: "destructive" });
         return;
@@ -291,67 +262,61 @@ export function IdentidadDigitalModule() {
     }
 
     setIsUploadingLogo(true);
-
     try {
-        // 3. Subir a Firebase con NOMBRE ÚNICO
         const timestamp = Date.now();
-        // Nota: Usamos la extensión original del archivo o .png por defecto
         const extension = file.name.split('.').pop() || 'png';
         const storageRef = ref(storage, `logos/${user.uid}/logo_upload_${timestamp}.${extension}`);
         
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        // 4. Actualizar estado visual (importante para que se vea en pantalla)
         setGeneratedImage({ 
             imageUrl: downloadURL, 
             optimizedPrompt: "Logo subido manualmente" 
         });
 
-        toast({
-            title: "Logo subido",
-            description: "Tu imagen se ha cargado correctamente."
-        });
+        toast({ title: "Logo subido", description: "Tu imagen se ha cargado correctamente." });
 
     } catch (error) {
         console.error("Error subiendo archivo:", error);
-        toast({
-            title: "Error al subir",
-            description: "No se pudo cargar tu imagen. Intenta de nuevo.",
-            variant: "destructive",
-        });
+        toast({ title: "Error al subir", description: "No se pudo cargar tu imagen. Intenta de nuevo.", variant: "destructive" });
     } finally {
         setIsUploadingLogo(false);
-        // Limpiar el input para permitir subir el mismo archivo si falla
-        if(event.target) event.target.value = '';
+        if(fileInputRef.current) fileInputRef.current.value = '';
     }
   };
     
-
-  const handleApplyIdentity = () => {
+  const handleApplyIdentity = async () => {
     if (!identityResult) return;
-    const logoSource = generatedImage ? (generatedImage.optimizedPrompt === 'Logo subido por el usuario' ? 'user_uploaded' : 'ai_generated') : null;
-
+    
     const identityToSave: BrandIdentity = {
       ...identityResult,
       brandName: brandForm.getValues('brandName'),
       slogan: brandForm.getValues('slogan'),
       logoPrompt: logoPrompt,
       logoUrl: generatedImage?.imageUrl || null,
-      logoSource: logoSource,
+      logoSource: generatedImage ? (generatedImage.optimizedPrompt === 'Logo subido manualmente' ? 'user_uploaded' : 'ai_generated') : null,
     };
     
     if (user && firestore) {
-        saveBrandIdentity(firestore, user.uid, identityToSave);
-        toast({
-            title: '¡Identidad Sincronizada!',
-            description: 'Tu marca se ha guardado en tu cuenta.',
-        });
+        try {
+            await saveBrandIdentity(firestore, user.uid, identityToSave);
+            toast({
+                title: '¡Identidad Sincronizada!',
+                description: 'Tu marca se ha guardado en tu cuenta.',
+            });
+        } catch (error) {
+             toast({
+                title: 'Error al Sincronizar',
+                description: 'No se pudo guardar la identidad en tu cuenta.',
+                variant: 'destructive',
+            });
+        }
     } else {
         localStorage.setItem('brandIdentity', JSON.stringify(identityToSave));
         toast({
             title: '¡Identidad Guardada!',
-            description: 'Tu marca se ha guardado en este dispositivo.',
+            description: 'Tu marca se ha guardado en este dispositivo (como invitado).',
         });
     }
     setIsOpen(false);
