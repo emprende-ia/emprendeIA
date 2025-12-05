@@ -78,6 +78,54 @@ export default function DashboardPage() {
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
+                        <CardHeader className="flex-grow p-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Palette className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Identidad Digital</CardTitle>
+                            </div>
+                            <CardDescription>Crea un nombre, eslogan y paleta de colores para tu marca.</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-0 pt-6">
+                            <IdentidadDigitalModule />
+                        </CardFooter>
+                    </div>
+                </Card>
+
+                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="relative z-10 flex flex-col h-full p-6">
+                        <CardHeader className="flex-grow p-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Asistente Financiero</CardTitle>
+                            </div>
+                            <CardDescription>Obtén un presupuesto y analiza el punto de equilibrio.</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-0 pt-6">
+                            <AdministracionRecursosModule />
+                        </CardFooter>
+                    </div>
+                </Card>
+
+                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="relative z-10 flex flex-col h-full p-6">
+                        <CardHeader className="flex-grow p-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Megaphone className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Generador de Campañas</CardTitle>
+                            </div>
+                            <CardDescription>Genera ideas de campañas de marketing y planes de acción.</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-0 pt-6">
+                            <CampanasMarketingModule />
+                        </CardFooter>
+                    </div>
+                </Card>
+
+                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="relative z-10 flex flex-col h-full p-6">
                     <CardHeader className="flex-grow p-0">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
@@ -103,54 +151,6 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardFooter className="p-0 pt-6">
                             <GuiaPasoAPasoModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Palette className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Identidad Digital</CardTitle>
-                            </div>
-                            <CardDescription>Crea un nombre, eslogan y paleta de colores para tu marca.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <IdentidadDigitalModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Megaphone className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Generador de Campañas</CardTitle>
-                            </div>
-                            <CardDescription>Genera ideas de campañas de marketing y planes de acción.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <CampanasMarketingModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Asistente Financiero</CardTitle>
-                            </div>
-                            <CardDescription>Obtén un presupuesto y analiza el punto de equilibrio.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <AdministracionRecursosModule />
                         </CardFooter>
                     </div>
                 </Card>
