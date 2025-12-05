@@ -90,7 +90,7 @@ export default function DashboardPage() {
                     <CardContent className="relative z-10 flex-grow p-6 pt-0 flex items-end">
                         {/* Content can be added here if needed */}
                     </CardContent>
-                    <CardFooter className="relative z-10 p-6 pt-0">
+                    <CardFooter className="relative z-10 p-6 pt-0 mt-auto">
                         <IdentidadDigitalModule />
                     </CardFooter>
                 </Card>
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                     <CardContent className="relative z-10 flex-grow p-6 pt-0 flex items-end">
                         {/* Content can be added here if needed */}
                     </CardContent>
-                    <CardFooter className="relative z-10 p-6 pt-0">
+                    <CardFooter className="relative z-10 p-6 pt-0 mt-auto">
                         <AdministracionRecursosModule />
                     </CardFooter>
                 </Card>
@@ -124,22 +124,22 @@ export default function DashboardPage() {
                     <CardContent className="relative z-10 flex-grow p-6 pt-0 flex items-end">
                         {/* Content can be added here if needed */}
                     </CardContent>
-                    <CardFooter className="relative z-10 p-6 pt-0">
+                    <CardFooter className="relative z-10 p-6 pt-0 mt-auto">
                         <CampanasMarketingModule />
                     </CardFooter>
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="h-32 w-full relative">
+                        <Image 
+                            src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" 
+                            alt="Proveedores" 
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                     <CardHeader className="relative z-10 p-6">
-                        <div className="flex justify-center mb-4 h-20 w-20 relative mx-auto">
-                            <Image 
-                                src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" 
-                                alt="Proveedores" 
-                                fill
-                                className="object-cover rounded-lg"
-                            />
-                        </div>
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
                             <CardTitle className="text-2xl">Proveedores</CardTitle>
@@ -149,22 +149,22 @@ export default function DashboardPage() {
                     <CardContent className="relative z-10 flex-grow p-6 pt-0 flex items-end">
                         {/* Content can be added here if needed */}
                     </CardContent>
-                    <CardFooter className="relative z-10 p-6 pt-0">
+                    <CardFooter className="relative z-10 p-6 pt-0 mt-auto">
                         <ProveedoresModule />
                     </CardFooter>
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="h-32 w-full relative">
+                        <Image 
+                            src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" 
+                            alt="Guía Paso a Paso" 
+                            fill
+                            className="object-contain"
+                        />
+                    </div>
                     <CardHeader className="relative z-10 p-6">
-                         <div className="flex justify-center mb-4 h-20 w-20 relative mx-auto">
-                            <Image 
-                                src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" 
-                                alt="Guía Paso a Paso" 
-                                fill
-                                className="object-contain"
-                            />
-                        </div>
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
                             <CardTitle className="text-2xl">Guía Paso a Paso</CardTitle>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
                     <CardContent className="relative z-10 flex-grow p-6 pt-0 flex items-end">
                         {/* Content can be added here if needed */}
                     </CardContent>
-                    <CardFooter className="relative z-10 p-6 pt-0">
+                    <CardFooter className="relative z-10 p-6 pt-0 mt-auto">
                         <GuiaPasoAPasoModule />
                     </CardFooter>
                 </Card>
