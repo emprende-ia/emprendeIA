@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,6 +11,7 @@ import { z } from 'zod';
 
 const GenerateResourcePlanInputSchema = z.object({
   businessDescription: z.string().describe('A description of the business and its required resources.'),
+  existingSupplies: z.string().optional().describe('A comma-separated list of supplies the user already owns.'),
 });
 export type GenerateResourcePlanInput = z.infer<typeof GenerateResourcePlanInputSchema>;
 
@@ -38,12 +40,17 @@ const generateResourcePlanPrompt = ai.definePrompt({
     prompt: `You are a startup financial advisor. Your task is to create an estimated budget for a new business based on the user's description. Your entire output must be in Spanish.
 
     **Business Description:** {{{businessDescription}}}
+    {{#if existingSupplies}}
+    **Existing Supplies (to be excluded from budget):** {{{existingSupplies}}}
+    {{/if}}
 
     Based on this description, generate a list of key budget items required to launch and operate the business for the first 3-6 months. For each item, provide:
     1.  **Category:** A logical grouping (e.g., "Equipo y Software", "Marketing y Ventas", "Costos Operativos", "Gastos Legales").
     2.  **Item:** The specific resource or expense.
     3.  **Estimated Cost:** A realistic cost range in Mexican Pesos (MXN) (e.g., "$10,000 - $25,000 MXN").
     4.  **Justification:** A short explanation of why this is important.
+
+    **CRITICAL:** If the user has provided a list of 'Existing Supplies', you MUST OMIT those items from the 'budgetItems' list. Mention in the final 'summary' that you have excluded the items the user already owns.
 
     After listing the items, provide a **totalEstimatedCost** summary and a brief **summary** with your main recommendations.
 

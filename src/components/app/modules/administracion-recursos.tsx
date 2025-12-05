@@ -36,6 +36,7 @@ const resourceFormSchema = z.object({
   businessDescription: z.string().min(20, {
     message: 'La descripción debe tener al menos 20 caracteres.',
   }),
+  existingSupplies: z.string().optional(),
 });
 type ResourceFormValues = z.infer<typeof resourceFormSchema>;
 
@@ -116,7 +117,7 @@ function BudgetPlanner({ onOpenChange }: { onOpenChange: (open: boolean) => void
 
     const form = useForm<ResourceFormValues>({
         resolver: zodResolver(resourceFormSchema),
-        defaultValues: { businessDescription: '' },
+        defaultValues: { businessDescription: '', existingSupplies: '' },
     });
      useEffect(() => {
         const savedProfile = localStorage.getItem('businessProfile');
@@ -160,8 +161,22 @@ function BudgetPlanner({ onOpenChange }: { onOpenChange: (open: boolean) => void
                   name="businessDescription"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>1. Describe tu idea de negocio y qué necesitas</FormLabel>
                       <FormControl>
                         <Textarea placeholder="Ej: 'Una cafetería pequeña con 3 empleados, necesito equipo de café, mobiliario básico, marketing inicial y registrar la marca.'" {...field} className="min-h-[100px]"/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="existingSupplies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>(Opcional) ¿Qué insumos y/o accesorios ya tienes?</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Ej: 'Ya tengo una máquina de espresso, un molino de café y algunas tazas.'" {...field} className="min-h-[80px]"/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
