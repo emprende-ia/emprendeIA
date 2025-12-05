@@ -71,33 +71,33 @@ export interface Theme {
       name: 'pastel-warm',
       displayName: 'Pastel Cálido',
       colors: {
-        '--background': '40 33% 97%',
-        '--foreground': '25 15% 25%',
-        '--card': '30 50% 95%',
-        '--card-foreground': '25 15% 15%',
-        '--popover': '30 50% 92%',
-        '--popover-foreground': '25 15% 15%',
-        '--primary': '10 80% 65%',
+        '--background': '38 40% 98%', // Soft off-white
+        '--foreground': '25 20% 15%', // Dark warm grey
+        '--card': '40 50% 96%', // Slightly creamier card
+        '--card-foreground': '25 20% 15%',
+        '--popover': '38 40% 97%',
+        '--popover-foreground': '25 20% 15%',
+        '--primary': '180 30% 45%', // Muted teal
         '--primary-foreground': '0 0% 100%',
-        '--secondary': '30 50% 92%',
-        '--secondary-foreground': '25 15% 15%',
-        '--muted': '30 50% 92%',
+        '--secondary': '30 40% 94%', // Softer secondary
+        '--secondary-foreground': '25 20% 15%',
+        '--muted': '30 40% 94%',
         '--muted-foreground': '25 15% 45%',
-        '--accent': '340 70% 75%',
-        '--accent-foreground': '345 15% 15%',
-        '--destructive': '0 70% 60%',
+        '--accent': '25 80% 70%', // Soft peach
+        '--accent-foreground': '25 20% 15%',
+        '--destructive': '0 60% 50%',
         '--destructive-foreground': '0 0% 100%',
         '--border': '30 30% 90%',
-        '--input': '30 30% 90%',
-        '--ring': '10 80% 65%',
+        '--input': '30 30% 92%',
+        '--ring': '180 30% 45%',
         '--radius': '0.8rem',
-        '--chart-1': '220 70% 50%',
-        '--chart-2': '160 60% 45%',
-        '--chart-3': '30 80% 55%',
-        '--chart-4': '280 65% 60%',
-        '--chart-5': '340 75% 55%',
-        '--background-gradient-start': '#fff1e6',
-        '--background-gradient-end': '#fde2e4',
+        '--chart-1': '180 40% 50%',
+        '--chart-2': '25 80% 60%',
+        '--chart-3': '40 70% 55%',
+        '--chart-4': '190 30% 60%',
+        '--chart-5': '340 60% 65%',
+        '--background-gradient-start': 'hsl(40, 50%, 96%)', // Creamy white
+        '--background-gradient-end': 'hsl(350, 60%, 97%)', // Faint pink
       },
     },
     {
@@ -134,3 +134,4 @@ export interface Theme {
       },
     },
   ];
+
