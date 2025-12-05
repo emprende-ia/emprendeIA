@@ -20,57 +20,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
 
-function SuggestedNextStep() {
-    const [suggestion, setSuggestion] = useState<{title: string, description: string, module: React.ReactNode} | null>(null);
-
-    useEffect(() => {
-        // This logic runs on the client and can be expanded.
-        const brandIdentity = localStorage.getItem('brandIdentity');
-        const learningPath = localStorage.getItem('learningPath'); // Assuming we might save this
-
-        if (!brandIdentity) {
-            setSuggestion({
-                title: "Define tu Identidad Digital",
-                description: "Tu primer paso es crear una marca sólida. Genera un nombre, eslogan y logo para que tu idea empiece a tomar forma.",
-                module: <IdentidadDigitalModule />
-            });
-        } else if (!learningPath) {
-            setSuggestion({
-                title: "Crea tu Plan de Acción",
-                description: "Ya tienes una marca, ¡genial! Ahora, creemos una guía paso a paso para organizar tus siguientes movimientos y lanzar tu negocio.",
-                module: <GuiaPasoAPasoModule />
-            });
-        } else {
-             setSuggestion({
-                title: "Encuentra tus Proveedores",
-                description: "Con un plan en mano, es hora de encontrar los socios correctos. Busca y cotiza con los mejores proveedores para tu negocio.",
-                module: <ProveedoresModule />
-            });
-        }
-    }, []);
-
-    if (!suggestion) {
-        return null;
-    }
-
-    return (
-        <Card className="bg-primary/10 border-primary/20 shadow-lg animate-in fade-in-50">
-            <CardHeader>
-                <CardTitle className="font-headline text-2xl">🚀 Tu Siguiente Paso Recomendado</CardTitle>
-                <CardDescription>{suggestion.title}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">{suggestion.description}</p>
-            </CardContent>
-            <CardFooter>
-                {/* The module component itself contains the DialogTrigger button */}
-                {suggestion.module}
-            </CardFooter>
-        </Card>
-    )
-}
-
-
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -128,8 +77,6 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-2 text-lg">Tus herramientas de IA para lanzar y crecer tu negocio.</p>
         </div>
 
-        <SuggestedNextStep />
-        
         <div className="pt-6">
             <h2 className="text-2xl font-bold mb-4 text-center">Todas las Herramientas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
