@@ -92,11 +92,19 @@ export function AppHeader() {
       
       // Asynchronously save to backend
       try {
-        await saveBrandIdentity(firestore, user?.uid, updatedIdentity);
-        toast({
-            title: 'Logo actualizado',
-            description: 'Tu nuevo logo ha sido guardado y sincronizado.',
-        });
+        if(user && firestore) {
+            await saveBrandIdentity(firestore, user.uid, updatedIdentity);
+            toast({
+                title: 'Logo actualizado',
+                description: 'Tu nuevo logo ha sido guardado y sincronizado.',
+            });
+        } else {
+             localStorage.setItem('brandIdentity', JSON.stringify(updatedIdentity));
+             toast({
+                title: 'Logo actualizado',
+                description: 'Tu nuevo logo se ha guardado en este dispositivo.',
+            });
+        }
       } catch (error) {
          toast({ title: 'Error al guardar el logo', description: 'No se pudo guardar la imagen. Inténtalo de nuevo.', variant: 'destructive'});
          // Optionally, revert the local state if save fails
@@ -187,7 +195,7 @@ export function AppHeader() {
                 <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
                     <Dialog>
                         <DialogTrigger asChild>
-                             <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full">
+                             <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full">
                                 <Lightbulb className="mr-2 h-4 w-4" /> Conceptos de Marketing
                             </div>
                         </DialogTrigger>
