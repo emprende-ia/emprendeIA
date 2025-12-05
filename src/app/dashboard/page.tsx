@@ -82,7 +82,7 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="h-32 w-full relative">
                         <Image 
-                            src="https://i.postimg.cc/QtS8g2q9/identidad-digital.jpg" 
+                            src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" 
                             alt="Identidad Digital" 
                             fill
                             className="object-cover"
