@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const CreativeTypeSchema = z.enum(['LOGO', 'BRAND_IMAGE']);
 
@@ -52,15 +53,15 @@ const generateOptimizedImageFlow = ai.defineFlow(
     Optimized Prompt:`;
     
     // Step 2: Optimize the user's prompt with an LLM.
-    const { text: optimizedPrompt } = await ai.generate({ prompt: optimizerPrompt });
+    const { text: optimizedPrompt } = await ai.generate({ prompt: optimizerPrompt, model: googleAI.model('gemini-2.5-flash') });
 
     if (!optimizedPrompt) {
         throw new Error("Failed to optimize the prompt.");
     }
     
-    // Step 3: Generate the image using the optimized prompt.
+    // Step 3: Generate the image using the optimized prompt with the correct image model.
     const { media } = await ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
+        model: googleAI.model('imagen-4.0-fast-generate-001'),
         prompt: optimizedPrompt,
     });
 
@@ -73,5 +74,3 @@ const generateOptimizedImageFlow = ai.defineFlow(
     return { imageUrl, optimizedPrompt };
   }
 );
-
-    
