@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, RefreshCw } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
@@ -14,63 +14,9 @@ import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
-<<<<<<< HEAD
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-=======
-
-function SuggestedNextStep() {
-    const { user } = useUser();
-    const [suggestion, setSuggestion] = useState<{title: string, description: string, module: React.ReactNode} | null>(null);
-
-    useEffect(() => {
-        // This logic runs on the client and can be expanded based on user progress.
-        // The dependency array makes it re-evaluate when the user state changes, or when the component is focused.
-        const brandIdentity = localStorage.getItem('brandIdentity');
-        const learningPath = localStorage.getItem('learningPath');
-
-        if (!brandIdentity) {
-            setSuggestion({
-                title: "Define tu Identidad Digital",
-                description: "Tu primer paso es crear una marca sólida. Genera un nombre, eslogan y logo para que tu idea empiece a tomar forma.",
-                module: <IdentidadDigitalModule />
-            });
-        } else if (!learningPath) {
-            setSuggestion({
-                title: "Crea tu Plan de Acción",
-                description: "Ya tienes una marca, ¡genial! Ahora, creemos una guía paso a paso para organizar tus siguientes movimientos y lanzar tu negocio.",
-                module: <GuiaPasoAPasoModule />
-            });
-        } else {
-             setSuggestion({
-                title: "Encuentra tus Proveedores",
-                description: "Con un plan en mano, es hora de encontrar los socios correctos. Busca y cotiza con los mejores proveedores para tu negocio.",
-                module: <ProveedoresModule />
-            });
-        }
-    }, [user]); // Reruns when user logs in/out, or can be tied to a more specific state management solution.
-
-    if (!suggestion) {
-        return null;
-    }
-
-    return (
-        <Card className="bg-primary/10 border-primary/20 shadow-lg animate-in fade-in-50">
-            <CardHeader>
-                <CardTitle className="font-headline text-2xl">🚀 Tu Siguiente Paso Recomendado</CardTitle>
-                <CardDescription>{suggestion.title}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">{suggestion.description}</p>
-            </CardContent>
-            <CardFooter>
-                {/* The module component itself contains the DialogTrigger button */}
-                {suggestion.module}
-            </CardFooter>
-        </Card>
-    )
-}
->>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
+import Link from "next/link";
 
 
 export default function DashboardPage() {
@@ -213,11 +159,29 @@ export default function DashboardPage() {
                         </CardFooter>
                     </div>
                 </Card>
+
+                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="relative z-10 flex flex-col h-full p-6">
+                        <CardHeader className="flex-grow p-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><RefreshCw className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Reformular mi Negocio</CardTitle>
+                            </div>
+                            <CardDescription>Vuelve a la página inicial para analizar una nueva idea o estrategia.</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-0 pt-6">
+                           <Button asChild className="w-full font-bold">
+                                <Link href="/start">
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Ir a Elegir Camino
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    </div>
+                </Card>
             </div>
         </div>
       </div>
     </div>
   );
 }
-
-    

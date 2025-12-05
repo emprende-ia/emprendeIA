@@ -4,14 +4,8 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-<<<<<<< HEAD
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-
-=======
-import { getFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage';
->>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -45,11 +39,7 @@ export function getSdks(firebaseApp: FirebaseApp) {
     firebaseApp,
     auth: getAuth(firebaseApp),
     firestore: getFirestore(firebaseApp),
-<<<<<<< HEAD
     storage: getStorage(firebaseApp),
-=======
-    storage: getStorage(firebaseApp)
->>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
   };
 }
 
