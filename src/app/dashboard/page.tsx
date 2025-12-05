@@ -80,6 +80,14 @@ export default function DashboardPage() {
                 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="h-32 w-full relative">
+                        <Image 
+                            src="https://i.postimg.cc/QtS8g2q9/identidad-digital.jpg" 
+                            alt="Identidad Digital" 
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                     <CardHeader className="relative z-10 p-6">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Palette className="h-8 w-8 text-primary" /></div>
@@ -97,6 +105,14 @@ export default function DashboardPage() {
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="h-32 w-full relative">
+                        <Image 
+                            src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" 
+                            alt="Asistente Financiero" 
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                     <CardHeader className="relative z-10 p-6">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
@@ -114,6 +130,14 @@ export default function DashboardPage() {
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="h-32 w-full relative">
+                        <Image 
+                            src="https://i.postimg.cc/pT3LgLzT/generador-campanas.jpg" 
+                            alt="Generador de Campañas" 
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                     <CardHeader className="relative z-10 p-6">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Megaphone className="h-8 w-8 text-primary" /></div>
