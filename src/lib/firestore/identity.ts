@@ -9,12 +9,10 @@ import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-
 
 export interface BrandIdentity extends GenerateDigitalIdentityOutput {
   logoUrl: string | null;
-  logoSource?: 'ai_generated' | 'user_uploaded' | null;
   updatedAt?: Date;
   logoSource?: 'ai_generated' | 'user_uploaded' | null;
 }
 
-<<<<<<< HEAD
 /**
  * Saves or updates a user's brand identity in Firestore.
  * It uses a single document with a fixed ID 'main' for each user.
@@ -23,18 +21,6 @@ export interface BrandIdentity extends GenerateDigitalIdentityOutput {
  * @param identityData - The brand identity data to save.
  */
 export async function saveBrandIdentity(
-=======
-export async function uploadLogo(storage: Storage, userId: string, dataUrl: string): Promise<string> {
-    if (!userId) {
-        throw new Error("User ID is required to upload a logo.");
-    }
-    const logoRef = ref(storage, `logos/${userId}/logo.png`);
-    const snapshot = await uploadString(logoRef, dataUrl, 'data_url');
-    return getDownloadURL(snapshot.ref);
-}
-
-export function saveBrandIdentity(
->>>>>>> 1ebb0bf80db47d4dadbb810b88dcb6ae3801e64f
   firestore: Firestore,
   userId: string,
   identityData: Omit<BrandIdentity, 'updatedAt'>
@@ -55,11 +41,7 @@ export function saveBrandIdentity(
   } catch (error) {
     const permissionError = new FirestorePermissionError({
         path: identityDoc.path,
-<<<<<<< HEAD
         operation: 'write', 
-=======
-        operation: 'write',
->>>>>>> 1ebb0bf80db47d4dadbb810b88dcb6ae3801e64f
         requestResourceData: dataToSave,
     });
     errorEmitter.emit('permission-error', permissionError);
@@ -114,5 +96,3 @@ export function getBrandIdentity(
 
   return unsubscribe;
 }
-
-    
