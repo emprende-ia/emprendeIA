@@ -71,33 +71,33 @@ export interface Theme {
       name: 'pastel-warm',
       displayName: 'Pastel Cálido',
       colors: {
-        '--background': '38 40% 98%', // Soft off-white
-        '--foreground': '25 20% 15%', // Dark warm grey
-        '--card': '40 50% 96%', // Slightly creamier card
-        '--card-foreground': '25 20% 15%',
-        '--popover': '38 40% 97%',
-        '--popover-foreground': '25 20% 15%',
-        '--primary': '180 30% 45%', // Muted teal
-        '--primary-foreground': '0 0% 100%',
-        '--secondary': '30 40% 94%', // Softer secondary
-        '--secondary-foreground': '25 20% 15%',
-        '--muted': '30 40% 94%',
-        '--muted-foreground': '25 15% 45%',
-        '--accent': '25 80% 70%', // Soft peach
-        '--accent-foreground': '25 20% 15%',
-        '--destructive': '0 60% 50%',
+        '--background': '39 100% 98%',
+        '--foreground': '24 10% 20%',
+        '--card': '40 70% 97%',
+        '--card-foreground': '24 10% 20%',
+        '--popover': '39 100% 98%',
+        '--popover-foreground': '24 10% 20%',
+        '--primary': '180 30% 40%',
+        '--primary-foreground': '39 100% 98%',
+        '--secondary': '30 50% 95%',
+        '--secondary-foreground': '24 10% 20%',
+        '--muted': '30 50% 95%',
+        '--muted-foreground': '24 5% 50%',
+        '--accent': '25 85% 75%',
+        '--accent-foreground': '24 10% 20%',
+        '--destructive': '0 70% 60%',
         '--destructive-foreground': '0 0% 100%',
-        '--border': '30 30% 90%',
-        '--input': '30 30% 92%',
-        '--ring': '180 30% 45%',
+        '--border': '30 30% 92%',
+        '--input': '30 30% 94%',
+        '--ring': '180 30% 40%',
         '--radius': '0.8rem',
         '--chart-1': '180 40% 50%',
         '--chart-2': '25 80% 60%',
         '--chart-3': '40 70% 55%',
         '--chart-4': '190 30% 60%',
         '--chart-5': '340 60% 65%',
-        '--background-gradient-start': 'hsl(40, 50%, 96%)', // Creamy white
-        '--background-gradient-end': 'hsl(350, 60%, 97%)', // Faint pink
+        '--background-gradient-start': '#FAF0E6',
+        '--background-gradient-end': '#FFDAB9',
       },
     },
     {
