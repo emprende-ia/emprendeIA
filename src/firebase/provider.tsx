@@ -158,8 +158,13 @@ export const useFirestore = (): Firestore => {
 
 /** Hook to access Firebase Storage instance. */
 export const useStorage = (): FirebaseStorage => {
+<<<<<<< HEAD
     const { storage } = useFirebase();
     return storage;
+=======
+  const { storage } = useFirebase();
+  return storage;
+>>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
 };
 
 /** Hook to access Firebase App instance. */

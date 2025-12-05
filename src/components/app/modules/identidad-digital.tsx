@@ -1,7 +1,11 @@
 
 'use client';
 
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react';
+=======
+import React, { useState, useEffect, useRef } from 'react';
+>>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,13 +46,16 @@ const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 export function IdentidadDigitalModule() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
 
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
-  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isGeneratingLogo, setIsGeneratingLogo] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   
   const [identityResult, setIdentityResult] = useState<GenerateDigitalIdentityOutput | null>(null);
   const [generatedImage, setGeneratedImage] = useState<GenerateOptimizedImageOutput | null>(null);
+  const [logoSource, setLogoSource] = useState<'ai_generated' | 'user_uploaded' | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
   
   const [isOpen, setIsOpen] = useState(false);
@@ -63,28 +70,25 @@ export function IdentidadDigitalModule() {
 
   useEffect(() => {
     if (isOpen) {
-        // Load intro audio from cache if available
         const cachedAudio = localStorage.getItem(AUDIO_CACHE_KEY);
         if (cachedAudio) {
             setGeneratedAudio(cachedAudio);
         }
 
-        // Load existing identity from Firestore if user is logged in
         if(user && firestore) {
           const unsubscribe = getBrandIdentity(firestore, user.uid, (identity) => {
             if (identity) {
               setIdentityResult(identity);
               setGeneratedImage(identity.logoUrl ? { imageUrl: identity.logoUrl, optimizedPrompt: identity.logoPrompt || '' } : null);
+              setLogoSource(identity.logoSource || null);
               brandForm.reset({ brandName: identity.brandName, slogan: identity.slogan });
               setLogoPrompt(identity.logoPrompt || '');
             } else {
-              // If Firestore listener returns null, it means data was deleted. Reset the state.
               resetIdentityState();
             }
           });
           return () => unsubscribe();
         } else {
-          // Fallback to localStorage for guest users
           const savedIdentity = localStorage.getItem('brandIdentity');
           if (savedIdentity) {
             const parsed = JSON.parse(savedIdentity);
@@ -92,10 +96,10 @@ export function IdentidadDigitalModule() {
             brandForm.reset({ brandName: parsed.brandName, slogan: parsed.slogan });
             setLogoPrompt(parsed.logoPrompt);
             setGeneratedImage(parsed.logoUrl ? { imageUrl: parsed.logoUrl, optimizedPrompt: parsed.logoPrompt } : null);
+            setLogoSource(parsed.logoSource || null);
           }
         }
         
-        // Pre-fill business description from profile
         const savedProfile = localStorage.getItem('businessProfile');
         if (savedProfile) {
             try {
@@ -143,6 +147,7 @@ export function IdentidadDigitalModule() {
       setGeneratedImage(null);
       brandForm.reset({ brandName: '', slogan: ''});
       setLogoPrompt('');
+      setLogoSource(null);
   }
 
   const onBusinessSubmit: SubmitHandler<IdentityFormValues> = async (data) => {
@@ -208,6 +213,101 @@ export function IdentidadDigitalModule() {
     }
   };
 
+<<<<<<< HEAD
+  const handleGenerateLogo = async () => {
+    if (!user || !user.uid || !storage) {
+        toast({ title: "Error de sesión", description: "Debes iniciar sesión para generar un logo.", variant: "destructive" });
+        return;
+    }
+
+    setIsGeneratingLogo(true);
+    try {
+        const { imageUrl: dataUri, optimizedPrompt } = await generateOptimizedImage({ prompt: logoPrompt, creativeType: 'LOGO' });
+        if (!dataUri) throw new Error("La IA no devolvió ninguna imagen.");
+        
+        const response = await fetch(dataUri);
+        const blob = await response.blob();
+        
+        const timestamp = Date.now();
+        const storageRef = ref(storage, `logos/${user.uid}/logo_ai_${timestamp}.png`);
+        
+        const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/png' });
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt });
+
+        toast({ title: "¡Logo generado y listo!", description: "Puedes guardarlo en tu identidad." });
+
+    } catch (e: any) {
+        console.error("Error generando logo:", e);
+        toast({ title: "Error al generar el logo", description: e.message || "Ocurrió un error inesperado.", variant: "destructive" });
+    } finally {
+        setIsGeneratingLogo(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !storage || !user.uid) {
+        toast({ title: "Debes iniciar sesión", description: "Para subir tu propio logo, necesitas una cuenta.", variant: "destructive" });
+        return;
+    }
+    
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        toast({ title: "Archivo inválido", description: "Solo puedes subir imágenes.", variant: "destructive" });
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "Archivo muy grande", description: "El logo debe pesar menos de 5MB.", variant: "destructive" });
+        return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+        const timestamp = Date.now();
+        const extension = file.name.split('.').pop() || 'png';
+        const storageRef = ref(storage, `logos/${user.uid}/logo_upload_${timestamp}.${extension}`);
+        
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        setGeneratedImage({ 
+            imageUrl: downloadURL, 
+            optimizedPrompt: "Logo subido manualmente" 
+        });
+
+        toast({ title: "Logo subido", description: "Tu imagen se ha cargado correctamente." });
+
+    } catch (error) {
+        console.error("Error subiendo archivo:", error);
+        toast({ title: "Error al subir", description: "No se pudo cargar tu imagen. Intenta de nuevo.", variant: "destructive" });
+    } finally {
+        setIsUploadingLogo(false);
+        if(fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+    
+  const handleApplyIdentity = async () => {
+=======
+  const uploadAndSaveLogo = async (imageUrl: string, source: 'ai_generated' | 'user_uploaded') => {
+    if (!user || !storage) {
+        toast({ title: "Error", description: "Debes iniciar sesión para guardar un logo.", variant: "destructive" });
+        return;
+    }
+    
+    try {
+        const downloadURL = await uploadLogo(storage, user.uid, imageUrl);
+        setGeneratedImage({ imageUrl: downloadURL, optimizedPrompt: source === 'ai_generated' ? logoPrompt : 'Logo subido por el usuario' });
+        setLogoSource(source);
+        toast({ title: "¡Logo guardado en la nube!", description: "Tu nuevo logo ha sido almacenado de forma segura." });
+    } catch (error) {
+        console.error("Upload and save logo error:", error);
+        toast({ title: "Error al subir el logo", description: "No se pudo guardar la imagen en la nube.", variant: "destructive" });
+    }
+  };
+
   const onImageGenerate = async () => {
       if (!logoPrompt) return;
 
@@ -234,16 +334,27 @@ export function IdentidadDigitalModule() {
       }
   };
 
+<<<<<<< HEAD
   const handleApplyIdentity = async () => {
+=======
+  const handleApplyIdentity = () => {
+>>>>>>> 1ebb0bf80db47d4dadbb810b88dcb6ae3801e64f
+>>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
     if (!identityResult) return;
+    
     const identityToSave: BrandIdentity = {
       ...identityResult,
       brandName: brandForm.getValues('brandName'),
       slogan: brandForm.getValues('slogan'),
       logoPrompt: logoPrompt,
       logoUrl: generatedImage?.imageUrl || null,
+<<<<<<< HEAD
+      logoSource: generatedImage ? (generatedImage.optimizedPrompt === 'Logo subido manualmente' ? 'user_uploaded' : 'ai_generated') : null,
+=======
+>>>>>>> 1ebb0bf80db47d4dadbb810b88dcb6ae3801e64f
     };
     
+<<<<<<< HEAD
     try {
       if (user && firestore) {
           await saveBrandIdentity(firestore, user.uid, identityToSave);
@@ -267,6 +378,28 @@ export function IdentidadDigitalModule() {
         description: errorMessage,
         variant: 'destructive',
       });
+=======
+    if (user && firestore) {
+        try {
+            await saveBrandIdentity(firestore, user.uid, identityToSave);
+            toast({
+                title: '¡Identidad Sincronizada!',
+                description: 'Tu marca se ha guardado en tu cuenta.',
+            });
+        } catch (error) {
+             toast({
+                title: 'Error al Sincronizar',
+                description: 'No se pudo guardar la identidad en tu cuenta.',
+                variant: 'destructive',
+            });
+        }
+    } else {
+        localStorage.setItem('brandIdentity', JSON.stringify(identityToSave));
+        toast({
+            title: '¡Identidad Guardada!',
+            description: 'Tu marca se ha guardado en este dispositivo (como invitado).',
+        });
+>>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
     }
   };
 
@@ -375,7 +508,7 @@ export function IdentidadDigitalModule() {
                         </FormItem>
                     )}
                     />
-                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isImageLoading}>
+                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isGeneratingLogo || isUploadingLogo}>
                     {isIdentityLoading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando Magia...</>
                     ) : (
@@ -496,7 +629,7 @@ export function IdentidadDigitalModule() {
                             <CardDescription>Usa esta descripción (prompt) en un generador de imágenes con IA.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                           <p className="text-sm italic p-4 bg-secondary rounded-md text-muted-foreground font-mono">"{logoPrompt}"</p>
+                           <Textarea value={logoPrompt} onChange={(e) => setLogoPrompt(e.target.value)} className="font-mono text-xs" rows={4} />
                            {isBrandDirty && (
                              <Button onClick={handleUpdateLogoPrompt} disabled={isRegeneratingLogoPrompt} className="w-full" variant="secondary">
                                 {isRegeneratingLogoPrompt ? (
@@ -507,17 +640,23 @@ export function IdentidadDigitalModule() {
                             </Button>
                            )}
                         </CardContent>
+<<<<<<< HEAD
+                        <CardFooter className="flex flex-col sm:flex-row gap-2">
+                           <Button onClick={handleGenerateLogo} disabled={isGeneratingLogo || isIdentityLoading || isUploadingLogo} className="w-full">
+                                {isGeneratingLogo ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo con IA...</>
+=======
                         <CardFooter>
                             <Button onClick={onImageGenerate} disabled={isImageLoading || isIdentityLoading || isBrandDirty} className="w-full">
                                 {isImageLoading ? (
                                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando logo...</>
+>>>>>>> 1ebb0bf80db47d4dadbb810b88dcb6ae3801e64f
                                 ) : (
                                     <><ImageIcon className="mr-2 h-4 w-4" /> Generar imagen con esta idea</>
                                 )}
                             </Button>
                         </CardFooter>
                     </Card>
-
                 </div>
             )}
         </div>
@@ -544,7 +683,7 @@ export function IdentidadDigitalModule() {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
-            <Button onClick={handleApplyIdentity} size="lg">
+            <Button onClick={handleApplyIdentity} size="lg" disabled={!identityResult}>
                 <Heart className="mr-2 h-4 w-4" />
                 Guardar y Sincronizar Identidad
             </Button>
@@ -554,6 +693,9 @@ export function IdentidadDigitalModule() {
   );
 }
 
+<<<<<<< HEAD
     
 
+=======
+>>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
     

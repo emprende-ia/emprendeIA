@@ -14,8 +14,63 @@ import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+<<<<<<< HEAD
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+=======
+
+function SuggestedNextStep() {
+    const { user } = useUser();
+    const [suggestion, setSuggestion] = useState<{title: string, description: string, module: React.ReactNode} | null>(null);
+
+    useEffect(() => {
+        // This logic runs on the client and can be expanded based on user progress.
+        // The dependency array makes it re-evaluate when the user state changes, or when the component is focused.
+        const brandIdentity = localStorage.getItem('brandIdentity');
+        const learningPath = localStorage.getItem('learningPath');
+
+        if (!brandIdentity) {
+            setSuggestion({
+                title: "Define tu Identidad Digital",
+                description: "Tu primer paso es crear una marca sólida. Genera un nombre, eslogan y logo para que tu idea empiece a tomar forma.",
+                module: <IdentidadDigitalModule />
+            });
+        } else if (!learningPath) {
+            setSuggestion({
+                title: "Crea tu Plan de Acción",
+                description: "Ya tienes una marca, ¡genial! Ahora, creemos una guía paso a paso para organizar tus siguientes movimientos y lanzar tu negocio.",
+                module: <GuiaPasoAPasoModule />
+            });
+        } else {
+             setSuggestion({
+                title: "Encuentra tus Proveedores",
+                description: "Con un plan en mano, es hora de encontrar los socios correctos. Busca y cotiza con los mejores proveedores para tu negocio.",
+                module: <ProveedoresModule />
+            });
+        }
+    }, [user]); // Reruns when user logs in/out, or can be tied to a more specific state management solution.
+
+    if (!suggestion) {
+        return null;
+    }
+
+    return (
+        <Card className="bg-primary/10 border-primary/20 shadow-lg animate-in fade-in-50">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl">🚀 Tu Siguiente Paso Recomendado</CardTitle>
+                <CardDescription>{suggestion.title}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">{suggestion.description}</p>
+            </CardContent>
+            <CardFooter>
+                {/* The module component itself contains the DialogTrigger button */}
+                {suggestion.module}
+            </CardFooter>
+        </Card>
+    )
+}
+>>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
 
 
 export default function DashboardPage() {
@@ -164,3 +219,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

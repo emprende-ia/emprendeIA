@@ -29,23 +29,6 @@ export async function generateOptimizedImage(input: GenerateOptimizedImageInput)
   return generateOptimizedImageFlow(input);
 }
 
-const promptOptimizerPrompt = ai.definePrompt({
-    name: 'promptOptimizerPrompt',
-    input: { schema: GenerateOptimizedImageInputSchema },
-    prompt: `You are a creative assistant that enhances user prompts for an AI image generator.
-    Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
-
-    {{#if isLogo}}
-    Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.
-    {{/if}}
-    {{#if isBrandImage}}
-    Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.
-    {{/if}}
-
-    User Prompt: {{{prompt}}}
-    Optimized Prompt:`,
-});
-
 const generateOptimizedImageFlow = ai.defineFlow(
   {
     name: 'generateOptimizedImageFlow',
@@ -53,20 +36,29 @@ const generateOptimizedImageFlow = ai.defineFlow(
     outputSchema: GenerateOptimizedImageOutputSchema,
   },
   async ({ prompt, creativeType }) => {
-    // Step 1: Optimize the user's prompt with an LLM based on the creative type.
-    const optimizerInput = {
-      prompt,
-      creativeType,
-      isLogo: creativeType === 'LOGO',
-      isBrandImage: creativeType === 'BRAND_IMAGE',
-    };
-    const { text: optimizedPrompt } = await promptOptimizerPrompt(optimizerInput);
+    
+    // Step 1: Dynamically create the prompt for the optimizer.
+    let optimizationInstructions = '';
+    if (creativeType === 'LOGO') {
+        optimizationInstructions = "Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.";
+    } else { // BRAND_IMAGE
+        optimizationInstructions = "Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.";
+    }
+
+    const optimizerPrompt = `You are a creative assistant that enhances user prompts for an AI image generator. Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
+    ${optimizationInstructions}
+
+    User Prompt: ${prompt}
+    Optimized Prompt:`;
+    
+    // Step 2: Optimize the user's prompt with an LLM.
+    const { text: optimizedPrompt } = await ai.generate({ prompt: optimizerPrompt });
 
     if (!optimizedPrompt) {
         throw new Error("Failed to optimize the prompt.");
     }
     
-    // Step 2: Generate the image using the optimized prompt.
+    // Step 3: Generate the image using the optimized prompt.
     const { media } = await ai.generate({
         model: 'googleai/imagen-4.0-fast-generate-001',
         prompt: optimizedPrompt,
@@ -81,3 +73,5 @@ const generateOptimizedImageFlow = ai.defineFlow(
     return { imageUrl, optimizedPrompt };
   }
 );
+
+    
