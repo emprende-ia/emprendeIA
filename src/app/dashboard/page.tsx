@@ -131,7 +131,7 @@ export default function DashboardPage() {
                     <CardHeader className="flex-grow p-0">
                         <div className="flex justify-center mb-4">
                             <Image 
-                                src="https://i.postimg.cc/BbBxd5S7/100-proveedores-y-distribuidores-confiables-(China-USA-y-mas)-PDF.jpg" 
+                                src="https://i.postimg.cc/BvNfQkhx/100-proveedores-y-distribuidores-confiables-(China-USA-y-mas)-PDF.jpg" 
                                 alt="Proveedores" 
                                 width={80} 
                                 height={80} 
