@@ -154,6 +154,15 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
                         <CardHeader className="flex-grow p-0">
+                             <div className="flex justify-center mb-4">
+                                <Image 
+                                    src="https://i.postimg.cc/T3GM6TRL/guias-paso-apaso.jpg" 
+                                    alt="Guía Paso a Paso" 
+                                    width={80} 
+                                    height={80} 
+                                    className="object-cover rounded-lg"
+                                />
+                            </div>
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
                                 <CardTitle className="text-2xl">Guía Paso a Paso</CardTitle>
