@@ -54,7 +54,7 @@ const generateOptimizedImageFlow = ai.defineFlow(
     
     // Step 2: Optimize the user's prompt with an LLM.
     const llmResponse = await ai.generate({ 
-      model: googleAI.model('gemini-2.5-flash'), // Explicitly use the model object
+      model: 'gemini-2.5-flash',
       prompt: optimizerPrompt,
     });
     const optimizedPrompt = llmResponse.text;
