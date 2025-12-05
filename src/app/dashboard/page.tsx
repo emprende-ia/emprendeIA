@@ -14,15 +14,12 @@ import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Image from "next/image";
 
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const router = useRouter();
   
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
@@ -132,6 +129,15 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
                     <CardHeader className="flex-grow p-0">
+                        <div className="flex justify-center mb-4">
+                            <Image 
+                                src="https://i.postimg.cc/BbBxd5S7/100-proveedores-y-distribuidores-confiables-(China-USA-y-mas)-PDF.jpg" 
+                                alt="Proveedores" 
+                                width={80} 
+                                height={80} 
+                                className="object-cover rounded-lg"
+                            />
+                        </div>
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
                             <CardTitle className="text-2xl">Proveedores</CardTitle>
@@ -165,3 +171,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
