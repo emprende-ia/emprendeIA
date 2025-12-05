@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search, RefreshCw } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
@@ -158,25 +158,6 @@ export default function DashboardPage() {
                         </CardFooter>
                     </div>
                 </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><RefreshCw className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Reformular mi Negocio</CardTitle>
-                            </div>
-                            <CardDescription>Vuelve al inicio para analizar una nueva idea o ajustar tu estrategia.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <Button onClick={() => router.push('/start')} variant="outline" className="w-full font-bold">
-                                Ir a Elegir Camino
-                            </Button>
-                        </CardFooter>
-                    </div>
-                </Card>
-
             </div>
         </div>
       </div>

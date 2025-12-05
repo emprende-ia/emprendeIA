@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText, BookOpen, Target, Lightbulb } from 'lucide-react';
+import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText, BookOpen, Target, Lightbulb, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -201,6 +201,11 @@ export function AppHeader() {
                             </div>
                         </DialogContent>
                     </Dialog>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/start')}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reformular mi Negocio
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
