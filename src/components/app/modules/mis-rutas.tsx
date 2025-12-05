@@ -310,13 +310,25 @@ function SavedPathsList() {
     );
 }
 
-export function MisRutasModule() {
+interface MisRutasModuleProps {
+  isMenuItem?: boolean;
+}
+
+export function MisRutasModule({ isMenuItem = false }: MisRutasModuleProps) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const TriggerComponent = isMenuItem ? 'div' : Button;
+  const triggerProps = isMenuItem
+    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full" }
+    : { className: "w-full font-bold" };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><BookOpen className="mr-2 h-4 w-4" /> Ver Rutas</Button>
+        <TriggerComponent {...triggerProps}>
+          <BookOpen className="mr-2 h-4 w-4" /> Mis Rutas
+        </TriggerComponent>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>

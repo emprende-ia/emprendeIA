@@ -122,14 +122,24 @@ function SavedCampaignsList() {
     );
 }
 
+interface MisCampanasModuleProps {
+  isMenuItem?: boolean;
+}
 
-export function MisCampanasModule() {
+export function MisCampanasModule({ isMenuItem = false }: MisCampanasModuleProps) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const TriggerComponent = isMenuItem ? 'div' : Button;
+  const triggerProps = isMenuItem
+    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full" }
+    : { className: "w-full font-bold" };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Workflow className="mr-2 h-4 w-4" /> Ver Campañas</Button>
+        <TriggerComponent {...triggerProps}>
+          <Workflow className="mr-2 h-4 w-4" /> Mis Campañas
+        </TriggerComponent>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>

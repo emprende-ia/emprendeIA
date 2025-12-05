@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText } from 'lucide-react';
+import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText, BookOpen, Target, Lightbulb } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -24,6 +24,10 @@ import { getBrandIdentity, saveBrandIdentity, type BrandIdentity } from '@/lib/f
 import { Loader2 } from 'lucide-react';
 import { ViabilityAnalysisViewer } from './modules/viability-analysis-viewer';
 import { useToast } from '@/hooks/use-toast';
+import { MisRutasModule } from './modules/mis-rutas';
+import { MisCampanasModule } from './modules/mis-campanas';
+import { BrandCampaign } from './modules/brand-campaign';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 
 export function AppHeader() {
@@ -79,25 +83,24 @@ export function AppHeader() {
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
       
-      const newIdentityState = {
-          ...brandIdentity,
+      // Immediately update local state for preview
+      const updatedIdentity = {
+          ...(brandIdentity || { brandName: 'Mi Marca', slogan: 'Mi Eslogan', colorPalette: [], logoPrompt: '' }),
           logoUrl: dataUrl,
-          brandName: brandIdentity?.brandName || 'Mi Marca',
-          slogan: brandIdentity?.slogan || 'Mi Eslogan',
-          colorPalette: brandIdentity?.colorPalette || [],
-          logoPrompt: brandIdentity?.logoPrompt || 'Logo personalizado',
       };
+      setBrandIdentity(updatedIdentity as BrandIdentity);
       
-      setBrandIdentity(newIdentityState as BrandIdentity);
-      
+      // Asynchronously save to backend
       try {
-        await saveBrandIdentity(firestore, user?.uid, newIdentityState);
+        await saveBrandIdentity(firestore, user?.uid, updatedIdentity);
         toast({
             title: 'Logo actualizado',
             description: 'Tu nuevo logo ha sido guardado y sincronizado.',
         });
       } catch (error) {
          toast({ title: 'Error al guardar el logo', description: 'No se pudo guardar la imagen. Inténtalo de nuevo.', variant: 'destructive'});
+         // Optionally, revert the local state if save fails
+         // setBrandIdentity(brandIdentity); 
       }
     };
     reader.readAsDataURL(file);
@@ -170,11 +173,35 @@ export function AppHeader() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Herramientas Rápidas</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 {hasAnalysis && (
+                {hasAnalysis && (
                     <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
                        <ViabilityAnalysisViewer isMenuItem={true} />
                     </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <MisRutasModule isMenuItem={true} />
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <MisCampanasModule isMenuItem={true} />
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                             <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full">
+                                <Lightbulb className="mr-2 h-4 w-4" /> Conceptos de Marketing
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-3xl">
+                            <DialogHeader>
+                                <DialogTitle className="font-headline text-2xl">Conceptos Clave de Marketing</DialogTitle>
+                                <DialogDescription>Una guía rápida para entender los pilares del marketing digital.</DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 max-h-[70vh] overflow-y-auto">
+                                <BrandCampaign />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
 
