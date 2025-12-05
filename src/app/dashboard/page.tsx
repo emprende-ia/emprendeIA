@@ -129,12 +129,11 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
                     <CardHeader className="flex-grow p-0">
-                        <div className="flex justify-center mb-4">
+                        <div className="flex justify-center mb-4 h-20 w-20 relative">
                             <Image 
-                                src="https://i.postimg.cc/BvNfQkhx/100-proveedores-y-distribuidores-confiables-(China-USA-y-mas)-PDF.jpg" 
+                                src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" 
                                 alt="Proveedores" 
-                                width={80} 
-                                height={80} 
+                                fill
                                 className="object-cover rounded-lg"
                             />
                         </div>
@@ -154,13 +153,12 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
                         <CardHeader className="flex-grow p-0">
-                             <div className="flex justify-center mb-4">
+                             <div className="flex justify-center mb-4 h-20 w-20 relative">
                                 <Image 
-                                    src="https://i.postimg.cc/T3GM6TRL/guias-paso-apaso.jpg" 
+                                    src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" 
                                     alt="Guía Paso a Paso" 
-                                    width={80} 
-                                    height={80} 
-                                    className="object-cover rounded-lg"
+                                    fill
+                                    className="object-contain"
                                 />
                             </div>
                             <div className="flex items-center gap-3 mb-2">
@@ -180,5 +178,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
