@@ -38,7 +38,6 @@ const generateOptimizedImageFlow = ai.defineFlow(
   },
   async ({ prompt, creativeType }) => {
     
-    // Step 1: Dynamically create the prompt for the optimizer.
     let optimizationInstructions = '';
     if (creativeType === 'LOGO') {
         optimizationInstructions = "Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.";
@@ -52,7 +51,7 @@ const generateOptimizedImageFlow = ai.defineFlow(
     User Prompt: ${prompt}
     Optimized Prompt:`;
     
-    // Step 2: Optimize the user's prompt with an LLM.
+    // Step 1: Optimize the user's prompt with an LLM.
     const llmResponse = await ai.generate({ 
       model: 'googleai/gemini-2.5-flash',
       prompt: optimizerPrompt,
@@ -60,10 +59,10 @@ const generateOptimizedImageFlow = ai.defineFlow(
     const optimizedPrompt = llmResponse.text;
     
     if (!optimizedPrompt) {
-        throw new Error("Failed to optimize the prompt.");
+        throw new Error("Failed to optimize the prompt. The AI did not return any text.");
     }
     
-    // Step 3: Generate the image using the optimized prompt with the correct image model.
+    // Step 2: Generate the image using the optimized prompt with the correct image model.
     const { media } = await ai.generate({
         model: googleAI.model('imagen-4.0-fast-generate-001'),
         prompt: optimizedPrompt,
@@ -72,7 +71,7 @@ const generateOptimizedImageFlow = ai.defineFlow(
     const imageUrl = media?.url;
 
     if (!imageUrl) {
-        throw new Error("Image generation failed.");
+        throw new Error("Image generation failed. The AI did not return an image.");
     }
 
     return { imageUrl, optimizedPrompt };
