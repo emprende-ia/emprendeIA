@@ -396,32 +396,33 @@ export function IdentidadDigitalModule() {
                     {generatedImage ? (
                         <Card className="overflow-hidden">
                             <CardContent className="p-0">
-                                <label htmlFor="logo-upload" className="aspect-video bg-muted flex items-center justify-center relative group cursor-pointer">
+                                <div className="aspect-video bg-muted flex items-center justify-center relative group">
                                     <Image src={generatedImage.imageUrl} alt="Logo generado por IA" width={512} height={288} className="object-contain"/>
-                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center opacity-0 group-hover:opacity-100 transition-opacity p-4">
-                                        <Upload className="h-8 w-8 text-white mb-2" />
-                                        <p className="text-white font-bold">Subir nuevo logo</p>
-                                        <p className="text-white/80 text-xs">Haz clic para seleccionar una imagen</p>
-                                    </div>
-                                    <Button onClick={handleDownloadLogo} variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Download className="h-4 w-4" />
-                                        <span className="sr-only">Descargar</span>
-                                    </Button>
-                                </label>
-                                <input
-                                    id="logo-upload"
-                                    ref={fileInputRef}
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/png, image/jpeg, image/webp"
-                                    onChange={handleLogoUpload}
-                                />
+                                </div>
                                 <div className="flex">
                                     {identityResult.colorPalette.map(color => (
                                         <div key={color.hex} style={{ backgroundColor: color.hex }} className="h-4 flex-1"/>
                                     ))}
                                 </div>
                             </CardContent>
+                             <CardFooter className="p-2 flex justify-end gap-2">
+                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm">
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Subir Logo
+                                </Button>
+                                <Button onClick={handleDownloadLogo} variant="secondary" size="sm">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Descargar
+                                </Button>
+                            </CardFooter>
+                             <input
+                                id="logo-upload"
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/webp"
+                                onChange={handleLogoUpload}
+                            />
                         </Card>
                     ) : (
                          <div className="space-y-4">
@@ -552,5 +553,7 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
+
+    
 
     
