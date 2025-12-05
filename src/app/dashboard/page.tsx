@@ -158,10 +158,10 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="h-32 w-full relative">
                         <Image 
-                            src="https://i.postimg.cc/5yGJdSJv/imagen-boton-1.png" 
+                            src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" 
                             alt="Guía Paso a Paso" 
                             fill
-                            className="object-contain"
+                            className="object-cover"
                         />
                     </div>
                     <CardHeader className="relative z-10 p-6">
