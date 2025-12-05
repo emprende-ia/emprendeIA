@@ -132,7 +132,7 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="h-32 w-full relative">
                         <Image 
-                            src="https://i.postimg.cc/pT3LgLzT/generador-campanas.jpg" 
+                            src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" 
                             alt="Generador de Campañas" 
                             fill
                             className="object-cover"
