@@ -37,6 +37,7 @@ const generateResourcePlanPrompt = ai.definePrompt({
     name: 'generateResourcePlanPrompt',
     input: { schema: GenerateResourcePlanInputSchema },
     output: { schema: GenerateResourcePlanOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are a startup financial advisor. Your task is to create an estimated budget for a new business based on the user's description. Your entire output must be in Spanish.
 
     **Business Description:** {{{businessDescription}}}

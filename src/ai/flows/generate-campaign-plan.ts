@@ -33,6 +33,7 @@ const generateCampaignPlanPrompt = ai.definePrompt({
     name: 'generateCampaignPlanPrompt',
     input: { schema: GenerateCampaignPlanInputSchema },
     output: { schema: CampaignPlanSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are an expert marketing campaign manager. A user has chosen a campaign idea and needs a detailed, actionable plan. Your entire output must be in Spanish.
 
     **Campaign Idea Details:**

@@ -71,6 +71,7 @@ const analyzeBusinessIdeaPrompt = ai.definePrompt({
     name: 'analyzeBusinessIdeaPrompt',
     input: { schema: AnalyzeBusinessIdeaInputSchema },
     output: { schema: AnalyzeBusinessIdeaOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are an expert business consultant, honest and direct, but also encouraging. Your entire output must be in Spanish.
     Analyze the following user profile for a new business venture and provide a concise viability analysis.
 

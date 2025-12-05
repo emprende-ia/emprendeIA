@@ -58,6 +58,7 @@ const suggestRelevantSuppliersPrompt = ai.definePrompt({
   name: 'suggestRelevantSuppliersPrompt',
   input: {schema: SuggestRelevantSuppliersInputSchema},
   output: {schema: SuggestRelevantSuppliersOutputSchema},
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an AI business advisor tasked with providing hyper-relevant supplier recommendations to entrepreneurs. Your entire output MUST be in Spanish.
 
   **Phase 1: Semantic Analysis & Sentiment Analysis**
