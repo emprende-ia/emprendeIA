@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2, Download } from "lucide-react";
+import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
 import { generateDigitalIdentity, type GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 import { generateOptimizedImage, type GenerateOptimizedImageOutput } from '@/ai/flows/generate-optimized-image';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
@@ -59,6 +59,7 @@ export function IdentidadDigitalModule() {
   const [isRegeneratingLogoPrompt, setIsRegeneratingLogoPrompt] = useState(false);
 
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -233,7 +234,7 @@ export function IdentidadDigitalModule() {
       }
   };
 
-  const handleApplyIdentity = () => {
+  const handleApplyIdentity = async () => {
     if (!identityResult) return;
     const identityToSave: BrandIdentity = {
       ...identityResult,
@@ -243,20 +244,30 @@ export function IdentidadDigitalModule() {
       logoUrl: generatedImage?.imageUrl || null,
     };
     
-    if (user && firestore) {
-        saveBrandIdentity(firestore, user.uid, identityToSave);
-        toast({
-            title: '¡Identidad Sincronizada!',
-            description: 'Tu marca se ha guardado en tu cuenta.',
-        });
-    } else {
-        localStorage.setItem('brandIdentity', JSON.stringify(identityToSave));
-        toast({
-            title: '¡Identidad Guardada!',
-            description: 'Tu marca se ha guardado en este dispositivo.',
-        });
+    try {
+      if (user && firestore) {
+          await saveBrandIdentity(firestore, user.uid, identityToSave);
+          toast({
+              title: '¡Identidad Sincronizada!',
+              description: 'Tu marca se ha guardado en tu cuenta.',
+          });
+      } else {
+          localStorage.setItem('brandIdentity', JSON.stringify(identityToSave));
+          toast({
+              title: '¡Identidad Guardada!',
+              description: 'Tu marca se ha guardado en este dispositivo.',
+          });
+      }
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Failed to save brand identity:", error);
+      const errorMessage = error instanceof Error ? error.message : "No se pudo sincronizar la identidad. Revisa la consola para más detalles.";
+      toast({
+        title: 'Error al Sincronizar',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
-    setIsOpen(false);
   };
 
   const handleDelete = () => {
@@ -272,7 +283,8 @@ export function IdentidadDigitalModule() {
       })
   }
 
-  const handleDownloadLogo = () => {
+  const handleDownloadLogo = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!generatedImage?.imageUrl) return;
     const link = document.createElement('a');
     link.href = generatedImage.imageUrl;
@@ -283,6 +295,25 @@ export function IdentidadDigitalModule() {
     document.body.removeChild(link);
   };
   
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setGeneratedImage({
+        imageUrl: dataUrl,
+        optimizedPrompt: 'Logo subido por el usuario',
+      });
+      toast({
+        title: 'Logo actualizado',
+        description: 'La nueva imagen se ha cargado. No olvides sincronizar para guardar los cambios.',
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
@@ -365,15 +396,26 @@ export function IdentidadDigitalModule() {
                     {generatedImage ? (
                         <Card className="overflow-hidden">
                             <CardContent className="p-0">
-                                <div className="aspect-video bg-muted flex items-center justify-center relative group">
+                                <label htmlFor="logo-upload" className="aspect-video bg-muted flex items-center justify-center relative group cursor-pointer">
                                     <Image src={generatedImage.imageUrl} alt="Logo generado por IA" width={512} height={288} className="object-contain"/>
-                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button onClick={handleDownloadLogo}>
-                                            <Download className="mr-2 h-4 w-4" />
-                                            Descargar Logo
-                                        </Button>
+                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center opacity-0 group-hover:opacity-100 transition-opacity p-4">
+                                        <Upload className="h-8 w-8 text-white mb-2" />
+                                        <p className="text-white font-bold">Subir nuevo logo</p>
+                                        <p className="text-white/80 text-xs">Haz clic para seleccionar una imagen</p>
                                     </div>
-                                </div>
+                                    <Button onClick={handleDownloadLogo} variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Download className="h-4 w-4" />
+                                        <span className="sr-only">Descargar</span>
+                                    </Button>
+                                </label>
+                                <input
+                                    id="logo-upload"
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/png, image/jpeg, image/webp"
+                                    onChange={handleLogoUpload}
+                                />
                                 <div className="flex">
                                     {identityResult.colorPalette.map(color => (
                                         <div key={color.hex} style={{ backgroundColor: color.hex }} className="h-4 flex-1"/>
@@ -510,3 +552,5 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
+
+    
