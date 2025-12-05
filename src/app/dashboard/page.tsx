@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, RefreshCw } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
@@ -14,10 +14,14 @@ import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
@@ -155,6 +159,12 @@ export default function DashboardPage() {
                     </div>
                 </Card>
             </div>
+        </div>
+        <div className="text-center p-4">
+            <Button onClick={() => router.push('/start')} variant="outline" size="lg">
+                <RefreshCw className="mr-2 h-5 w-5" />
+                Reformular mi Negocio
+            </Button>
         </div>
       </div>
     </div>
