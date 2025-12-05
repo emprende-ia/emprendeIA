@@ -77,6 +77,72 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-2 text-lg">Tus herramientas de IA para lanzar y crecer tu negocio.</p>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+           <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                <div className="relative z-10 flex flex-col h-full p-6">
+                    <CardHeader className="flex-grow p-0">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
+                            <CardTitle className="text-2xl">Mis Rutas</CardTitle>
+                        </div>
+                        <CardDescription>Consulta y da seguimiento a tus planes de aprendizaje.</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-0 pt-6">
+                        <MisRutasModule />
+                    </CardFooter>
+                </div>
+            </Card>
+
+             <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                <div className="relative z-10 flex flex-col h-full p-6">
+                    <CardHeader className="flex-grow p-0">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Target className="h-8 w-8 text-primary" /></div>
+                            <CardTitle className="text-2xl">Mis Campañas</CardTitle>
+                        </div>
+                        <CardDescription>Da seguimiento a tus campañas de marketing activas.</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-0 pt-6">
+                        <MisCampanasModule />
+                    </CardFooter>
+                </div>
+            </Card>
+
+            <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                <div className="relative z-10 flex flex-col h-full p-6">
+                    <CardHeader className="flex-grow p-0">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Lightbulb className="h-8 w-8 text-primary" /></div>
+                            <CardTitle className="text-2xl">Conceptos de Marketing</CardTitle>
+                        </div>
+                        <CardDescription>Aprende los fundamentos para potenciar tu marca.</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-0 pt-6">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button className="w-full font-bold">Ver Conceptos</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-3xl">
+                                <DialogHeader>
+                                    <DialogTitle className="font-headline text-2xl">Conceptos Clave de Marketing</DialogTitle>
+                                    <DialogDescription>
+                                        Una guía rápida para entender los pilares del marketing digital.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 max-h-[70vh] overflow-y-auto">
+                                    <BrandCampaign />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </CardFooter>
+                </div>
+            </Card>
+        </div>
+
+
         <div className="pt-6">
             <h2 className="text-2xl font-bold mb-4 text-center">Todas las Herramientas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -156,69 +222,6 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardFooter className="p-0 pt-6">
                             <AdministracionRecursosModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-                
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Route className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Mis Rutas</CardTitle>
-                            </div>
-                            <CardDescription>Consulta y da seguimiento a tus planes de aprendizaje.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <MisRutasModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Target className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Mis Campañas</CardTitle>
-                            </div>
-                            <CardDescription>Da seguimiento a tus campañas de marketing activas.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <MisCampanasModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Lightbulb className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Conceptos de Marketing</CardTitle>
-                            </div>
-                            <CardDescription>Aprende los fundamentos para potenciar tu marca.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button className="w-full font-bold">Ver Conceptos</Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-3xl">
-                                    <DialogHeader>
-                                        <DialogTitle className="font-headline text-2xl">Conceptos Clave de Marketing</DialogTitle>
-                                        <DialogDescription>
-                                            Una guía rápida para entender los pilares del marketing digital.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="py-4 max-h-[70vh] overflow-y-auto">
-                                        <BrandCampaign />
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
                         </CardFooter>
                     </div>
                 </Card>

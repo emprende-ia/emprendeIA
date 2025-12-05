@@ -316,7 +316,7 @@ export function MisRutasModule() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Route className="mr-2 h-4 w-4" /> Mis Rutas</Button>
+        <Button className="w-full font-bold"><BookOpen className="mr-2 h-4 w-4" /> Ver Rutas</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>

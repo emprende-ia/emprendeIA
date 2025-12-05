@@ -2,7 +2,7 @@
 'use client';
 
 import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
@@ -20,21 +20,25 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import Image from 'next/image';
 import { SettingsMenu } from './settings-menu';
-import { NotesModule } from './modules/notes-module';
-import { LuminarAssistantModule } from './modules/luminar-assistant';
-import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import { getBrandIdentity, saveBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
 import { Loader2 } from 'lucide-react';
 import { ViabilityAnalysisViewer } from './modules/viability-analysis-viewer';
+import { useToast } from '@/hooks/use-toast';
+
 
 export function AppHeader() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
   const [hasAnalysis, setHasAnalysis] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const brandName = brandIdentity?.brandName || "EmprendeIA";
   const logoUrl = brandIdentity?.logoUrl || "https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png";
@@ -67,6 +71,38 @@ export function AppHeader() {
     }
   }, [user, firestore]);
 
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      
+      const newIdentityState = {
+          ...brandIdentity,
+          logoUrl: dataUrl,
+          brandName: brandIdentity?.brandName || 'Mi Marca',
+          slogan: brandIdentity?.slogan || 'Mi Eslogan',
+          colorPalette: brandIdentity?.colorPalette || [],
+          logoPrompt: brandIdentity?.logoPrompt || 'Logo personalizado',
+      };
+      
+      setBrandIdentity(newIdentityState as BrandIdentity);
+      
+      try {
+        await saveBrandIdentity(firestore, user?.uid, newIdentityState);
+        toast({
+            title: 'Logo actualizado',
+            description: 'Tu nuevo logo ha sido guardado y sincronizado.',
+        });
+      } catch (error) {
+         toast({ title: 'Error al guardar el logo', description: 'No se pudo guardar la imagen. Inténtalo de nuevo.', variant: 'destructive'});
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
@@ -85,12 +121,25 @@ export function AppHeader() {
 
   return (
     <header className="relative flex w-full items-center justify-between">
-      <Link href="/start" className="flex items-center gap-3">
-        {isIdentityLoading ? (
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        ) : (
-            <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="rounded-full object-cover drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
-        )}
+      <div className="flex items-center gap-3 group relative">
+         <label htmlFor="logo-upload-header" className="cursor-pointer">
+            {isIdentityLoading ? (
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            ) : (
+                <Image src={logoUrl} alt={`${brandName} Logo`} width={64} height={64} className="rounded-full object-cover drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+            )}
+             <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs text-white">Cambiar</p>
+            </div>
+         </label>
+         <input
+            id="logo-upload-header"
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/png, image/jpeg, image/webp"
+            onChange={handleLogoUpload}
+        />
         <div>
             <h1 className="font-headline text-2xl font-bold tracking-tighter text-foreground sm:text-3xl">
             {brandName}
@@ -99,7 +148,7 @@ export function AppHeader() {
                 Convierte tus ideas en negocios reales.
             </p>
         </div>
-      </Link>
+      </div>
       
       <div className="flex items-center gap-2">
         <SettingsMenu />
@@ -121,19 +170,10 @@ export function AppHeader() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Herramientas Rápidas</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                    <NotesModule isMenuItem={true}/>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                    <LuminarAssistantModule isMenuItem={true} />
-                </DropdownMenuItem>
                  {hasAnalysis && (
-                    <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                           <ViabilityAnalysisViewer isMenuItem={true} />
-                        </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                       <ViabilityAnalysisViewer isMenuItem={true} />
+                    </DropdownMenuItem>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>
@@ -180,5 +220,3 @@ export function AppHeader() {
     </header>
   );
 }
-
-    
