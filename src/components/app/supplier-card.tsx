@@ -81,14 +81,6 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
                 Verificado
               </Badge>
             )}
-             <Button variant="ghost" size="icon" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                  <Bookmark className="h-4 w-4" />
-              )}
-              <span className="sr-only">Guardar Proveedor</span>
-          </Button>
           </div>
         </div>
         {rating > 0 && (
@@ -127,10 +119,15 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button variant="outline" className="w-full">
-          Contactar
-        </Button>
+      <CardFooter className="flex flex-col sm:flex-row gap-2">
+         <Button variant="outline" className="w-full" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                  <Bookmark className="mr-2 h-4 w-4" />
+              )}
+              Guardar Proveedor
+          </Button>
         <Button asChild className="w-full">
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
             <MapPin className="mr-2 h-4 w-4" />

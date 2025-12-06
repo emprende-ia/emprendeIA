@@ -3,13 +3,14 @@
 
 import { useEffect, useState } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { getSearchHistory, type SearchHistory } from '@/lib/firestore/search-history';
+import { getSearchHistory, deleteSearchHistory, type SearchHistory } from '@/lib/firestore/search-history';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { History } from 'lucide-react';
+import { History, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Button } from '../ui/button';
 
 export function HistorySidebar() {
   const { user } = useUser();
@@ -24,16 +25,18 @@ export function HistorySidebar() {
         setHistory(newHistory);
         setIsLoading(false);
       });
-      // The real-time listener will handle updates.
-      // We return the unsubscribe function to clean up when the component unmounts.
       return () => unsubscribe();
-
     } else if (!user) {
-      // If there's no user, we're not loading and there's no history.
       setIsLoading(false);
       setHistory([]);
     }
   }, [user, firestore]);
+
+  const handleDelete = (searchId: string) => {
+    if (user && firestore && searchId) {
+      deleteSearchHistory(firestore, user.uid, searchId);
+    }
+  };
 
   return (
     <Card className="sticky top-8">
@@ -54,8 +57,17 @@ export function HistorySidebar() {
         ) : history.length > 0 ? (
           <ul className="space-y-4">
             {history.map((item) => (
-              <li key={item.id} className="p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors">
-                <p className="font-semibold truncate text-sm">{item.term}</p>
+              <li key={item.id} className="group relative p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => item.id && handleDelete(item.id)}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Borrar</span>
+                </Button>
+                <p className="font-semibold truncate text-sm pr-6">{item.term}</p>
                 <p className="text-xs text-muted-foreground pt-1">
                   {formatDistanceToNow(item.timestamp, { addSuffix: true, locale: es })}
                 </p>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Firestore, collection, addDoc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore';
+import { Firestore, collection, addDoc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -37,6 +37,31 @@ export function saveSearchHistory(
         path: historyCollection.path,
         operation: 'create',
         requestResourceData: dataToSave,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+}
+
+/**
+ * Deletes a search history record for a specific user.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param searchId - The ID of the search record to delete.
+ */
+export function deleteSearchHistory(
+  firestore: Firestore,
+  userId: string,
+  searchId: string,
+): void {
+  if (!userId || !searchId) return;
+  const searchDoc = doc(firestore, `users/${userId}/searchHistory`, searchId);
+  
+  deleteDoc(searchDoc)
+    .catch((error) => {
+      console.error("Error deleting search history: ", error);
+      const permissionError = new FirestorePermissionError({
+        path: searchDoc.path,
+        operation: 'delete',
       });
       errorEmitter.emit('permission-error', permissionError);
     });
