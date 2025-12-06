@@ -74,25 +74,33 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="font-headline text-xl">{supplier.name}</CardTitle>
-          <div className='flex items-center gap-2'>
-            {isVerified && (
-              <Badge variant="outline" className="flex-shrink-0 border-green-500 bg-green-100/80 text-green-700 dark:bg-green-900/50 dark:text-green-400">
-                <BadgeCheck className="mr-1 h-4 w-4" />
-                Verificado
-              </Badge>
-            )}
-          </div>
+          {isVerified && (
+            <Badge variant="outline" className="flex-shrink-0 border-green-500 bg-green-100/80 text-green-700 dark:bg-green-900/50 dark:text-green-400">
+              <BadgeCheck className="mr-1 h-4 w-4" />
+              Verificado
+            </Badge>
+          )}
         </div>
-        {rating > 0 && (
-          <CardDescription className="flex items-center gap-2 pt-1">
-            <div className="flex items-center gap-0.5 text-amber-500">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-current' : ''}`} />
-              ))}
-            </div>
-            <span className="text-xs text-muted-foreground">{rating} ({reviewCount} reseñas)</span>
-          </CardDescription>
-        )}
+        <div className="flex flex-col items-start gap-2">
+            {rating > 0 && (
+                <CardDescription className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-0.5 text-amber-500">
+                    {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-current' : ''}`} />
+                    ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{rating} ({reviewCount} reseñas)</span>
+                </CardDescription>
+            )}
+            <Button variant="outline" size="sm" className="mt-2" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Bookmark className="mr-2 h-4 w-4" />
+                )}
+                Guardar Proveedor
+            </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
         <div className="rounded-md border-l-4 border-primary bg-primary/10 p-3 text-sm italic text-muted-foreground">
@@ -120,14 +128,6 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
         </div>
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row gap-2">
-         <Button variant="outline" size="sm" className="w-full" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                  <Bookmark className="mr-2 h-4 w-4" />
-              )}
-              Guardar Proveedor
-          </Button>
         <Button asChild className="w-full" size="sm">
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
             <MapPin className="mr-2 h-4 w-4" />
