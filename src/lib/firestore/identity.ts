@@ -4,10 +4,10 @@
 import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { GenerateBrandAssetsOutput } from '@/ai/flows/generate-brand-assets';
+import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 
-// This interface is now simplified to only include one standard logo URL.
-export interface BrandIdentity extends Omit<GenerateBrandAssetsOutput, 'logoUrl' | 'logoSource'> {
+// This interface combines the text identity with the optional logo URL
+export interface BrandIdentity extends GenerateDigitalIdentityOutput {
   logoUrl: string | null;
   logoSource: 'ai_generated' | 'user_uploaded' | null;
   updatedAt?: Date;

@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Palette, Bot, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
 import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
-import { generateBrandAssets } from '@/ai/flows/generate-brand-assets';
+import { generateLogoFromPrompt } from '@/ai/flows/generate-logo-from-prompt';
 import { regenerateBrandElements } from '@/ai/flows/regenerate-brand-elements';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -40,6 +40,7 @@ export function IdentidadDigitalModule() {
   const firestore = useFirestore();
 
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
+  const [isLogoLoading, setIsLogoLoading] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -119,26 +120,11 @@ export function IdentidadDigitalModule() {
     setIsIdentityLoading(true);
     resetIdentityState();
     try {
-      // Step 1: Generate text elements (name, slogan, colors, logo prompt)
-      const identityElements = await generateDigitalIdentity(data);
-      
-      // Step 2: Generate the logo and its different sizes
-      const { logoUrl } = await generateBrandAssets({
-        businessDescription: data.businessDescription,
-      });
-
-      // Step 3: Combine all results
-      const result: BrandIdentity = {
-        ...identityElements,
-        logoUrl: logoUrl,
-        logoSource: 'ai_generated',
-      }
-      
+      const result = await generateDigitalIdentity(data);
       setIdentityResult(result);
-
       toast({
-        title: "¡Identidad Digital Generada!",
-        description: "Aquí tienes los elementos clave para tu nueva marca.",
+        title: "¡Identidad de Marca Generada!",
+        description: "Revisa el nombre, eslogan y el prompt para tu logo.",
       });
     } catch (e) {
       console.error(e);
@@ -151,6 +137,28 @@ export function IdentidadDigitalModule() {
       setIsIdentityLoading(false);
     }
   };
+  
+  const handleGenerateLogo = async () => {
+      if (!identityResult?.logoPrompt) {
+          toast({ title: 'Falta el prompt del logo', description: 'Primero genera una identidad de marca para obtener un prompt.', variant: 'destructive'});
+          return;
+      }
+      setIsLogoLoading(true);
+      try {
+        const { logoUrl } = await generateLogoFromPrompt({ logoPrompt: identityResult.logoPrompt });
+        setIdentityResult(prev => ({
+            ...prev,
+            logoUrl: logoUrl,
+            logoSource: 'ai_generated'
+        }));
+        toast({ title: '¡Logo generado!', description: 'Tu nuevo logo está listo.'});
+      } catch (error) {
+        console.error(error);
+        toast({ title: 'Error al generar el logo', description: 'No se pudo crear la imagen. Intenta de nuevo.', variant: 'destructive'});
+      } finally {
+        setIsLogoLoading(false);
+      }
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -321,7 +329,7 @@ export function IdentidadDigitalModule() {
                         </FormItem>
                     )}
                     />
-                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isUploadingLogo}>
+                    <Button type="submit" size="sm" className="w-full font-bold" disabled={isIdentityLoading || isUploadingLogo || isLogoLoading}>
                     {isIdentityLoading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando Magia...</>
                     ) : (
@@ -336,13 +344,13 @@ export function IdentidadDigitalModule() {
                      <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
-                        <AlertDescription className="text-muted-foreground">Puedes editar el nombre y eslogan, y luego guardar los elementos para sincronizarlos con tu cuenta.</AlertDescription>
+                        <AlertDescription className="text-muted-foreground">Puedes editar los elementos y luego generar un logo basado en el prompt.</AlertDescription>
                     </Alert>
 
                     {identityResult.logoUrl && (
                         <Card className="overflow-hidden">
                             <CardHeader>
-                                <CardTitle className="text-lg">Logo Generado</CardTitle>
+                                <CardTitle className="text-lg">Logo</CardTitle>
                             </CardHeader>
                             <CardContent className="p-6 flex items-center justify-center">
                                 <div className="aspect-square bg-muted flex items-center justify-center relative group w-48 h-48 rounded-lg">
@@ -398,7 +406,7 @@ export function IdentidadDigitalModule() {
                                 />
                                  <Button onClick={handleRegenerateElements} size="icon" variant="ghost" disabled={isRegenerating}>
                                     {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4 text-primary" />}
-                                </Button>
+                                 </Button>
                                 </div>
                             </div>
                             <div>
@@ -417,8 +425,17 @@ export function IdentidadDigitalModule() {
                             </div>
                             {identityResult.logoPrompt && (
                                 <div>
-                                    <p className="text-sm font-semibold">Prompt del Logo:</p>
-                                    <p className="text-xs font-mono text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{identityResult.logoPrompt}</p>
+                                    <label className="text-sm font-semibold">Prompt del Logo:</label>
+                                    <Textarea
+                                        value={identityResult.logoPrompt || ''}
+                                        onChange={(e) => setIdentityResult(prev => ({ ...prev, logoPrompt: e.target.value }))}
+                                        className="text-xs font-mono text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1"
+                                        rows={4}
+                                    />
+                                    <Button onClick={handleGenerateLogo} size="sm" className="w-full mt-2" disabled={isLogoLoading || !identityResult.logoPrompt}>
+                                        {isLogoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                                        Generar Logo con IA
+                                    </Button>
                                 </div>
                             )}
                         </CardContent>
@@ -458,5 +475,3 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
-
-    
