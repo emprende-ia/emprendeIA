@@ -55,7 +55,7 @@ const generateIdentityPrompt = ai.definePrompt({
     input: { schema: GenerateBrandAssetsInputSchema },
     output: { schema: BrandIdentityElementsSchema },
     prompt: `You are a world-class branding expert. Your entire output must be in Spanish, except for the 'logoPrompt' which MUST be in English.
-    Based on the user's business description, generate a brand name, slogan, color palette, and a descriptive logo prompt.
+    Based on the user's business description, generate a brand name, slogan, colorPalette, and a descriptive logo prompt.
     Business Description: {{{businessDescription}}}
     Return the final output as a JSON object.`,
 });
