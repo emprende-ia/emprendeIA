@@ -39,6 +39,7 @@ const promptOptimizer = ai.definePrompt({
     name: 'promptOptimizer',
     input: { schema: OptimizerPromptInputSchema },
     output: { schema: z.string() },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are a creative assistant that enhances user prompts for an AI image generator. Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
     {{#if isLogo}}
     Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.
