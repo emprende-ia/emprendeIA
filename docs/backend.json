@@ -218,6 +218,36 @@
         }
       },
       "required": ["brandName", "slogan", "updatedAt"]
+    },
+    "SavedSupplier": {
+      "title": "Saved Supplier",
+      "description": "A supplier profile saved by a user.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "contactInfo": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "specialOffers": {
+          "type": "string"
+        },
+        "summaryIA": {
+          "type": "string"
+        },
+        "savedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "description", "contactInfo", "location", "summaryIA", "savedAt"]
     }
   },
   "auth": {
@@ -290,6 +320,14 @@
           "entityName": "BrandIdentity",
           "schema": { "$ref": "#/entities/BrandIdentity" },
           "description": "Stores the user's primary brand identity."
+        }
+      },
+      {
+        "path": "/users/{userId}/savedSuppliers/{supplierId}",
+        "definition": {
+          "entityName": "SavedSupplier",
+          "schema": { "$ref": "#/entities/SavedSupplier" },
+          "description": "Stores a user's saved supplier profiles."
         }
       }
     ]

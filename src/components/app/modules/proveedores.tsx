@@ -12,13 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Lightbulb } from 'lucide-react';
+import { Loader2, Sparkles, Lightbulb, Bookmark } from 'lucide-react';
 import { SupplierCard } from '../supplier-card';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useUser, useFirestore } from '@/firebase';
 import { saveSearchHistory } from '@/lib/firestore/search-history';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import Image from 'next/image';
+import { SavedSuppliersModule } from './saved-suppliers';
 
 const formSchema = z.object({
   businessPlan: z.string().min(25, {
@@ -157,6 +157,7 @@ export function ProveedoresModule() {
                     </FormItem>
                   )}
                 />
+                <div className='flex gap-2'>
                 <Button type="submit" size="sm" className="w-full font-bold" disabled={isLoading}>
                   {isLoading ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Buscando...</>
@@ -164,6 +165,8 @@ export function ProveedoresModule() {
                     <><Sparkles className="mr-2 h-4 w-4" /> Buscar Proveedores</>
                   )}
                 </Button>
+                <SavedSuppliersModule />
+                </div>
               </form>
             </Form>
           </div>

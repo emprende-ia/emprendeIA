@@ -11,6 +11,7 @@
  *   - /users/{userId}/marketingCampaigns/{campaignId}: Private marketing campaigns saved by each user.
  *   - /users/{userId}/notes/{noteId}: Private notes for each user.
  *   - /users/{userId}/brandIdentity/main: Private brand identity for each user.
+ *   - /users/{userId}/savedSuppliers/{supplierId}: Private list of saved suppliers for each user.
  * @key-security-decisions
  *   - User listing is disallowed to protect privacy.
  *   - Supplier data is publicly readable.
@@ -131,6 +132,17 @@ service cloud.firestore {
      */
     match /users/{userId}/brandIdentity/main {
         allow read, create, update, delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Enforces that only the authenticated user can manage their saved suppliers.
+     * @path /users/{userId}/savedSuppliers/{supplierId}
+     * @allow (create, get, list, update, delete): The user can manage their own saved suppliers if the userId matches their auth UID.
+     * @deny (create, get, list, update, delete): Denies operations if the user is not authenticated or the user ID does not match.
+     * @principle Enforces user-ownership for saved suppliers.
+     */
+    match /users/{userId}/savedSuppliers/{supplierId} {
+      allow read, write: if isOwner(userId);
     }
 
     // --- Helper functions ---
