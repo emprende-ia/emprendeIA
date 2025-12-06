@@ -17,3 +17,4 @@ import '@/ai/flows/generate-task-audio.ts';
 import '@/ai/flows/generate-campaign-plan.ts';
 import '@/ai/flows/analyze-breakeven-point.ts';
 import '@/ai/flows/generate-module-audio.ts';
+import '@/ai/flows/regenerate-brand-elements.ts';

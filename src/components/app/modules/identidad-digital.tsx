@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Palette, Bot, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
 import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
 import { generateBrandAssets } from '@/ai/flows/generate-brand-assets';
+import { regenerateBrandElements } from '@/ai/flows/regenerate-brand-elements';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -41,6 +42,7 @@ export function IdentidadDigitalModule() {
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   
   const [identityResult, setIdentityResult] = useState<Partial<BrandIdentity> | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
@@ -118,14 +120,14 @@ export function IdentidadDigitalModule() {
     resetIdentityState();
     try {
       const identityElements = await generateDigitalIdentity(data);
-      const brandAssets = await generateBrandAssets({
+      const { logoUrl } = await generateBrandAssets({
         businessDescription: data.businessDescription,
-        logoPrompt: identityElements.logoPrompt,
       });
 
       const result: BrandIdentity = {
         ...identityElements,
-        ...brandAssets,
+        logoUrl: logoUrl,
+        logoSource: 'ai_generated',
       }
       
       setIdentityResult(result);
@@ -222,6 +224,29 @@ export function IdentidadDigitalModule() {
       });
     }
   };
+
+  const handleRegenerateElements = async () => {
+    const description = businessForm.getValues('businessDescription');
+    if (!description) {
+        toast({ title: 'Falta descripción', description: 'Por favor, describe tu negocio primero.', variant: 'destructive'});
+        return;
+    }
+    setIsRegenerating(true);
+    try {
+        const { brandName, slogan } = await regenerateBrandElements({ businessDescription: description });
+        setIdentityResult(prev => ({
+            ...prev,
+            brandName,
+            slogan,
+        }));
+        toast({ title: '¡Nuevas sugerencias!', description: 'Se ha generado un nuevo nombre y eslogan.'});
+    } catch (error) {
+        console.error(error);
+        toast({ title: 'Error', description: 'No se pudieron generar nuevas sugerencias.', variant: 'destructive'});
+    } finally {
+        setIsRegenerating(false);
+    }
+  }
 
   const handleDelete = () => {
       if (user && firestore) {
@@ -363,19 +388,29 @@ export function IdentidadDigitalModule() {
                         <CardContent className="space-y-4">
                             <div>
                                 <label className="text-sm font-semibold">Nombre:</label>
+                                <div className="flex items-center gap-2">
                                 <Input
                                     value={identityResult.brandName || ''}
                                     onChange={(e) => setIdentityResult(prev => ({ ...prev, brandName: e.target.value }))}
                                     className="font-headline text-xl h-auto p-1 mt-1"
                                 />
+                                <Button onClick={handleRegenerateElements} size="icon" variant="ghost" disabled={isRegenerating}>
+                                    {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4 text-primary" />}
+                                </Button>
+                                </div>
                             </div>
                              <div>
                                 <label className="text-sm font-semibold">Eslogan:</label>
+                                <div className="flex items-center gap-2">
                                 <Input
                                     value={identityResult.slogan || ''}
                                     onChange={(e) => setIdentityResult(prev => ({ ...prev, slogan: e.target.value }))}
                                     className="italic text-muted-foreground mt-1"
                                 />
+                                 <Button onClick={handleRegenerateElements} size="icon" variant="ghost" disabled={isRegenerating}>
+                                    {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4 text-primary" />}
+                                </Button>
+                                </div>
                             </div>
                             <div>
                                 <p className="text-sm font-semibold">Paleta de Colores:</p>
