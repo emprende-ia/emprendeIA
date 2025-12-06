@@ -4,16 +4,15 @@
 /**
  * @fileOverview This file defines a Genkit flow for generating a complete brand identity,
  * including a logo, using a multi-step AI process.
- * 1. An LLM generates a text-based brand identity (name, slogan, etc.).
- * 2. An image generation model creates a base logo from a detailed prompt.
- * 3. An image processing API is called to create a standard-sized version of the logo.
+ * 1. An LLM generates a text-based brand identity (name, slogan, logo prompt).
+ * 2. An image generation model creates a base logo from the generated prompt.
+ * 3. An image processing API creates a standard-sized version of the logo.
  *
  * @module ai/flows/generate-brand-assets
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generateOptimizedImage } from './generate-optimized-image';
 import { firebaseConfig } from '@/firebase/config';
 
 // Define the input schema for the brand generation flow
@@ -30,7 +29,7 @@ const BrandIdentityElementsSchema = z.object({
     hex: z.string().describe('The hex code of the color (e.g., "#FFFFFF").'),
     name: z.string().describe('The name of the color (e.g., "Snow White").'),
   })).describe('A palette of 3-5 colors that match the brand identity.'),
-  logoPrompt: z.string().describe('A suggested prompt for generating a logo for the brand.'),
+  logoPrompt: z.string().describe('A suggested prompt for generating a logo for the brand. This prompt must be in English.'),
 });
 
 // Define the final output schema for the entire flow, now with a single logo URL
@@ -55,7 +54,8 @@ const generateIdentityPrompt = ai.definePrompt({
     name: 'generateIdentityElementsPrompt',
     input: { schema: GenerateBrandAssetsInputSchema },
     output: { schema: BrandIdentityElementsSchema },
-    prompt: `You are a world-class branding expert. Based on the user's business description, generate a brand name, slogan, color palette, and a descriptive logo prompt.
+    prompt: `You are a world-class branding expert. Your entire output must be in Spanish, except for the 'logoPrompt' which MUST be in English.
+    Based on the user's business description, generate a brand name, slogan, color palette, and a descriptive logo prompt.
     Business Description: {{{businessDescription}}}
     Return the final output as a JSON object.`,
 });
@@ -68,18 +68,20 @@ const generateBrandAssetsFlow = ai.defineFlow(
     outputSchema: GenerateBrandAssetsOutputSchema,
   },
   async ({ businessDescription }) => {
-    // 1. Generate text-based brand identity
+    // 1. Generate text-based brand identity, including the logo prompt
     const { output: identityElements } = await generateIdentityPrompt({ businessDescription });
     if (!identityElements) {
         throw new Error('Failed to generate brand identity elements.');
     }
 
-    // 2. Generate the base logo image from the optimized prompt
-    const { imageUrl: baseLogoDataUrl } = await generateOptimizedImage({
+    // 2. Generate the base logo image from the newly generated prompt
+    const { media } = await ai.generate({
+        model: 'googleai/imagen-4.0-fast-generate-001',
         prompt: identityElements.logoPrompt,
-        creativeType: 'LOGO',
     });
-     if (!baseLogoDataUrl) {
+    
+    const baseLogoDataUrl = media?.url;
+    if (!baseLogoDataUrl) {
         throw new Error('Failed to generate the base logo image.');
     }
 
