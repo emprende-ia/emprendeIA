@@ -114,9 +114,6 @@ export function CampanasMarketingModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
-              <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" layout="fill" objectFit="cover" />
-          </div>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Megaphone/> Generador de Campañas de Marketing</DialogTitle>
           <DialogDescription>
             Describe tu producto o servicio y la IA generará ideas de campañas para atraer a tus primeros clientes.
@@ -190,5 +187,3 @@ export function CampanasMarketingModule() {
     </Dialog>
   );
 }
-
-    
