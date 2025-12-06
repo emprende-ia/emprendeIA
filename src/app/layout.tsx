@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <head>
+       <head>
         <title>EmprendeIA</title>
         <meta name="description" content="Convierte tus ideas en negocios reales." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

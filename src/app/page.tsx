@@ -16,23 +16,14 @@ export default function LandingPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
 
-  useEffect(() => {
-    // Redirect logged-in users to the start page.
-    if (!isUserLoading && user) {
-      router.push('/start');
-    }
-  }, [user, isUserLoading, router]);
-
-  // If the auth state is still loading, or if the user is logged in
-  // (and about to be redirected), show the loader.
-  if (isUserLoading || user) {
+  if (isUserLoading) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-  
+
   // If loading is finished and there's no user, show the landing page.
   if (!isUserLoading && !user) {
     return (
@@ -113,6 +104,18 @@ export default function LandingPage() {
 
           </div>
         </main>
+    );
+  }
+
+  // If user is logged in, redirect them. This is better handled
+  // by a router or middleware in a real app, but for this component,
+  // we can use useEffect on the client.
+  if (user) {
+    router.push('/start');
+    return (
+        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
     );
   }
 
