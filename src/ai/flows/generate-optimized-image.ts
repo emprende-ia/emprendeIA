@@ -20,10 +20,6 @@ const GenerateOptimizedImageInputSchema = z.object({
 });
 export type GenerateOptimizedImageInput = z.infer<typeof GenerateOptimizedImageInputSchema>;
 
-const OptimizerPromptInputSchema = GenerateOptimizedImageInputSchema.extend({
-  isLogo: z.boolean(),
-});
-
 const GenerateOptimizedImageOutputSchema = z.object({
   imageUrl: z.string().url().describe('The data URI of the generated image.'),
   optimizedPrompt: z.string().describe('The AI-enhanced prompt used for generation.'),
@@ -34,23 +30,6 @@ export async function generateOptimizedImage(input: GenerateOptimizedImageInput)
   return generateOptimizedImageFlow(input);
 }
 
-// Define el prompt para la optimización del texto
-const promptOptimizer = ai.definePrompt({
-    name: 'promptOptimizer',
-    input: { schema: OptimizerPromptInputSchema },
-    output: { schema: z.string() },
-    model: 'googleai/gemini-2.5-flash',
-    prompt: `You are a creative assistant that enhances user prompts for an AI image generator. Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
-    {{#if isLogo}}
-    Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.
-    {{else}}
-    Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.
-    {{/if}}
-
-    User Prompt: {{{prompt}}}
-    Optimized Prompt:`,
-});
-
 const generateOptimizedImageFlow = ai.defineFlow(
   {
     name: 'generateOptimizedImageFlow',
@@ -59,22 +38,31 @@ const generateOptimizedImageFlow = ai.defineFlow(
   },
   async ({ prompt, creativeType }) => {
     
-    // Step 1: Optimize the user's prompt with the text model.
-    const optimizerInput = {
-      prompt,
-      creativeType,
-      isLogo: creativeType === 'LOGO',
-    };
+    // Step 1: Build the prompt for the text model to optimize the user's prompt.
+    const isLogo = creativeType === 'LOGO';
+    let promptToOptimize = `You are a creative assistant that enhances user prompts for an AI image generator. Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.\n`;
     
-    // Correctly call the defined prompt object.
-    const optimizedPromptResponse = await promptOptimizer(optimizerInput);
-    const optimizedPrompt = optimizedPromptResponse.output;
+    if (isLogo) {
+      promptToOptimize += `Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.\n`;
+    } else {
+      promptToOptimize += `Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.\n`;
+    }
+    
+    promptToOptimize += `User Prompt: ${prompt}\nOptimized Prompt:`;
+
+    // Step 2: Call the text model to get the optimized prompt.
+    const optimizedPromptResponse = await ai.generate({
+      prompt: promptToOptimize,
+      model: googleAI.model('gemini-2.5-flash'),
+    });
+
+    const optimizedPrompt = optimizedPromptResponse.text;
 
     if (!optimizedPrompt) {
         throw new Error("Failed to optimize the prompt. The AI did not return any text.");
     }
     
-    // Step 2: Generate the image using the optimized prompt with the image model.
+    // Step 3: Generate the image using the optimized prompt with the image model.
     const { media } = await ai.generate({
         model: googleAI.model('imagen-4.0-fast-generate-001'),
         prompt: optimizedPrompt,
