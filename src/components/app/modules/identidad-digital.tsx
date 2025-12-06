@@ -119,11 +119,15 @@ export function IdentidadDigitalModule() {
     setIsIdentityLoading(true);
     resetIdentityState();
     try {
+      // Step 1: Generate text elements (name, slogan, colors, logo prompt)
       const identityElements = await generateDigitalIdentity(data);
+      
+      // Step 2: Generate the logo and its different sizes
       const { logoUrl } = await generateBrandAssets({
         businessDescription: data.businessDescription,
       });
 
+      // Step 3: Combine all results
       const result: BrandIdentity = {
         ...identityElements,
         logoUrl: logoUrl,
@@ -156,8 +160,8 @@ export function IdentidadDigitalModule() {
         toast({ title: "Archivo inválido", description: "Solo puedes subir imágenes.", variant: "destructive" });
         return;
     }
-    if (file.size > 1 * 1024 * 1024) { // 1MB Limit for Data URL
-        toast({ title: "Archivo muy grande", description: "El logo debe pesar menos de 1MB.", variant: "destructive" });
+    if (file.size > 4 * 1024 * 1024) { 
+        toast({ title: "Archivo muy grande", description: "El logo debe pesar menos de 4MB.", variant: "destructive" });
         return;
     }
 
@@ -267,7 +271,8 @@ export function IdentidadDigitalModule() {
     const link = document.createElement('a');
     link.href = identityResult.logoUrl;
     const brandName = identityResult.brandName || 'logo';
-    const fileExtension = identityResult.logoUrl.split(';')[0].split('/')[1] || 'png';
+    const fileExtensionMatch = identityResult.logoUrl.match(/^data:image\/(\w+);base64,/);
+    const fileExtension = fileExtensionMatch ? fileExtensionMatch[1] : 'png';
     link.download = `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.${fileExtension}`;
     document.body.appendChild(link);
     link.click();
@@ -301,22 +306,6 @@ export function IdentidadDigitalModule() {
             </div>
         </DialogHeader>
         <div className="py-4 space-y-6 overflow-y-auto pr-4">
-            <div className="space-y-4">
-                {generatedAudio ? (
-                    <div className="flex flex-col items-center gap-2">
-                        <audio src={generatedAudio} controls className="w-full h-10" />
-                        <p className="text-xs text-muted-foreground">Reproduce la introducción al módulo.</p>
-                    </div>
-                ) : (
-                    <Button variant="outline" className="w-full" onClick={handleGenerateAudio} disabled={isAudioLoading}>
-                        {isAudioLoading ? (
-                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando audio...</>
-                        ) : (
-                            <><AudioWaveform className="mr-2 h-4 w-4" /> Introducción al módulo</>
-                        )}
-                    </Button>
-                )}
-            </div>
             
             <Form {...businessForm}>
                 <form onSubmit={businessForm.handleSubmit(onBusinessSubmit)} className="space-y-4">
@@ -469,3 +458,5 @@ export function IdentidadDigitalModule() {
     </Dialog>
   );
 }
+
+    

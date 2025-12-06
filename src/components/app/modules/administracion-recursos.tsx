@@ -22,6 +22,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from "@/components/ui/input";
+import Image from 'next/image';
 
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -567,6 +568,9 @@ export function AdministracionRecursosModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
+          <div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
+              <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" layout="fill" objectFit="cover" />
+          </div>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2"><DollarSign /> Administración de Recursos</DialogTitle>
           <DialogDescription>
             Usa el Asistente Financiero para registrar y visualizar tus movimientos, o el Planificador para estimar un presupuesto inicial.
@@ -590,3 +594,5 @@ export function AdministracionRecursosModule() {
     </Dialog>
   );
 }
+
+    

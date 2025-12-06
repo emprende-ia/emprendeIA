@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useUser, useFirestore } from '@/firebase';
 import { saveSearchHistory } from '@/lib/firestore/search-history';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 const formSchema = z.object({
   businessPlan: z.string().min(25, {
@@ -118,6 +120,9 @@ export function ProveedoresModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
+           <div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
+              <Image src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" alt="Proveedores" layout="fill" objectFit="cover" />
+          </div>
           <DialogTitle className="font-headline text-2xl">Buscador de Proveedores con IA</DialogTitle>
           <DialogDescription>
             Describe tu negocio y la IA encontrará los proveedores más relevantes para ti, priorizando la ubicación y calidad.
@@ -195,3 +200,5 @@ export function ProveedoresModule() {
     </Dialog>
   );
 }
+
+    

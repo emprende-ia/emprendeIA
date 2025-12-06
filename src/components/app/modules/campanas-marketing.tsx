@@ -17,6 +17,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Image from 'next/image';
 
 const formSchema = z.object({
   productDescription: z.string().min(15, { message: 'Describe tu producto o servicio con al menos 15 caracteres.' }),
@@ -113,6 +114,9 @@ export function CampanasMarketingModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
+          <div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
+              <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" layout="fill" objectFit="cover" />
+          </div>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Megaphone/> Generador de Campañas de Marketing</DialogTitle>
           <DialogDescription>
             Describe tu producto o servicio y la IA generará ideas de campañas para atraer a tus primeros clientes.
@@ -186,3 +190,5 @@ export function CampanasMarketingModule() {
     </Dialog>
   );
 }
+
+    

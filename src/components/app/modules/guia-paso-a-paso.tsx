@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore } from '@/firebase';
 import { saveLearningPath } from '@/lib/firestore/learning-paths';
+import Image from 'next/image';
 
 const formSchema = z.object({
   giro: z.string().min(10, { message: 'Describe tu idea/negocio con más detalle.' }),
@@ -154,6 +155,9 @@ export function GuiaPasoAPasoModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
+          <div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
+              <Image src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" alt="Guía Paso a Paso" layout="fill" objectFit="cover" />
+          </div>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2"><BookOpen/> Tu Guía de Aprendizaje Personalizada</DialogTitle>
           <DialogDescription>
             Responde 4 preguntas y la IA creará una ruta de micro-learning para alcanzar tu próximo objetivo.
@@ -309,3 +313,5 @@ export function GuiaPasoAPasoModule() {
     </Dialog>
   );
 }
+
+    

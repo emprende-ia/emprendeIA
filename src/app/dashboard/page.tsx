@@ -17,6 +17,7 @@ import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 
 export default function DashboardPage() {
@@ -81,8 +82,11 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold mb-4 text-center">Todas las Herramientas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                    <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Palette className="h-8 w-8 text-primary" /></div>
@@ -97,8 +101,11 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                     <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
@@ -113,8 +120,11 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                     <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Megaphone className="h-8 w-8 text-primary" /></div>
@@ -129,8 +139,11 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                    <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" alt="Proveedores" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                     <CardHeader className="flex-grow p-0">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
@@ -145,8 +158,11 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                    <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" alt="Guía Paso a Paso" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
@@ -165,3 +181,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
