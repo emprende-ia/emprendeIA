@@ -2,15 +2,18 @@
 'use client';
 
 import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL, Storage } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
+import type { GenerateBrandAssetsOutput } from '@/ai/flows/generate-brand-assets';
 
-export interface BrandIdentity extends GenerateDigitalIdentityOutput {
+// This interface now fully matches the output of the generation flow
+export interface BrandIdentity extends Omit<GenerateBrandAssetsOutput, 'logoUrl' | 'logoSource'> {
   logoUrl: string | null;
+  logoLargeUrl: string | null;
+  logoMediumUrl: string | null;
+  logoSmallUrl: string | null;
+  logoSource: 'ai_generated' | 'user_uploaded' | null;
   updatedAt?: Date;
-  logoSource?: 'ai_generated' | 'user_uploaded' | null;
 }
 
 /**
