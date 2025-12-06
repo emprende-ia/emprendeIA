@@ -20,6 +20,10 @@ const GenerateOptimizedImageInputSchema = z.object({
 });
 export type GenerateOptimizedImageInput = z.infer<typeof GenerateOptimizedImageInputSchema>;
 
+const OptimizerPromptInputSchema = GenerateOptimizedImageInputSchema.extend({
+  isLogo: z.boolean(),
+});
+
 const GenerateOptimizedImageOutputSchema = z.object({
   imageUrl: z.string().url().describe('The data URI of the generated image.'),
   optimizedPrompt: z.string().describe('The AI-enhanced prompt used for generation.'),
@@ -33,10 +37,10 @@ export async function generateOptimizedImage(input: GenerateOptimizedImageInput)
 // Define el prompt para la optimización del texto
 const promptOptimizer = ai.definePrompt({
     name: 'promptOptimizer',
-    input: { schema: GenerateOptimizedImageInputSchema },
+    input: { schema: OptimizerPromptInputSchema },
     output: { schema: z.string() },
     prompt: `You are a creative assistant that enhances user prompts for an AI image generator. Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.
-    {{#if (eq creativeType 'LOGO')}}
+    {{#if isLogo}}
     Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.
     {{else}}
     Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.
@@ -55,7 +59,12 @@ const generateOptimizedImageFlow = ai.defineFlow(
   async ({ prompt, creativeType }) => {
     
     // Step 1: Optimize the user's prompt with the text model.
-    const optimizedPromptResponse = await promptOptimizer({ prompt, creativeType });
+    const optimizerInput = {
+      prompt,
+      creativeType,
+      isLogo: creativeType === 'LOGO',
+    };
+    const optimizedPromptResponse = await promptOptimizer(optimizerInput);
     const optimizedPrompt = optimizedPromptResponse.output;
 
     if (!optimizedPrompt) {
