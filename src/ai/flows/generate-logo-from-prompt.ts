@@ -36,10 +36,13 @@ const generateLogoFromPromptFlow = ai.defineFlow(
     outputSchema: GenerateLogoOutputSchema,
   },
   async ({ logoPrompt }) => {
-    // 1. Generate the base logo image from the provided prompt
+    // 1. Generate the base logo image from the provided prompt using a model optimized for smaller outputs.
     const { media } = await ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: logoPrompt,
+        model: 'googleai/gemini-2.5-flash-image-preview',
+        prompt: `Generate a logo based on this prompt: ${logoPrompt}`,
+        config: {
+          responseModalities: ['IMAGE'], // Request only an image as output
+        },
     });
     
     const baseLogoDataUrl = media?.url;
