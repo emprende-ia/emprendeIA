@@ -304,6 +304,9 @@ export function IdentidadDigitalModule() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
+            <div className="relative h-40 w-full rounded-lg overflow-hidden mb-4">
+              <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" layout="fill" objectFit="cover" />
+            </div>
             <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                 <div>
                     <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
