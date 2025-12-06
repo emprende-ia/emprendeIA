@@ -30,6 +30,7 @@ export async function generateOptimizedImage(input: GenerateOptimizedImageInput)
   return generateOptimizedImageFlow(input);
 }
 
+
 const generateOptimizedImageFlow = ai.defineFlow(
   {
     name: 'generateOptimizedImageFlow',
@@ -53,7 +54,7 @@ const generateOptimizedImageFlow = ai.defineFlow(
     
     // Step 1: Optimize the user's prompt with an LLM.
     const llmResponse = await ai.generate({ 
-      model: 'googleai/gemini-2.5-flash',
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: optimizerPrompt,
     });
     const optimizedPrompt = llmResponse.text;
@@ -77,3 +78,4 @@ const generateOptimizedImageFlow = ai.defineFlow(
     return { imageUrl, optimizedPrompt };
   }
 );
+
