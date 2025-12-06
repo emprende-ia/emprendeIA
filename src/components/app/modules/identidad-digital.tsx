@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Palette, Bot, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
-import { generateBrandAssets, type GenerateBrandAssetsOutput } from '@/ai/flows/generate-brand-assets';
+import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
+import { generateBrandAssets } from '@/ai/flows/generate-brand-assets';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -19,6 +20,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { useUser, useFirestore } from '@/firebase';
 import { saveBrandIdentity, getBrandIdentity, deleteBrandIdentity, BrandIdentity } from '@/lib/firestore/identity';
+import { Input } from '@/components/ui/input';
+
 
 const identityFormSchema = z.object({
   businessDescription: z.string().min(10, {
@@ -114,8 +117,19 @@ export function IdentidadDigitalModule() {
     setIsIdentityLoading(true);
     resetIdentityState();
     try {
-      const result: GenerateBrandAssetsOutput = await generateBrandAssets(data);
+      const identityElements = await generateDigitalIdentity(data);
+      const brandAssets = await generateBrandAssets({
+        businessDescription: data.businessDescription,
+        logoPrompt: identityElements.logoPrompt,
+      });
+
+      const result: BrandIdentity = {
+        ...identityElements,
+        ...brandAssets,
+      }
+      
       setIdentityResult(result);
+
       toast({
         title: "¡Identidad Digital Generada!",
         description: "Aquí tienes los elementos clave para tu nueva marca.",
@@ -228,7 +242,6 @@ export function IdentidadDigitalModule() {
     const link = document.createElement('a');
     link.href = identityResult.logoUrl;
     const brandName = identityResult.brandName || 'logo';
-    // Since it's a data URL, we need to handle the download attribute carefully
     const fileExtension = identityResult.logoUrl.split(';')[0].split('/')[1] || 'png';
     link.download = `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.${fileExtension}`;
     document.body.appendChild(link);
@@ -309,7 +322,7 @@ export function IdentidadDigitalModule() {
                      <Alert>
                         <Bot className="h-4 w-4" />
                         <AlertTitle className="font-bold">¡Aquí tienes tu nueva Identidad de Marca!</AlertTitle>
-                        <AlertDescription className="text-muted-foreground">Puedes guardar los elementos para sincronizarlos con tu cuenta.</AlertDescription>
+                        <AlertDescription className="text-muted-foreground">Puedes editar el nombre y eslogan, y luego guardar los elementos para sincronizarlos con tu cuenta.</AlertDescription>
                     </Alert>
 
                     {identityResult.logoUrl && (
@@ -349,12 +362,20 @@ export function IdentidadDigitalModule() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <p className="text-sm font-semibold">Nombre:</p>
-                                <p className="font-headline text-xl">{identityResult.brandName}</p>
+                                <label className="text-sm font-semibold">Nombre:</label>
+                                <Input
+                                    value={identityResult.brandName || ''}
+                                    onChange={(e) => setIdentityResult(prev => ({ ...prev, brandName: e.target.value }))}
+                                    className="font-headline text-xl h-auto p-1 mt-1"
+                                />
                             </div>
                              <div>
-                                <p className="text-sm font-semibold">Eslogan:</p>
-                                <p className="italic text-muted-foreground">{identityResult.slogan}</p>
+                                <label className="text-sm font-semibold">Eslogan:</label>
+                                <Input
+                                    value={identityResult.slogan || ''}
+                                    onChange={(e) => setIdentityResult(prev => ({ ...prev, slogan: e.target.value }))}
+                                    className="italic text-muted-foreground mt-1"
+                                />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold">Paleta de Colores:</p>
