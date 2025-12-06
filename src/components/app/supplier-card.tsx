@@ -120,7 +120,7 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
         </div>
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row gap-2">
-         <Button variant="outline" className="w-full" onClick={handleSave} disabled={isSaving}>
+         <Button variant="outline" size="sm" className="w-full" onClick={handleSave} disabled={isSaving}>
               {isSaving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -128,7 +128,7 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
               )}
               Guardar Proveedor
           </Button>
-        <Button asChild className="w-full">
+        <Button asChild className="w-full" size="sm">
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
             <MapPin className="mr-2 h-4 w-4" />
             Ver en Mapa

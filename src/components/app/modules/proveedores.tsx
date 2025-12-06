@@ -9,10 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { suggestRelevantSuppliers } from '@/ai/flows/suggest-relevant-suppliers';
 import type { SuggestRelevantSuppliersOutput } from '@/ai/flows/suggest-relevant-suppliers';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Lightbulb, Bookmark } from 'lucide-react';
+import { Loader2, Sparkles, Lightbulb, Search } from 'lucide-react';
 import { SupplierCard } from '../supplier-card';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useUser, useFirestore } from '@/firebase';
@@ -129,11 +129,12 @@ export function ProveedoresModule() {
           <div className="space-y-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
+                 <FormField
                   control={form.control}
                   name="businessPlan"
                   render={({ field }) => (
                     <FormItem>
+                       <FormLabel className="font-semibold">1. Describe tu negocio o idea</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ej: 'Quiero abrir una cafetería de especialidad con ambiente rústico y postres artesanales.'"
@@ -150,15 +151,16 @@ export function ProveedoresModule() {
                   name="businessLocation"
                   render={({ field }) => (
                     <FormItem>
+                       <FormLabel className="font-semibold">2. ¿Dónde se ubica tu negocio?</FormLabel>
                       <FormControl>
-                        <Input placeholder="¿Dónde se ubica tu negocio? (Ej: 'Ciudad de México')" {...field} />
+                        <Input placeholder="Ej: 'Ciudad de México'" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className='flex gap-2'>
-                <Button type="submit" size="sm" className="w-full font-bold" disabled={isLoading}>
+                <div className='flex gap-2 pt-2'>
+                <Button type="submit" className="w-full font-bold" disabled={isLoading}>
                   {isLoading ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Buscando...</>
                   ) : (
@@ -190,8 +192,10 @@ export function ProveedoresModule() {
                     </div>
                 </div>
              ) : (
-               <div className="flex items-center justify-center h-full text-center text-muted-foreground p-8 rounded-lg border-2 border-dashed">
-                  <p>Los resultados de la IA aparecerán aquí.</p>
+               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 rounded-lg border-2 border-dashed">
+                  <Search className="h-12 w-12 mb-4 text-muted-foreground/50"/>
+                  <p className="font-semibold">Los resultados de la IA aparecerán aquí.</p>
+                  <p className="text-sm">Completa el formulario y presiona "Buscar".</p>
                </div>
              )}
           </div>
