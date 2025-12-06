@@ -66,13 +66,9 @@ const generateOptimizedImageFlow = ai.defineFlow(
       isLogo: creativeType === 'LOGO',
     };
     
-    // Correctly call the generate method and extract the text.
-    const optimizedPromptResponse = await ai.generate({
-        prompt: promptOptimizer.prompt,
-        model: googleAI.model('gemini-2.5-flash'),
-        input: optimizerInput,
-    });
-    const optimizedPrompt = optimizedPromptResponse.text;
+    // Correctly call the defined prompt object.
+    const optimizedPromptResponse = await promptOptimizer(optimizerInput);
+    const optimizedPrompt = optimizedPromptResponse.output;
 
     if (!optimizedPrompt) {
         throw new Error("Failed to optimize the prompt. The AI did not return any text.");
