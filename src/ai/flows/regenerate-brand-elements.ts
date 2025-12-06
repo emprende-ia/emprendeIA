@@ -28,7 +28,8 @@ const regeneratePrompt = ai.definePrompt({
     name: 'regenerateBrandElementsPrompt',
     input: { schema: RegenerateBrandElementsInputSchema },
     output: { schema: RegenerateBrandElementsOutputSchema },
-    prompt: `You are a branding expert. Based on the business description, generate a new brand name and slogan.
+    prompt: `You are a branding expert. Your entire output must be in Spanish.
+    Based on the business description, generate a new brand name and slogan.
     Business Description: {{{businessDescription}}}
     Return the final output as a JSON object.`,
 });
