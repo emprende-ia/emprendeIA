@@ -6,12 +6,9 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { GenerateBrandAssetsOutput } from '@/ai/flows/generate-brand-assets';
 
-// This interface now fully matches the output of the generation flow
+// This interface is now simplified to only include one standard logo URL.
 export interface BrandIdentity extends Omit<GenerateBrandAssetsOutput, 'logoUrl' | 'logoSource'> {
   logoUrl: string | null;
-  logoLargeUrl: string | null;
-  logoMediumUrl: string | null;
-  logoSmallUrl: string | null;
   logoSource: 'ai_generated' | 'user_uploaded' | null;
   updatedAt?: Date;
 }
@@ -40,6 +37,8 @@ export async function saveBrandIdentity(
   };
 
   try {
+    // This will either create a new document or merge data into an existing one.
+    // We pass the complete object to ensure all fields are updated.
     await setDoc(identityDoc, dataToSave, { merge: true });
   } catch (error) {
     const permissionError = new FirestorePermissionError({
@@ -47,7 +46,9 @@ export async function saveBrandIdentity(
         operation: 'write', 
         requestResourceData: dataToSave,
     });
+    // For LLM-based error fixing, we emit a contextual error.
     errorEmitter.emit('permission-error', permissionError);
+    // We also re-throw the error so the calling function can handle it.
     throw error;
   }
 }

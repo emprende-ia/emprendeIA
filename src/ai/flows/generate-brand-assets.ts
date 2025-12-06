@@ -6,7 +6,7 @@
  * including a logo, using a multi-step AI process.
  * 1. An LLM generates a text-based brand identity (name, slogan, etc.).
  * 2. An image generation model creates a base logo from a detailed prompt.
- * 3. An image processing API is called to create resized versions of the logo.
+ * 3. An image processing API is called to create a standard-sized version of the logo.
  *
  * @module ai/flows/generate-brand-assets
  */
@@ -33,16 +33,13 @@ const BrandIdentityElementsSchema = z.object({
   logoPrompt: z.string().describe('A suggested prompt for generating a logo for the brand.'),
 });
 
-// Define the final output schema for the entire flow, including all logo URLs
+// Define the final output schema for the entire flow, now with a single logo URL
 const GenerateBrandAssetsOutputSchema = z.object({
     brandName: z.string(),
     slogan: z.string(),
     colorPalette: z.array(z.object({ hex: z.string(), name: z.string() })),
     logoPrompt: z.string(),
-    logoUrl: z.string().url().describe("The data URI of the generated base logo image."),
-    logoLargeUrl: z.string().url(),
-    logoMediumUrl: z.string().url(),
-    logoSmallUrl: z.string().url(),
+    logoUrl: z.string().url().describe("The data URI of the generated standard logo image (512x512)."),
     logoSource: z.enum(['ai_generated', 'user_uploaded']).nullable(),
 });
 export type GenerateBrandAssetsOutput = z.infer<typeof GenerateBrandAssetsOutputSchema>;
@@ -78,67 +75,52 @@ const generateBrandAssetsFlow = ai.defineFlow(
     }
 
     // 2. Generate the base logo image from the optimized prompt
-    const { imageUrl: logoBaseUrl } = await generateOptimizedImage({
+    const { imageUrl: baseLogoDataUrl } = await generateOptimizedImage({
         prompt: identityElements.logoPrompt,
         creativeType: 'LOGO',
     });
-     if (!logoBaseUrl) {
+     if (!baseLogoDataUrl) {
         throw new Error('Failed to generate the base logo image.');
     }
 
     // 3. Define the Image Processing API endpoint and payload
     const imageProcessingApi = `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/ext-image-processing-api-handler/process`;
     
-    const sizes = {
-        large: { width: 1024, height: 1024 },
-        medium: { width: 512, height: 512 },
-        small: { width: 128, height: 128 },
-    };
+    // Define the single standard size
+    const standardSize = { width: 512, height: 512 };
 
-    const processImage = async (size: {width: number, height: number}) => {
-        try {
-            const response = await fetch(imageProcessingApi, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    input: { data: logoBaseUrl }, // Pass data URI directly
-                    operations: [
-                        { name: 'resize', params: { width: size.width, height: size.height, fit: 'cover' } },
-                    ],
-                    output: { format: 'webp', data: true } // Request output as data URI
-                }),
-            });
+    let standardLogoUrl = baseLogoDataUrl; // Fallback to base image
+    try {
+      const response = await fetch(imageProcessingApi, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              input: { data: baseLogoDataUrl }, // Pass data URI directly
+              operations: [
+                  { name: 'resize', params: { width: standardSize.width, height: standardSize.height, fit: 'cover' } },
+              ],
+              output: { format: 'webp', data: true } // Request output as data URI
+          }),
+      });
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Image processing failed for size ${size.width}x${size.height}: ${response.status} ${errorBody}`);
-            }
+      if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Image processing failed: ${response.status} ${errorBody}`);
+      }
 
-            const result = await response.json();
-            return result.data; // The result is already a data URI
-        } catch (error) {
-            console.error(`Error processing image for size ${size.width}x${size.height}:`, error);
-            // Fallback to the base URL if processing fails
-            return logoBaseUrl;
-        }
-    };
+      const result = await response.json();
+      standardLogoUrl = result.data; // The result is already a data URI
+    } catch (error) {
+        console.error(`Error processing image, falling back to original:`, error);
+        // If processing fails, we'll just use the original data URL
+        standardLogoUrl = baseLogoDataUrl;
+    }
     
-    // 4. Process images for all sizes concurrently
-    const [logoLargeUrl, logoMediumUrl, logoSmallUrl] = await Promise.all([
-        processImage(sizes.large),
-        processImage(sizes.medium),
-        processImage(sizes.small),
-    ]);
-
-    // 5. Return all generated assets
+    // 4. Return all generated assets with the single standard logo URL
     return {
         ...identityElements,
-        logoUrl: logoBaseUrl, // The original data URI from the AI
-        logoLargeUrl,
-        logoMediumUrl,
-        logoSmallUrl,
+        logoUrl: standardLogoUrl,
         logoSource: 'ai_generated',
     };
   }
 );
-

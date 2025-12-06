@@ -7,10 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, PenTool, Bot, Image as ImageIcon, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
+import { Loader2, Sparkles, Palette, Bot, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
 import { generateBrandAssets, type GenerateBrandAssetsOutput } from '@/ai/flows/generate-brand-assets';
 import { generateModuleAudio } from '@/ai/flows/generate-module-audio';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -18,9 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
-import { useUser, useFirestore, useStorage } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { saveBrandIdentity, getBrandIdentity, deleteBrandIdentity, BrandIdentity } from '@/lib/firestore/identity';
-import { uploadBytes, getDownloadURL, ref } from 'firebase/storage';
 
 const identityFormSchema = z.object({
   businessDescription: z.string().min(10, {
@@ -36,13 +34,12 @@ const AUDIO_CACHE_KEY = 'audio_intro_identidad_digital';
 export function IdentidadDigitalModule() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const storage = useStorage();
 
   const [isIdentityLoading, setIsIdentityLoading] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   
-  const [identityResult, setIdentityResult] = useState<Partial<GenerateBrandAssetsOutput> | null>(null);
+  const [identityResult, setIdentityResult] = useState<Partial<BrandIdentity> | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
   
   const [isOpen, setIsOpen] = useState(false);
@@ -117,7 +114,7 @@ export function IdentidadDigitalModule() {
     setIsIdentityLoading(true);
     resetIdentityState();
     try {
-      const result = await generateBrandAssets(data);
+      const result: GenerateBrandAssetsOutput = await generateBrandAssets(data);
       setIdentityResult(result);
       toast({
         title: "¡Identidad Digital Generada!",
@@ -136,11 +133,6 @@ export function IdentidadDigitalModule() {
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !storage || !user.uid) {
-        toast({ title: "Debes iniciar sesión", description: "Para subir tu propio logo, necesitas una cuenta.", variant: "destructive" });
-        return;
-    }
-    
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -148,35 +140,28 @@ export function IdentidadDigitalModule() {
         toast({ title: "Archivo inválido", description: "Solo puedes subir imágenes.", variant: "destructive" });
         return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-        toast({ title: "Archivo muy grande", description: "El logo debe pesar menos de 5MB.", variant: "destructive" });
+    if (file.size > 1 * 1024 * 1024) { // 1MB Limit for Data URL
+        toast({ title: "Archivo muy grande", description: "El logo debe pesar menos de 1MB.", variant: "destructive" });
         return;
     }
 
     setIsUploadingLogo(true);
     try {
-        const timestamp = Date.now();
-        const extension = file.name.split('.').pop() || 'png';
-        const storageRef = ref(storage, `logos/${user.uid}/logo_upload_${timestamp}.${extension}`);
-        
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-
-        setIdentityResult(prev => ({
-            ...(prev || {}),
-            logoUrl: downloadURL,
-            logoLargeUrl: downloadURL,
-            logoMediumUrl: downloadURL,
-            logoSmallUrl: downloadURL,
-            logoSource: 'user_uploaded'
-        }));
-
-
-        toast({ title: "Logo subido", description: "Tu imagen se ha cargado correctamente." });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const dataUrl = reader.result as string;
+            setIdentityResult(prev => ({
+                ...(prev || {}),
+                logoUrl: dataUrl,
+                logoSource: 'user_uploaded'
+            }));
+            toast({ title: "Logo cargado", description: "Tu imagen se ha cargado. No olvides guardar y sincronizar." });
+        };
+        reader.readAsDataURL(file);
 
     } catch (error) {
-        console.error("Error subiendo archivo:", error);
-        toast({ title: "Error al subir", description: "No se pudo cargar tu imagen. Intenta de nuevo.", variant: "destructive" });
+        console.error("Error cargando archivo:", error);
+        toast({ title: "Error al cargar", description: "No se pudo cargar tu imagen. Intenta de nuevo.", variant: "destructive" });
     } finally {
         setIsUploadingLogo(false);
         if(fileInputRef.current) fileInputRef.current.value = '';
@@ -192,9 +177,6 @@ export function IdentidadDigitalModule() {
       colorPalette: identityResult.colorPalette || [],
       logoPrompt: identityResult.logoPrompt || '',
       logoUrl: identityResult.logoUrl || null,
-      logoLargeUrl: identityResult.logoLargeUrl || null,
-      logoMediumUrl: identityResult.logoMediumUrl || null,
-      logoSmallUrl: identityResult.logoSmallUrl || null,
       logoSource: identityResult.logoSource || null,
     };
     
@@ -215,7 +197,10 @@ export function IdentidadDigitalModule() {
       setIsOpen(false);
     } catch (error) {
       console.error("Failed to save brand identity:", error);
-      const errorMessage = error instanceof Error ? error.message : "No se pudo sincronizar la identidad. Revisa la consola para más detalles.";
+      let errorMessage = "No se pudo sincronizar la identidad.";
+      if (error instanceof Error && error.message.includes('exceeds the maximum allowed size')) {
+          errorMessage = "El logo es demasiado grande para guardarlo. Intenta subir una imagen más pequeña."
+      }
       toast({
         title: 'Error al Sincronizar',
         description: errorMessage,
@@ -239,11 +224,13 @@ export function IdentidadDigitalModule() {
 
   const handleDownloadLogo = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!identityResult?.logoLargeUrl) return;
+    if (!identityResult?.logoUrl) return;
     const link = document.createElement('a');
-    link.href = identityResult.logoLargeUrl;
+    link.href = identityResult.logoUrl;
     const brandName = identityResult.brandName || 'logo';
-    link.download = `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.png`;
+    // Since it's a data URL, we need to handle the download attribute carefully
+    const fileExtension = identityResult.logoUrl.split(';')[0].split('/')[1] || 'png';
+    link.download = `${brandName.toLowerCase().replace(/\s+/g, '-')}-logo.${fileExtension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -270,7 +257,7 @@ export function IdentidadDigitalModule() {
                 <div>
                     <DialogTitle className="font-headline text-2xl flex items-center gap-2"><Palette /> Generador de Identidad Digital</DialogTitle>
                     <DialogDescription>
-                        Describe tu negocio y la IA creará un nombre, eslogan, colores y un logo profesional en varios tamaños.
+                        Describe tu negocio y la IA creará un nombre, eslogan, colores y un logo profesional.
                     </DialogDescription>
                 </div>
             </div>
@@ -325,18 +312,14 @@ export function IdentidadDigitalModule() {
                         <AlertDescription className="text-muted-foreground">Puedes guardar los elementos para sincronizarlos con tu cuenta.</AlertDescription>
                     </Alert>
 
-                    {identityResult.logoLargeUrl && (
+                    {identityResult.logoUrl && (
                         <Card className="overflow-hidden">
                             <CardHeader>
                                 <CardTitle className="text-lg">Logo Generado</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0 flex flex-col sm:flex-row items-center justify-center gap-6 p-6">
+                            <CardContent className="p-6 flex items-center justify-center">
                                 <div className="aspect-square bg-muted flex items-center justify-center relative group w-48 h-48 rounded-lg">
-                                    <Image src={identityResult.logoLargeUrl} alt="Logo principal generado por IA" layout="fill" className="object-contain p-2"/>
-                                </div>
-                                <div className="flex flex-row sm:flex-col gap-4">
-                                     {identityResult.logoMediumUrl && <Image src={identityResult.logoMediumUrl} alt="Logo mediano" width={128} height={128} className="object-contain bg-muted rounded-md p-1" />}
-                                     {identityResult.logoSmallUrl && <Image src={identityResult.logoSmallUrl} alt="Logo pequeño" width={64} height={64} className="object-contain bg-muted rounded-md p-1" />}
+                                    <Image src={identityResult.logoUrl} alt="Logo principal generado por IA" layout="fill" className="object-contain p-2"/>
                                 </div>
                             </CardContent>
                              <CardFooter className="p-2 flex justify-end gap-2">
