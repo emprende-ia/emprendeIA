@@ -22,6 +22,7 @@ import Image from 'next/image';
 import { useUser, useFirestore } from '@/firebase';
 import { saveBrandIdentity, getBrandIdentity, deleteBrandIdentity, BrandIdentity } from '@/lib/firestore/identity';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const identityFormSchema = z.object({
@@ -69,12 +70,6 @@ export function IdentidadDigitalModule() {
             }
           });
           return () => unsubscribe();
-        } else {
-          const savedIdentity = localStorage.getItem('brandIdentity');
-          if (savedIdentity) {
-            const parsed = JSON.parse(savedIdentity);
-            setIdentityResult(parsed);
-          }
         }
         
         const savedProfile = localStorage.getItem('businessProfile');
@@ -197,7 +192,10 @@ export function IdentidadDigitalModule() {
   };
     
   const handleApplyIdentity = async () => {
-    if (!identityResult) return;
+    if (!identityResult || !user || !firestore) {
+      toast({ title: 'Error', description: 'Debes iniciar sesión para guardar tu identidad.', variant: 'destructive' });
+      return;
+    }
     
     const identityToSave: BrandIdentity = {
       brandName: identityResult.brandName || '',
@@ -209,19 +207,11 @@ export function IdentidadDigitalModule() {
     };
     
     try {
-      if (user && firestore) {
-          await saveBrandIdentity(firestore, user.uid, identityToSave);
-          toast({
-              title: '¡Identidad Sincronizada!',
-              description: 'Tu marca se ha guardado en tu cuenta.',
-          });
-      } else {
-          localStorage.setItem('brandIdentity', JSON.stringify(identityToSave));
-          toast({
-              title: '¡Identidad Guardada!',
-              description: 'Tu marca se ha guardado en este dispositivo.',
-          });
-      }
+      await saveBrandIdentity(firestore, user.uid, identityToSave);
+      toast({
+          title: '¡Identidad Sincronizada!',
+          description: 'Tu marca se ha guardado en tu cuenta.',
+      });
       setIsOpen(false);
     } catch (error) {
       console.error("Failed to save brand identity:", error);
@@ -263,8 +253,6 @@ export function IdentidadDigitalModule() {
   const handleDelete = () => {
       if (user && firestore) {
           deleteBrandIdentity(firestore, user.uid);
-      } else {
-          localStorage.removeItem('brandIdentity');
       }
       resetIdentityState();
       toast({
@@ -358,10 +346,19 @@ export function IdentidadDigitalModule() {
                                 </div>
                             </CardContent>
                              <CardFooter className="p-2 flex justify-end gap-2">
-                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={isUploadingLogo}>
-                                    {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="mr-2 h-4 w-4" />}
-                                    Subir Logo
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className='w-full'>
+                                            <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={isUploadingLogo || !user}>
+                                                {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="mr-2 h-4 w-4" />}
+                                                Subir Logo
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                     {!user && <TooltipContent><p>Inicia sesión para subir tu propio logo</p></TooltipContent>}
+                                  </Tooltip>
+                                </TooltipProvider>
                                 <Button onClick={handleDownloadLogo} variant="secondary" size="sm">
                                     <Download className="mr-2 h-4 w-4" />
                                     Descargar
@@ -374,6 +371,7 @@ export function IdentidadDigitalModule() {
                                 className="hidden"
                                 accept="image/png, image/jpeg, image/webp"
                                 onChange={handleFileUpload}
+                                disabled={!user}
                             />
                         </Card>
                     )}
@@ -432,10 +430,19 @@ export function IdentidadDigitalModule() {
                                         className="text-xs font-mono text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1"
                                         rows={4}
                                     />
-                                    <Button onClick={handleGenerateLogo} size="sm" className="w-full mt-2" disabled={isLogoLoading || !identityResult.logoPrompt}>
-                                        {isLogoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />}
-                                        Generar Logo con IA
-                                    </Button>
+                                     <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="w-full">
+                                            <Button onClick={handleGenerateLogo} size="sm" className="w-full mt-2" disabled={isLogoLoading || !identityResult.logoPrompt || !user}>
+                                                {isLogoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                                                Generar Logo con IA
+                                            </Button>
+                                          </div>
+                                        </TooltipTrigger>
+                                        {!user && <TooltipContent><p>Inicia sesión para generar un logo con IA</p></TooltipContent>}
+                                      </Tooltip>
+                                    </TooltipProvider>
                                 </div>
                             )}
                         </CardContent>
@@ -447,7 +454,7 @@ export function IdentidadDigitalModule() {
              {identityResult && (
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="lg">
+                        <Button variant="destructive" size="lg" disabled={!user}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Borrar Identidad
                         </Button>
@@ -466,10 +473,19 @@ export function IdentidadDigitalModule() {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
-            <Button onClick={handleApplyIdentity} size="lg" disabled={!identityResult}>
-                <Heart className="mr-2 h-4 w-4" />
-                Guardar y Sincronizar Identidad
-            </Button>
+             <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className='w-full'>
+                        <Button onClick={handleApplyIdentity} size="lg" disabled={!identityResult || !user} className="w-full">
+                            <Heart className="mr-2 h-4 w-4" />
+                            Guardar y Sincronizar Identidad
+                        </Button>
+                    </div>
+                </TooltipTrigger>
+                 {!user && <TooltipContent><p>Inicia sesión para guardar tu identidad</p></TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
         </DialogFooter>
       </DialogContent>
     </Dialog>

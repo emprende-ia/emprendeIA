@@ -68,16 +68,6 @@ export function ProveedoresModule() {
     setIsLoading(true);
     setRecommendations(null);
 
-    if (!user || !firestore) {
-      toast({
-        title: "Usuario no autenticado",
-        description: "Debes iniciar sesión para usar esta función.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const result = await suggestRelevantSuppliers(data);
       if (!result.suppliers || result.suppliers.length === 0) {
@@ -86,10 +76,12 @@ export function ProveedoresModule() {
           description: "Intenta refinar tu plan de negocio para obtener mejores resultados.",
         });
       } else {
-         saveSearchHistory(firestore, user.uid, {
-            term: data.businessPlan,
-            resultingKeywords: result.suppliers.map(s => s.name).slice(0, 3),
-          });
+         if (user && firestore) {
+          saveSearchHistory(firestore, user.uid, {
+              term: data.businessPlan,
+              resultingKeywords: result.suppliers.map(s => s.name).slice(0, 3),
+            });
+         }
          setRecommendations(result);
       }
     } catch (e) {

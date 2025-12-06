@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const formSchema = z.object({
   productDescription: z.string().min(15, { message: 'Describe tu producto o servicio con al menos 15 caracteres.' }),
@@ -170,13 +171,26 @@ export function CampanasMarketingModule() {
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" size="sm" onClick={() => handleSaveCampaign(idea)} disabled={!!isSaving}>
-                                     {isSaving === idea.title ? (
-                                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando plan...</>
-                                     ) : (
-                                        <><Workflow className="mr-2 h-4 w-4" /> Quiero trabajar en esta campaña</>
-                                     )}
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="w-full">
+                                        <Button className="w-full" size="sm" onClick={() => handleSaveCampaign(idea)} disabled={!!isSaving || !user}>
+                                             {isSaving === idea.title ? (
+                                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando plan...</>
+                                             ) : (
+                                                <><Workflow className="mr-2 h-4 w-4" /> Quiero trabajar en esta campaña</>
+                                             )}
+                                        </Button>
+                                      </div>
+                                    </TooltipTrigger>
+                                    {!user && (
+                                      <TooltipContent>
+                                        <p>Inicia sesión para guardar la campaña</p>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                </TooltipProvider>
                             </CardFooter>
                         </Card>
                     ))}

@@ -11,6 +11,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { saveSupplier, type SavedSupplierData } from '@/lib/firestore/suppliers';
 import { Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 type Supplier = SuggestRelevantSuppliersOutput['suppliers'][0];
@@ -92,14 +93,27 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
                     <span className="text-xs text-muted-foreground">{rating} ({reviewCount} reseñas)</span>
                 </CardDescription>
             )}
-            <Button variant="outline" size="sm" className="mt-2" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <Bookmark className="mr-2 h-4 w-4" />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving || !user}>
+                        {isSaving ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Bookmark className="mr-2 h-4 w-4" />
+                        )}
+                        Guardar Proveedor
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!user && (
+                  <TooltipContent>
+                    <p>Inicia sesión para guardar</p>
+                  </TooltipContent>
                 )}
-                Guardar Proveedor
-            </Button>
+              </Tooltip>
+            </TooltipProvider>
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">

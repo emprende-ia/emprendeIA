@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore } from '@/firebase';
 import { saveLearningPath } from '@/lib/firestore/learning-paths';
 import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const formSchema = z.object({
   giro: z.string().min(10, { message: 'Describe tu idea/negocio con más detalle.' }),
@@ -201,7 +202,16 @@ export function GuiaPasoAPasoModule() {
           {learningPath && (
             <div className="max-h-[65vh] overflow-y-auto p-1 space-y-6 pt-4">
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <Button onClick={handleSavePath}><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className='w-full'>
+                            <Button onClick={handleSavePath} disabled={!user} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
+                          </div>
+                        </TooltipTrigger>
+                        {!user && <TooltipContent><p>Inicia sesión para guardar tu guía</p></TooltipContent>}
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button onClick={resetForm} variant="outline"><RefreshCw className="mr-2 h-4 w-4" /> Generar otra guía</Button>
                 </div>
                 <Alert className="bg-primary/5">
