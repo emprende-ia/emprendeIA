@@ -12,6 +12,7 @@
  *   - /users/{userId}/notes/{noteId}: Private notes for each user.
  *   - /users/{userId}/brandIdentity/main: Private brand identity for each user.
  *   - /users/{userId}/savedSuppliers/{supplierId}: Private list of saved suppliers for each user.
+ *   - /users/{userId}/viabilityAnalysis/latest: Private document for the user's latest viability analysis.
  * @key-security-decisions
  *   - User listing is disallowed to protect privacy.
  *   - Supplier data is publicly readable.
@@ -48,6 +49,16 @@ service cloud.firestore {
       allow get, list: if true;
       allow create: if isOwner(userId);
       allow update, delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for their viability analysis document.
+     * @path /users/{userId}/viabilityAnalysis/latest
+     * @allow (read, write): The user can manage their own analysis document.
+     * @principle Enforces strict user-ownership for a singleton analysis document.
+     */
+    match /users/{userId}/viabilityAnalysis/latest {
+        allow read, write: if isOwner(userId);
     }
 
     /**

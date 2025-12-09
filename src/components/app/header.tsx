@@ -39,7 +39,6 @@ export function AppHeader() {
 
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
-  const [hasAnalysis, setHasAnalysis] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,10 +48,6 @@ export function AppHeader() {
 
 
   useEffect(() => {
-    // Check for saved analysis in localStorage
-    if (localStorage.getItem('viabilityAnalysis')) {
-        setHasAnalysis(true);
-    }
     
     if (user && firestore) {
       setIsIdentityLoading(true);
@@ -79,6 +74,11 @@ export function AppHeader() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!user) {
+        toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para cambiar el logo.', variant: 'destructive'});
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
@@ -98,12 +98,6 @@ export function AppHeader() {
                 title: 'Logo actualizado',
                 description: 'Tu nuevo logo ha sido guardado y sincronizado.',
             });
-        } else {
-             localStorage.setItem('brandIdentity', JSON.stringify(updatedIdentity));
-             toast({
-                title: 'Logo actualizado',
-                description: 'Tu nuevo logo se ha guardado en este dispositivo.',
-            });
         }
       } catch (error) {
          toast({ title: 'Error al guardar el logo', description: 'No se pudo guardar la imagen. Inténtalo de nuevo.', variant: 'destructive'});
@@ -117,9 +111,10 @@ export function AppHeader() {
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
-      // Optional: Clear guest data on logout
+      // Clear all guest/session data on logout
       localStorage.removeItem('viabilityAnalysis');
       localStorage.removeItem('brandIdentity');
+      localStorage.removeItem('businessProfile');
       router.push('/');
     }
   };
@@ -181,11 +176,9 @@ export function AppHeader() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Herramientas Rápidas</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {hasAnalysis && (
-                    <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                       <ViabilityAnalysisViewer isMenuItem={true} />
-                    </DropdownMenuItem>
-                )}
+                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                   <ViabilityAnalysisViewer isMenuItem={true} />
+                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <MisRutasModule isMenuItem={true} />
                 </DropdownMenuItem>

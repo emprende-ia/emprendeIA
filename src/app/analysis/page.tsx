@@ -13,6 +13,8 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useUser, useFirestore } from '@/firebase';
+import { saveViabilityAnalysis } from '@/lib/firestore/analysis';
 
 const labelMapping: Record<string, string> = {
     idea: 'Tu Idea',
@@ -39,6 +41,8 @@ function AnalysisPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeBusinessIdeaOutput | null>(null);
@@ -57,6 +61,19 @@ function AnalysisPageContent() {
     try {
       const result = await analyzeBusinessIdea(formData);
       setAnalysisResult(result);
+      if (user && firestore) {
+        await saveViabilityAnalysis(firestore, user.uid, result, 'new-venture');
+        toast({
+          title: "¡Análisis Guardado!",
+          description: "Tu análisis se ha guardado en tu cuenta.",
+        });
+      } else {
+        localStorage.setItem('viabilityAnalysis', JSON.stringify(result));
+        toast({
+          title: "Análisis generado",
+          description: "Inicia sesión para guardar este análisis en tu cuenta.",
+        });
+      }
     } catch (error) {
       console.error("Error during analysis:", error);
       toast({
@@ -99,13 +116,6 @@ function AnalysisPageContent() {
   const costData = analysisResult?.analysis.costAnalysis;
 
   const handleProceedToDashboard = () => {
-    if (analysisResult) {
-      localStorage.setItem('viabilityAnalysis', JSON.stringify(analysisResult));
-      toast({
-        title: "¡Análisis Guardado!",
-        description: "Puedes consultar este análisis en cualquier momento desde 'Herramientas Rápidas'.",
-      });
-    }
     router.push('/dashboard');
   };
 
@@ -320,5 +330,3 @@ export default function AnalysisPage() {
         </Suspense>
     )
 }
-
-    

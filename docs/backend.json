@@ -1,6 +1,28 @@
 
 {
   "entities": {
+    "ViabilityAnalysis": {
+      "title": "Viability Analysis",
+      "description": "Represents a saved viability analysis for a user's business idea or existing business.",
+      "type": "object",
+      "properties": {
+        "analysis": {
+          "type": "object",
+          "description": "The full JSON object of the AI-generated analysis."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["new-venture", "existing-venture"],
+          "description": "The type of analysis performed."
+        },
+        "savedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the analysis was saved."
+        }
+      },
+      "required": ["analysis", "type", "savedAt"]
+    },
     "UserProfile": {
       "title": "User Profile",
       "description": "Represents a user's profile information.",
@@ -258,6 +280,14 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/users/{userId}/viabilityAnalysis/latest",
+        "definition": {
+          "entityName": "ViabilityAnalysis",
+          "schema": { "$ref": "#/entities/ViabilityAnalysis" },
+          "description": "Stores the user's latest viability analysis result."
+        }
+      },
       {
         "path": "/suppliers/{supplierId}",
         "definition": {

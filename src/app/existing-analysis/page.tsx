@@ -10,6 +10,8 @@ import { RefreshCw, Loader2, Bot, Milestone, BrainCircuit, CheckCircle, AlertCir
 import { analyzeExistingBusiness, type AnalyzeExistingBusinessInput, type AnalyzeExistingBusinessOutput } from '@/ai/flows/analyze-existing-business';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { useUser, useFirestore } from '@/firebase';
+import { saveViabilityAnalysis } from '@/lib/firestore/analysis';
 
 const labelMapping: Record<string, string> = {
     situacionActual: 'Tipo de Negocio',
@@ -30,6 +32,8 @@ function ExistingAnalysisPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
 
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeExistingBusinessOutput | null>(null);
@@ -48,6 +52,19 @@ function ExistingAnalysisPageContent() {
     try {
       const result = await analyzeExistingBusiness(formData);
       setAnalysisResult(result);
+      if (user && firestore) {
+        await saveViabilityAnalysis(firestore, user.uid, result, 'existing-venture');
+        toast({
+          title: "¡Análisis Guardado!",
+          description: "Tu análisis se ha guardado en tu cuenta.",
+        });
+      } else {
+        localStorage.setItem('viabilityAnalysis', JSON.stringify(result));
+        toast({
+          title: "Análisis generado",
+          description: "Inicia sesión para guardar este análisis en tu cuenta.",
+        });
+      }
     } catch (error) {
       console.error("Error during analysis:", error);
       toast({

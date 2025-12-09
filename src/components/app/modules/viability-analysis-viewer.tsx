@@ -6,17 +6,32 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Bot, FileText, ShieldAlert, CheckCircle, AlertCircle, XCircle, BarChart, ListTodo, Star, Goal, AlertTriangle, ShoppingCart, Info } from 'lucide-react';
+import { Bot, FileText, ShieldAlert, CheckCircle, AlertCircle, XCircle, BarChart, ListTodo, Star, Goal, AlertTriangle, ShoppingCart, Info, Loader2 } from 'lucide-react';
 import { type AnalyzeBusinessIdeaOutput } from '@/ai/flows/analyze-business-idea';
+import { type AnalyzeExistingBusinessOutput } from '@/ai/flows/analyze-existing-business';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore } from '@/firebase';
+import { getViabilityAnalysis, type SavedAnalysis, type ViabilityAnalysis } from '@/lib/firestore/analysis';
 
-function AnalysisDisplay({ analysisResult }: { analysisResult: AnalyzeBusinessIdeaOutput }) {
-    const viabilityData = analysisResult.analysis.viability;
-    const costData = analysisResult.analysis.costAnalysis;
+function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis }) {
+    
+    // Type guard to check if it's a new venture analysis
+    const isNewVentureAnalysis = (analysis: any): analysis is AnalyzeBusinessIdeaOutput => {
+        return 'costAnalysis' in analysis.analysis;
+    };
+    
+    // Type guard to check if it's an existing venture analysis
+    const isExistingVentureAnalysis = (analysis: any): analysis is AnalyzeExistingBusinessOutput => {
+        return 'growthViability' in analysis.analysis;
+    };
+
+    const viabilityData = isExistingVentureAnalysis(analysisResult) 
+        ? analysisResult.analysis.growthViability
+        : (analysisResult as AnalyzeBusinessIdeaOutput).analysis.viability;
 
     const getViabilityIcon = (level: 'Verde' | 'Amarillo' | 'Rojo') => {
         switch (level) {
@@ -83,7 +98,13 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: AnalyzeBusinessId
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <Card>
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>{viabilityData.level === 'Verde' ? "Cómo Mantenerlo en Verde" : "Cómo Llegar a Verde"}</CardTitle>
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>
+                                  {isExistingVentureAnalysis(analysisResult) ? (
+                                      growthViability.level === 'Verde' ? "Cómo Acelerar el Crecimiento" : "Cómo Estabilizar/Pasar a Crecimiento"
+                                  ) : (
+                                      viabilityData.level === 'Verde' ? "Cómo Mantenerlo en Verde" : "Cómo Llegar a Verde"
+                                  )}
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
@@ -94,7 +115,9 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: AnalyzeBusinessId
                         {viabilityData.level === 'Rojo' && viabilityData.alternatives && viabilityData.alternatives.length > 0 && (
                             <Card>
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>Alternativas Dentro del Giro</CardTitle>
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>
+                                        {isExistingVentureAnalysis(analysisResult) ? 'Alternativas Estratégicas' : 'Alternativas Dentro del Giro'}
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
@@ -131,14 +154,14 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: AnalyzeBusinessId
                 </div>
             </div>
           
-            {costData && (
+            {isNewVentureAnalysis(analysisResult) && analysisResult.analysis.costAnalysis && (
                 <div>
                      <Separator className="my-6" />
                      <h3 className="font-headline text-xl mb-4 flex items-center gap-2"><ShoppingCart /> Presupuesto de Inversión Inicial</h3>
                      <Alert variant="default" className="mb-4">
                         <Info className="h-4 w-4"/>
                         <AlertTitle className="font-bold">Análisis de Inversión de la IA</AlertTitle>
-                        <AlertDescription>{costData.summary}</AlertDescription>
+                        <AlertDescription>{analysisResult.analysis.costAnalysis.summary}</AlertDescription>
                      </Alert>
                      <div className="overflow-x-auto">
                         <Table>
@@ -152,7 +175,7 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: AnalyzeBusinessId
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {costData.items.map((item, i) => (
+                                {analysisResult.analysis.costAnalysis.items.map((item, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Badge variant={getPriorityBadgeVariant(item.priority)}>{item.priority}</Badge></TableCell>
                                         <TableCell className="font-medium">{item.item}</TableCell>
@@ -170,32 +193,53 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: AnalyzeBusinessId
     );
 }
 
-
 interface ViabilityAnalysisViewerProps {
     isMenuItem?: boolean;
 }
 
 export function ViabilityAnalysisViewer({ isMenuItem = false }: ViabilityAnalysisViewerProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [analysisResult, setAnalysisResult] = useState<AnalyzeBusinessIdeaOutput | null>(null);
+    const [savedAnalysis, setSavedAnalysis] = useState<SavedAnalysis | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const { user, isUserLoading } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
 
     useEffect(() => {
-        if (isOpen) {
+        if (!isOpen) return;
+
+        setIsLoading(true);
+        if (user && firestore) {
+            const unsubscribe = getViabilityAnalysis(firestore, user.uid, (analysis) => {
+                setSavedAnalysis(analysis);
+                setIsLoading(false);
+            });
+            return () => unsubscribe();
+        } else {
+            // Fallback for guest users
             try {
-                const savedAnalysis = localStorage.getItem('viabilityAnalysis');
-                if (savedAnalysis) {
-                    setAnalysisResult(JSON.parse(savedAnalysis));
+                const localData = localStorage.getItem('viabilityAnalysis');
+                if (localData) {
+                    setSavedAnalysis({
+                        id: 'latest',
+                        analysis: JSON.parse(localData),
+                        type: 'new-venture', // Assume new-venture for local data
+                        savedAt: new Date(),
+                    });
                 } else {
-                    toast({ title: 'No se encontró el análisis', description: 'No hay un análisis de viabilidad guardado para mostrar.', variant: 'destructive'});
-                    setIsOpen(false);
+                    setSavedAnalysis(null);
                 }
             } catch (error) {
-                toast({ title: 'Error al cargar el análisis', description: 'No se pudo leer el análisis guardado.', variant: 'destructive'});
-                setIsOpen(false);
+                console.error("Failed to parse local analysis", error);
+                setSavedAnalysis(null);
             }
+            setIsLoading(false);
         }
-    }, [isOpen, toast]);
+    }, [isOpen, user, firestore]);
+
+    const handleTriggerClick = () => {
+        setIsOpen(true);
+    };
 
     const TriggerComponent = isMenuItem ? 'div' : Button;
     const triggerProps = isMenuItem
@@ -205,7 +249,7 @@ export function ViabilityAnalysisViewer({ isMenuItem = false }: ViabilityAnalysi
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <TriggerComponent {...triggerProps}>
+                <TriggerComponent {...triggerProps} onClick={handleTriggerClick}>
                     <FileText className="mr-2 h-4 w-4" /> Mi Análisis
                 </TriggerComponent>
             </DialogTrigger>
@@ -213,18 +257,21 @@ export function ViabilityAnalysisViewer({ isMenuItem = false }: ViabilityAnalysi
                 <DialogHeader>
                     <DialogTitle className="font-headline text-2xl">Análisis de Viabilidad Guardado</DialogTitle>
                     <DialogDescription>
-                        Este es el último análisis de viabilidad que generaste y guardaste.
+                        Este es el último análisis de viabilidad que generaste.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 max-h-[70vh] overflow-y-auto pr-4">
-                    {analysisResult ? (
-                        <AnalysisDisplay analysisResult={analysisResult} />
+                    {isLoading || isUserLoading ? (
+                        <div className="flex items-center justify-center h-40">
+                           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : savedAnalysis ? (
+                        <AnalysisDisplay analysisResult={savedAnalysis.analysis} />
                     ) : (
-                        <p className="text-center text-muted-foreground">Cargando análisis...</p>
+                        <p className="text-center text-muted-foreground py-10">No se encontró ningún análisis guardado. Genera uno desde la página de inicio.</p>
                     )}
                 </div>
             </DialogContent>
         </Dialog>
     );
 }
-    
