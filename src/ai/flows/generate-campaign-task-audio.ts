@@ -55,7 +55,7 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
     outputSchema: GenerateCampaignTaskAudioOutputSchema,
   },
   async (input) => {
-    // Step 1: Create a single, clean prompt to generate the audio directly.
+    
     const audioPrompt = `
       You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
       Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
@@ -69,7 +69,6 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
       Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
     `;
 
-    // Step 2: Convert the prompt directly into speech.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
         prompt: audioPrompt,
@@ -96,3 +95,4 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
     };
   }
 );
+
