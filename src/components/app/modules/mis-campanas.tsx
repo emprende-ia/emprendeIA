@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { getMarketingCampaigns, toggleCampaignTaskCompletion, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
-import { Loader2, Target, Check, Circle, Workflow } from "lucide-react";
+import { generateCampaignTaskAudio } from '@/ai/flows/generate-campaign-task-audio';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Target, Check, Circle, Workflow, HelpCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +22,9 @@ function SavedCampaignsList() {
     const firestore = useFirestore();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
+    const [generatedAudios, setGeneratedAudios] = useState<Record<string, string>>({});
+    const { toast } = useToast();
 
     useEffect(() => {
         if (user && firestore) {
@@ -39,6 +44,34 @@ function SavedCampaignsList() {
         if (!user || !firestore) return;
         toggleCampaignTaskCompletion(firestore, user.uid, campaignId, taskDescription, isCompleted);
     };
+
+    const handleAudioHelp = async (campaignId: string, taskIndex: number) => {
+        const audioKey = `${campaignId}-${taskIndex}`;
+        setIsAudioLoading(audioKey);
+        try {
+            const campaign = campaigns.find(c => c.id === campaignId);
+            const task = campaign?.campaignPlan.actionableTasks[taskIndex];
+
+            if (!campaign || !task) return;
+
+            const result = await generateCampaignTaskAudio({
+                campaignTitle: campaign.campaignIdea.title,
+                campaignChannel: campaign.campaignIdea.channel,
+                campaignMessage: campaign.campaignIdea.keyMessage,
+                taskToExplain: task,
+            });
+            
+            setGeneratedAudios(prev => ({...prev, [audioKey]: result.audioUrl }));
+            
+            toast({ title: '¡Audio de ayuda listo!', description: 'Presiona el botón de reproducir para escucharlo.' });
+        } catch (error) {
+            console.error("Error generating audio:", error);
+            toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
+        } finally {
+            setIsAudioLoading(null);
+        }
+    };
+
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -96,17 +129,35 @@ function SavedCampaignsList() {
                                             <p className="font-semibold text-sm pt-2">Tareas a Realizar:</p>
                                             {campaign.campaignPlan.actionableTasks.map((task, index) => {
                                                  const isCompleted = campaign.completedTasks.includes(task);
+                                                 const audioKey = `${campaign.id}-${index}`;
+                                                 const audioUrl = generatedAudios[audioKey];
                                                  return (
-                                                    <div key={index} className="flex items-start gap-3 p-3 bg-secondary/50 rounded-md">
-                                                         <Checkbox 
-                                                            id={`task-${campaign.id}-${index}`}
-                                                            checked={isCompleted}
-                                                            onCheckedChange={(checked) => handleTaskToggle(campaign.id, task, !!checked)}
-                                                            className="mt-1"
-                                                        />
-                                                        <label htmlFor={`task-${campaign.id}-${index}`} className={`flex-1 text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                                                            {task}
-                                                        </label>
+                                                    <div key={index} className="p-3 bg-secondary/50 rounded-md space-y-3">
+                                                        <div className="flex items-start gap-3">
+                                                            <Checkbox 
+                                                                id={`task-${campaign.id}-${index}`}
+                                                                checked={isCompleted}
+                                                                onCheckedChange={(checked) => handleTaskToggle(campaign.id, task, !!checked)}
+                                                                className="mt-1"
+                                                            />
+                                                            <label htmlFor={`task-${campaign.id}-${index}`} className={`flex-1 text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                                                                {task}
+                                                            </label>
+                                                        </div>
+                                                        <div className="pl-7">
+                                                        {audioUrl ? (
+                                                            <audio controls src={audioUrl} className="h-8" />
+                                                        ) : (
+                                                            <Button size="sm" variant="outline" onClick={() => handleAudioHelp(campaign.id, index)} disabled={!!isAudioLoading}>
+                                                                {isAudioLoading === audioKey ? (
+                                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <HelpCircle className="mr-2 h-4 w-4" />
+                                                                )}
+                                                                Necesito ayuda con esta tarea
+                                                            </Button>
+                                                        )}
+                                                        </div>
                                                     </div>
                                                  )
                                             })}
@@ -131,7 +182,7 @@ export function MisCampanasModule({ isMenuItem = false }: MisCampanasModuleProps
   
   const TriggerComponent = isMenuItem ? 'div' : Button;
   const triggerProps = isMenuItem
-    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full" }
+    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full" }
     : { className: "w-full font-bold" };
 
   return (
