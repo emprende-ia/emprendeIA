@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { generateMarketingCampaign } from '@/ai/flows/generate-marketing-campaign';
-import { saveCampaign, CampaignIdea, CampaignIdeaSchema } from '@/lib/firestore/marketing-campaigns';
+import { generateMarketingCampaign, type GenerateMarketingCampaignOutput } from '@/ai/flows/generate-marketing-campaign';
+import { saveCampaign, CampaignIdea } from '@/lib/firestore/marketing-campaigns';
 import { useUser, useFirestore } from '@/firebase';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ export function CampanasMarketingModule() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState<string | null>(null);
-  const [campaignIdeas, setCampaignIdeas] = useState<z.infer<typeof CampaignIdeaSchema>[]>([]);
+  const [campaignIdeas, setCampaignIdeas] = useState<GenerateMarketingCampaignOutput>([]);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -58,7 +58,7 @@ export function CampanasMarketingModule() {
     setCampaignIdeas([]);
     try {
       const result = await generateMarketingCampaign(data);
-      setCampaignIdeas(result.campaigns);
+      setCampaignIdeas(result);
     } catch (e) {
       toast({
         title: "Error al generar ideas",
