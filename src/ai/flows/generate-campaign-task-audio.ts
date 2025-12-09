@@ -55,11 +55,11 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
     outputSchema: GenerateCampaignTaskAudioOutputSchema,
   },
   async (input) => {
-    // Step 1: Generate a friendly, expert script from the task details.
-    const scriptPrompt = `
+    // Step 1: Create a single, clean prompt to generate the audio directly.
+    const audioPrompt = `
       You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
-      Your task is to create a short audio script (around 150 words) to help the user understand and complete a specific marketing task.
-      Your entire output must be the script itself, in Spanish.
+      Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
+      Your entire output must be the spoken audio, in Spanish.
 
       The user is working on the campaign "${input.campaignTitle}" on the channel "${input.campaignChannel}". The key message is "${input.campaignMessage}".
       
@@ -69,18 +69,10 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
       Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
     `;
 
-    const { text: script } = await ai.generate({
-      prompt: scriptPrompt,
-    });
-
-    if (!script) {
-        throw new Error('Failed to generate audio script.');
-    }
-
-    // Step 2: Convert the generated script into speech.
+    // Step 2: Convert the prompt directly into speech.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
-        prompt: script,
+        prompt: audioPrompt,
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
