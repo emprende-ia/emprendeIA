@@ -8,7 +8,17 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { CampaignPlanSchema, type CampaignPlan } from '@/lib/firestore/marketing-campaigns';
+
+// Define the schema locally to avoid Genkit/Zod resolution issues with imported schemas.
+const CampaignPlanSchema = z.object({
+    strategy: z.string().describe("A brief, one-paragraph summary of the overall strategy for this campaign."),
+    contentSuggestions: z.array(z.string()).describe("A list of 3-5 specific content ideas to create for this campaign (e.g., 'Un Reel mostrando el proceso artesanal', 'Un carrusel con testimonios de clientes')."),
+    actionableTasks: z.array(z.string()).describe("A list of 5-7 concrete, actionable tasks to execute the campaign (e.g., 'Definir paleta de colores para la campaña', 'Escribir 3 borradores de copy para anuncios', 'Contactar a 2 micro-influencers')."),
+    kpis: z.array(z.string()).describe("A list of 2-3 key performance indicators (KPIs) to measure the campaign's success (e.g., 'Tasa de interacción', 'Número de seguidores nuevos', 'Ventas generadas desde el link en bio')."),
+});
+// Re-export the type for use in other files.
+export type CampaignPlan = z.infer<typeof CampaignPlanSchema>;
+
 
 const GenerateCampaignPlanInputSchema = z.object({
   campaignTitle: z.string().describe("The title of the marketing campaign idea."),
@@ -18,10 +28,8 @@ const GenerateCampaignPlanInputSchema = z.object({
 });
 export type GenerateCampaignPlanInput = z.infer<typeof GenerateCampaignPlanInputSchema>;
 
-// The output of this flow is the CampaignPlan itself.
-export type CampaignPlanOutput = CampaignPlan;
 
-export async function generateCampaignPlan(input: GenerateCampaignPlanInput): Promise<CampaignPlanOutput> {
+export async function generateCampaignPlan(input: GenerateCampaignPlanInput): Promise<CampaignPlan> {
   return generateCampaignPlanFlow(input);
 }
 
@@ -54,14 +62,13 @@ const generateCampaignPlanFlow = ai.defineFlow(
   {
     name: 'generateCampaignPlanFlow',
     inputSchema: GenerateCampaignPlanInputSchema,
-    outputSchema: CampaignPlanSchema, // The output schema should match the prompt's output schema.
+    outputSchema: CampaignPlanSchema, 
   },
   async (input) => {
     const { output } = await generateCampaignPlanPrompt(input);
     if (!output) {
         throw new Error('Failed to generate a campaign plan.');
     }
-    // The output from the prompt is the plan itself.
     return output;
   }
 );

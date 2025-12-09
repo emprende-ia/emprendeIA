@@ -5,7 +5,7 @@ import { Firestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove,
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { z } from 'zod';
-import { generateCampaignPlan } from '@/ai/flows/generate-campaign-plan';
+import { generateCampaignPlan, type CampaignPlan } from '@/ai/flows/generate-campaign-plan';
 
 export const CampaignIdeaSchema = z.object({
     title: z.string().describe('A catchy title for the campaign idea.'),
@@ -14,15 +14,17 @@ export const CampaignIdeaSchema = z.object({
     targetAudience: z.string().describe('The specific audience this campaign should target.'),
 });
 
-export const CampaignPlanSchema = z.object({
-    strategy: z.string().describe("A brief, one-paragraph summary of the overall strategy for this campaign."),
-    contentSuggestions: z.array(z.string()).describe("A list of 3-5 specific content ideas to create for this campaign (e.g., 'Un Reel mostrando el proceso artesanal', 'Un carrusel con testimonios de clientes')."),
-    actionableTasks: z.array(z.string()).describe("A list of 5-7 concrete, actionable tasks to execute the campaign (e.g., 'Definir paleta de colores para la campaña', 'Escribir 3 borradores de copy para anuncios', 'Contactar a 2 micro-influencers')."),
-    kpis: z.array(z.string()).describe("A list of 2-3 key performance indicators (KPIs) to measure the campaign's success (e.g., 'Tasa de interacción', 'Número de seguidores nuevos', 'Ventas generadas desde el link en bio')."),
+// The schema definition is now primarily in the flow file.
+// We can re-create the schema here for type safety in this file without exporting it.
+const CampaignPlanSchema = z.object({
+    strategy: z.string(),
+    contentSuggestions: z.array(z.string()),
+    actionableTasks: z.array(z.string()),
+    kpis: z.array(z.string()),
 });
 
+
 export type CampaignIdea = z.infer<typeof CampaignIdeaSchema>;
-export type CampaignPlan = z.infer<typeof CampaignPlanSchema>;
 
 export interface MarketingCampaign {
   id: string;
@@ -48,7 +50,6 @@ export async function saveCampaign(
   }
 
   // Step 1: Generate the detailed campaign plan from the idea.
-  // The generateCampaignPlan flow now returns the plan object directly.
   const campaignPlan = await generateCampaignPlan({
       campaignTitle: campaignIdea.title,
       campaignChannel: campaignIdea.channel,
