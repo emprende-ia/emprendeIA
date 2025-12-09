@@ -48,6 +48,23 @@ async function toWav(pcmData: Buffer): Promise<string> {
     });
 }
 
+const audioPrompt = ai.definePrompt({
+    name: 'generateCampaignTaskAudioPrompt',
+    input: { schema: GenerateCampaignTaskAudioInputSchema },
+    prompt: `You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
+      Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
+      Your entire output must be the spoken audio, in Spanish.
+
+      The user is working on the campaign "{{{campaignTitle}}}" on the channel "{{{campaignChannel}}}". The key message is "{{{campaignMessage}}}".
+      
+      The specific task they need help with is: "{{{taskToExplain}}}"
+
+      Explain what this task means in simple terms, why it's important for their campaign, and give them a concrete tip to get started.
+      Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
+    `,
+});
+
+
 const generateCampaignTaskAudioFlow = ai.defineFlow(
   {
     name: 'generateCampaignTaskAudioFlow',
@@ -56,22 +73,9 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const audioPrompt = `
-      You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
-      Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
-      Your entire output must be the spoken audio, in Spanish.
-
-      The user is working on the campaign "${input.campaignTitle}" on the channel "${input.campaignChannel}". The key message is "${input.campaignMessage}".
-      
-      The specific task they need help with is: "${input.taskToExplain}"
-
-      Explain what this task means in simple terms, why it's important for their campaign, and give them a concrete tip to get started.
-      Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
-    `;
-
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
-        prompt: audioPrompt,
+        prompt: await audioPrompt(input),
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
@@ -95,4 +99,3 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
     };
   }
 );
-
