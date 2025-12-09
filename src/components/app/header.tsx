@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText, BookOpen, Target, Lightbulb, RefreshCw } from 'lucide-react';
+import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText, BookOpen, Target, Lightbulb, RefreshCw, Workflow } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';

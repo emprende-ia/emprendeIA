@@ -3,28 +3,29 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search, Route, Target, Lightbulb } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, Lightbulb } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
 import { CampanasMarketingModule } from "@/components/app/modules/campanas-marketing";
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
-import { MisRutasModule } from "@/components/app/modules/mis-rutas";
-import { MisCampanasModule } from "@/components/app/modules/mis-campanas";
 import { useUser, useFirestore } from "@/firebase";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
-import { BrandCampaign } from "@/components/app/modules/brand-campaign";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from "@/components/ui/button";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { BrandCampaign } from "@/components/app/modules/brand-campaign";
 
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
@@ -176,7 +177,7 @@ export default function DashboardPage() {
                         </CardFooter>
                     </div>
                 </Card>
-                
+
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
