@@ -100,7 +100,7 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>
                                   {isExistingVentureAnalysis(analysisResult) ? (
-                                      growthViability.level === 'Verde' ? "Cómo Acelerar el Crecimiento" : "Cómo Estabilizar/Pasar a Crecimiento"
+                                      viabilityData.level === 'Verde' ? "Cómo Acelerar el Crecimiento" : "Cómo Estabilizar/Pasar a Crecimiento"
                                   ) : (
                                       viabilityData.level === 'Verde' ? "Cómo Mantenerlo en Verde" : "Cómo Llegar a Verde"
                                   )}
