@@ -19,6 +19,8 @@ import { BrandCampaign } from "@/components/app/modules/brand-campaign";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from "@/components/ui/button";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import Image from "next/image";
+
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -81,40 +83,11 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold mb-4 text-center">Todas las Herramientas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                    <CardHeader className="flex-grow p-0">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
-                            <CardTitle className="text-2xl">Proveedores</CardTitle>
-                        </div>
-                        <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
-                    </CardHeader>
-                    <CardFooter className="p-0 pt-6">
-                        <ProveedoresModule />
-                    </CardFooter>
+                    <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
                     </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Guía Paso a Paso</CardTitle>
-                            </div>
-                            <CardDescription>Genera un plan de acción detallado para tu idea de negocio.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <GuiaPasoAPasoModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Palette className="h-8 w-8 text-primary" /></div>
@@ -129,8 +102,30 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                     <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
+                        <CardHeader className="flex-grow p-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Asistente Financiero</CardTitle>
+                            </div>
+                            <CardDescription>Obtén un presupuesto y analiza el punto de equilibrio.</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-0 pt-6">
+                            <AdministracionRecursosModule />
+                        </CardFooter>
+                    </div>
+                </Card>
+
+                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                     <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Megaphone className="h-8 w-8 text-primary" /></div>
@@ -145,53 +140,43 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
+                    <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" alt="Proveedores" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
+                    <CardHeader className="flex-grow p-0">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
+                            <CardTitle className="text-2xl">Proveedores</CardTitle>
+                        </div>
+                        <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-0 pt-6">
+                        <ProveedoresModule />
+                    </CardFooter>
+                    </div>
+                </Card>
+
+                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                    <div className="relative h-40 w-full">
+                        <Image src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" alt="Guía Paso a Paso" layout="fill" objectFit="cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Asistente Financiero</CardTitle>
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Guía Paso a Paso</CardTitle>
                             </div>
-                            <CardDescription>Obtén un presupuesto y analiza el punto de equilibrio.</CardDescription>
+                            <CardDescription>Genera un plan de acción detallado para tu idea de negocio.</CardDescription>
                         </CardHeader>
                         <CardFooter className="p-0 pt-6">
-                            <AdministracionRecursosModule />
+                            <GuiaPasoAPasoModule />
                         </CardFooter>
                     </div>
                 </Card>
                 
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Route className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Mis Rutas</CardTitle>
-                            </div>
-                            <CardDescription>Consulta y da seguimiento a tus planes de aprendizaje.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <MisRutasModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
-                    <div className="relative z-10 flex flex-col h-full p-6">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Target className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Mis Campañas</CardTitle>
-                            </div>
-                            <CardDescription>Da seguimiento a tus campañas de marketing activas.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6">
-                            <MisCampanasModule />
-                        </CardFooter>
-                    </div>
-                </Card>
-
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
                     <div className="relative z-10 flex flex-col h-full p-6">
