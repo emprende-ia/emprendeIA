@@ -48,7 +48,8 @@ export async function saveCampaign(
   }
 
   // Step 1: Generate the detailed campaign plan from the idea.
-  const { plan: campaignPlan } = await generateCampaignPlan({
+  // The generateCampaignPlan flow now returns the plan object directly.
+  const campaignPlan = await generateCampaignPlan({
       campaignTitle: campaignIdea.title,
       campaignChannel: campaignIdea.channel,
       campaignMessage: campaignIdea.keyMessage,

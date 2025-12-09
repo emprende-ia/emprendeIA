@@ -8,7 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { CampaignPlanSchema } from '@/lib/firestore/marketing-campaigns';
+import { CampaignPlanSchema, type CampaignPlan } from '@/lib/firestore/marketing-campaigns';
 
 const GenerateCampaignPlanInputSchema = z.object({
   campaignTitle: z.string().describe("The title of the marketing campaign idea."),
@@ -18,12 +18,8 @@ const GenerateCampaignPlanInputSchema = z.object({
 });
 export type GenerateCampaignPlanInput = z.infer<typeof GenerateCampaignPlanInputSchema>;
 
-
-const CampaignPlanOutputSchema = z.object({
-    plan: CampaignPlanSchema
-});
-
-export type CampaignPlanOutput = z.infer<typeof CampaignPlanOutputSchema>;
+// The output of this flow is the CampaignPlan itself.
+export type CampaignPlanOutput = CampaignPlan;
 
 export async function generateCampaignPlan(input: GenerateCampaignPlanInput): Promise<CampaignPlanOutput> {
   return generateCampaignPlanFlow(input);
@@ -58,13 +54,14 @@ const generateCampaignPlanFlow = ai.defineFlow(
   {
     name: 'generateCampaignPlanFlow',
     inputSchema: GenerateCampaignPlanInputSchema,
-    outputSchema: CampaignPlanOutputSchema,
+    outputSchema: CampaignPlanSchema, // The output schema should match the prompt's output schema.
   },
   async (input) => {
     const { output } = await generateCampaignPlanPrompt(input);
     if (!output) {
         throw new Error('Failed to generate a campaign plan.');
     }
-    return { plan: output };
+    // The output from the prompt is the plan itself.
+    return output;
   }
 );
