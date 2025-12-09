@@ -83,7 +83,7 @@ const generateTaskAudioFlow = ai.defineFlow(
     // Step 2: Convert the generated script into speech.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
-        prompt: script,
+        prompt: script, // Pass the generated script text here
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
