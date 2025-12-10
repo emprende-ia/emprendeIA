@@ -43,7 +43,7 @@ function RegisterPageContent() {
     defaultValues: {
       fullName: '',
       username: '',
-      age: undefined,
+      age: '' as any, // Use empty string for controlled component
       email: '',
       password: '',
       confirmPassword: '',
