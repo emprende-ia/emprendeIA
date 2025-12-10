@@ -13,6 +13,7 @@
  *   - /users/{userId}/brandIdentity/main: Private brand identity for each user.
  *   - /users/{userId}/savedSuppliers/{supplierId}: Private list of saved suppliers for each user.
  *   - /users/{userId}/viabilityAnalysis/latest: Private document for the user's latest viability analysis.
+ *   - /customers/{userId}/checkout_sessions/{sessionId}: Private checkout sessions for Stripe integration.
  * @key-security-decisions
  *   - User listing is disallowed to protect privacy.
  *   - Supplier data is publicly readable.
@@ -34,6 +35,18 @@ service cloud.firestore {
     match /suppliers/{supplierId} {
       allow get, list: if true;
       allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows read and write access to customer data for the Stripe extension. This is critical for creating checkout sessions.
+     * @path /customers/{userId}/checkout_sessions/{sessionId}
+     * @allow (create, get, delete): An authenticated user can create, read, and delete their own checkout sessions.
+     * @deny (update, list): Updating sessions is handled by the extension, and listing is disallowed for security.
+     * @principle Enforces user-ownership for Stripe checkout session creation.
+     */
+    match /customers/{userId}/checkout_sessions/{sessionId} {
+      allow create, get, delete: if isOwner(userId);
+      allow update, list: if false;
     }
 
     /**
