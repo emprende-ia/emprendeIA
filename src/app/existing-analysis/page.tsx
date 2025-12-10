@@ -140,7 +140,7 @@ function ExistingAnalysisPageContent() {
                     </Alert>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                        <div className="hover:border-primary/50 transition-colors">
                             <h3 className="font-semibold mb-2 flex items-center gap-2"><BarChart className="h-5 w-5"/>Análisis FODA</h3>
                             <div className="space-y-3">
                                 <div className="space-y-1">
@@ -169,7 +169,7 @@ function ExistingAnalysisPageContent() {
                                     <AlertTitle className="font-bold text-lg">{growthViabilityData.level}: <span className="font-normal">{growthViabilityData.phrase}</span></AlertTitle>
                                 </div>
                             </Alert>
-                             <Card className="bg-secondary/50">
+                             <Card className="bg-secondary/50 hover:border-primary/50 transition-colors">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-semibold flex items-center gap-2"><ListTodo className="h-4 w-4"/>Razones</CardTitle>
                                 </CardHeader>
@@ -179,7 +179,7 @@ function ExistingAnalysisPageContent() {
                                     </ol>
                                 </CardContent>
                             </Card>
-                             <Card className="bg-secondary/50">
+                             <Card className="bg-secondary/50 hover:border-primary/50 transition-colors">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-semibold flex items-center gap-2"><Star className="h-4 w-4"/>Próximos Pasos</CardTitle>
                                 </CardHeader>
@@ -193,7 +193,7 @@ function ExistingAnalysisPageContent() {
                     </div>
 
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                        <Card>
+                        <Card className="hover:border-primary/50 transition-colors">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>{growthViabilityData.level === 'Verde' ? "Cómo Acelerar el Crecimiento" : "Cómo Estabilizar/Pasar a Crecimiento"}</CardTitle>
                             </CardHeader>
@@ -204,7 +204,7 @@ function ExistingAnalysisPageContent() {
                             </CardContent>
                         </Card>
                         {growthViabilityData.level === 'Rojo' && growthViabilityData.alternatives && growthViabilityData.alternatives.length > 0 && (
-                            <Card>
+                            <Card className="hover:border-primary/50 transition-colors">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>Alternativas Estratégicas</CardTitle>
                                 </CardHeader>

@@ -74,7 +74,7 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis
                         </div>
                     </Alert>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card className="bg-secondary/50">
+                        <Card className="bg-secondary/50 hover:border-primary/50 transition-colors">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2"><ListTodo className="h-4 w-4"/>Razones</CardTitle>
                             </CardHeader>
@@ -84,7 +84,7 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis
                                 </ol>
                             </CardContent>
                         </Card>
-                        <Card className="bg-secondary/50">
+                        <Card className="bg-secondary/50 hover:border-primary/50 transition-colors">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2"><Star className="h-4 w-4"/>Próximos Pasos</CardTitle>
                             </CardHeader>
@@ -96,7 +96,7 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis
                         </Card>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <Card>
+                       <Card className="hover:border-primary/50 transition-colors">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2"><Goal className="h-4 w-4"/>
                                   {isExistingVentureAnalysis(analysisResult) ? (
@@ -113,7 +113,7 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis
                             </CardContent>
                         </Card>
                         {viabilityData.level === 'Rojo' && viabilityData.alternatives && viabilityData.alternatives.length > 0 && (
-                            <Card>
+                            <Card className="hover:border-primary/50 transition-colors">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>
                                         {isExistingVentureAnalysis(analysisResult) ? 'Alternativas Estratégicas' : 'Alternativas Dentro del Giro'}
@@ -135,19 +135,19 @@ function AnalysisDisplay({ analysisResult }: { analysisResult: ViabilityAnalysis
             <div>
                 <h3 className="font-headline text-xl mb-4 flex items-center gap-2"><BarChart className="h-5 w-5"/>Análisis FODA</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="border-green-500/30">
+                    <Card className="border-green-500/30 hover:border-green-500/80 transition-colors">
                         <CardHeader className="pb-2"><CardTitle className="text-base text-green-500">Fortalezas</CardTitle></CardHeader>
                         <CardContent><ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">{analysisResult.analysis.swot.strengths.map((item, i) => <li key={i}>{item}</li>)}</ul></CardContent>
                     </Card>
-                     <Card className="border-red-500/30">
+                     <Card className="border-red-500/30 hover:border-red-500/80 transition-colors">
                         <CardHeader className="pb-2"><CardTitle className="text-base text-red-500">Debilidades</CardTitle></CardHeader>
                         <CardContent><ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">{analysisResult.analysis.swot.weaknesses.map((item, i) => <li key={i}>{item}</li>)}</ul></CardContent>
                     </Card>
-                     <Card className="border-blue-500/30">
+                     <Card className="border-blue-500/30 hover:border-blue-500/80 transition-colors">
                         <CardHeader className="pb-2"><CardTitle className="text-base text-blue-500">Oportunidades</CardTitle></CardHeader>
                         <CardContent><ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">{analysisResult.analysis.swot.opportunities.map((item, i) => <li key={i}>{item}</li>)}</ul></CardContent>
                     </Card>
-                     <Card className="border-orange-500/30">
+                     <Card className="border-orange-500/30 hover:border-orange-500/80 transition-colors">
                         <CardHeader className="pb-2"><CardTitle className="text-base text-orange-500">Amenazas</CardTitle></CardHeader>
                         <CardContent><ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">{analysisResult.analysis.swot.threats.map((item, i) => <li key={i}>{item}</li>)}</ul></CardContent>
                     </Card>
@@ -243,7 +243,7 @@ export function ViabilityAnalysisViewer({ isMenuItem = false }: ViabilityAnalysi
 
     const TriggerComponent = isMenuItem ? 'div' : Button;
     const triggerProps = isMenuItem
-        ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" }
+        ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" }
         : { variant: "outline" as any, className: "w-full" };
 
     return (
