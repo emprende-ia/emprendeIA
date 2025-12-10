@@ -56,21 +56,23 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Step 1: Manually construct the prompt string to avoid recursion issues.
-    const scriptPrompt = `You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
-      Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
-      Your entire output must be the spoken audio, in Spanish.
+    // Step 1: Manually construct a simple, direct prompt string to avoid recursive errors.
+    const simplePrompt = `
+        You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
+        Explain the following marketing task in Spanish, keeping it concise (around 150 words).
 
-      The user is working on the campaign "${input.campaignTitle}" on the channel "${input.campaignChannel}". The key message is "${input.campaignMessage}".
-      
-      The specific task they need help with is: "${input.taskToExplain}"
+        Campaign: "${input.campaignTitle}"
+        Channel: "${input.campaignChannel}"
+        Task to explain: "${input.taskToExplain}"
 
-      Explain what this task means in simple terms, why it's important for their campaign, and give them a concrete tip to get started.
-      Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
+        Explain what this task means, why it's important for their campaign, and give them a concrete tip to get started.
+        Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
     `;
 
-    // Step 2: Generate the script using the text-oriented model.
-    const { text: script } = await ai.generate({ prompt: scriptPrompt });
+    // Step 2: Generate the script using the simple text prompt.
+    const { text: script } = await ai.generate({
+        prompt: simplePrompt,
+    });
 
     if (!script) {
         throw new Error("Audio script generation failed.");
