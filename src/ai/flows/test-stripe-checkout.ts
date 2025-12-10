@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -9,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
@@ -18,13 +19,14 @@ import {
   addDoc,
   onSnapshot,
   collection,
-  DocumentReference,
 } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 // Initialize Firebase app to get a Firestore instance
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+if (!getApps().length) {
+  initializeApp(firebaseConfig);
+}
+const db = getFirestore(getApp());
 
 const TestStripeCheckoutInputSchema = z.object({
   userId: z.string().describe('The Firebase Auth UID of the user.'),
@@ -53,23 +55,24 @@ const testStripeCheckoutFlow = ai.defineFlow(
       throw new Error('User must be authenticated.');
     }
 
-    // 1. Ensure customer document exists in Firestore
+    // 1. Ensure customer document exists in Firestore for the Stripe extension's security rules
     const customerRef = doc(db, 'customers', userId);
     const customerSnap = await getDoc(customerRef);
     if (!customerSnap.exists()) {
+      // This is a crucial step. The Stripe extension's default security rules
+      // often require the parent customer document to exist before allowing writes
+      // to subcollections like checkout_sessions.
       await setDoc(customerRef, {});
     }
 
-    // 2. Create the checkout session document
+    // 2. Create the checkout session document in the subcollection
     const checkoutSessionsCollection = collection(customerRef, 'checkout_sessions');
     const newSessionRef = await addDoc(checkoutSessionsCollection, {
       price: 'price_1SH8EJPvgBWnIXuYe5lVi9h2', // Test price ID
       quantity: 1,
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/pricing-success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/pricing-cancel`,
-      // The mode can be 'payment', 'setup', or 'subscription'.
-      // For a one-time payment test, 'payment' is appropriate.
-      mode: 'payment',
+      mode: 'payment', // For a one-time payment test
     });
 
     // 3. Wait for the Stripe extension to populate the URL
