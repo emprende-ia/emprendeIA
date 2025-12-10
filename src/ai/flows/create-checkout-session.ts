@@ -18,7 +18,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
-  getDoc,
   setDoc,
   addDoc,
   onSnapshot,
@@ -63,10 +62,17 @@ const createCheckoutSessionFlow = ai.defineFlow(
       throw new Error('User must be authenticated to create a checkout session.');
     }
 
+    // Step 1: Ensure the customer document exists in Firestore.
+    // The Stripe extension requires this parent document to exist before creating a sub-collection document.
+    const customerDocRef = doc(db, 'customers', userId);
+    await setDoc(customerDocRef, { 
+      email: userEmail || null,
+      stripeId: null // Stripe ID will be populated by the extension
+    }, { merge: true });
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
 
-    // 1. Create the checkout session document in Firestore
-    // The Stripe Extension will listen to this collection
+    // Step 2: Create the checkout session document in the sub-collection.
     const checkoutSessionsCollection = collection(db, 'customers', userId, 'checkout_sessions');
     const newSessionDoc = await addDoc(checkoutSessionsCollection, {
       price: priceId,
@@ -81,7 +87,7 @@ const createCheckoutSessionFlow = ai.defineFlow(
       },
     });
 
-    // 2. Wait for the Stripe extension to populate the checkout URL
+    // Step 3: Wait for the Stripe extension to populate the checkout URL.
     return new Promise((resolve, reject) => {
       const unsubscribe = onSnapshot(
         newSessionDoc,
