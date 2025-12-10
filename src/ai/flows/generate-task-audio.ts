@@ -77,7 +77,8 @@ const generateTaskAudioFlow = ai.defineFlow(
   async (input) => {
 
     // Step 1: Generate the script using the text-oriented prompt
-    const { text: script } = await ai.generate({ prompt: audioPrompt, input });
+    const result = await audioPrompt(input);
+    const script = result.text;
 
     if (!script) {
         throw new Error("Audio script generation failed.");
