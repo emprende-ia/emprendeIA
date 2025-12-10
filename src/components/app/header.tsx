@@ -39,6 +39,7 @@ export function AppHeader() {
 
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +49,7 @@ export function AppHeader() {
 
 
   useEffect(() => {
+    setIsClient(true);
     
     if (user && firestore) {
       setIsIdentityLoading(true);
@@ -157,7 +159,7 @@ export function AppHeader() {
       </div>
       
       <div className="flex items-center gap-2">
-        <SettingsMenu />
+        {isClient && <SettingsMenu />}
         
          <Button asChild variant="outline" size="sm">
             <Link href="/pricing">
