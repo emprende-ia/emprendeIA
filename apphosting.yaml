@@ -8,3 +8,5 @@ runConfig:
 secretEnvironmentVariables:
   - key: STRIPE_WEBHOOK_SECRET
     secret: STRIPE_WEBHOOK_SECRET
+  - key: STRIPE_SECRET_KEY
+    secret: STRIPE_SECRET_KEY

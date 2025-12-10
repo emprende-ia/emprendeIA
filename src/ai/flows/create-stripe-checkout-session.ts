@@ -75,6 +75,10 @@ const createStripeCheckoutSessionFlow = ai.defineFlow(
       return { sessionId: session.id, sessionUrl: session.url };
 
     } catch (error: any) {
+      if (error.message.includes('No API key provided')) {
+          console.error('Stripe Flow Error: STRIPE_SECRET_KEY is not set or available in the environment.');
+          throw new Error('La configuración del servidor para pagos no está completa. Por favor, contacta al soporte.');
+      }
       console.error('Stripe Flow Error:', error.message);
       throw new Error(`Could not create checkout session: ${error.message}`);
     }
