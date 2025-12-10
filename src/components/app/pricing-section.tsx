@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Check, Gem, Sparkles, User } from 'lucide-react';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { createStripeCheckoutSession } from '@/ai/flows/create-stripe-checkout-session';
+import { createCheckoutSession } from '@/ai/flows/create-checkout-session';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -87,14 +88,14 @@ export function PricingSection() {
         setIsLoading(priceId);
 
         try {
-            const { sessionUrl } = await createStripeCheckoutSession({
+            const { checkoutUrl } = await createCheckoutSession({
                 priceId,
-                userEmail: user.email || '',
                 userId: user.uid,
+                userEmail: user.email || undefined,
             });
 
-            if (sessionUrl) {
-                window.location.href = sessionUrl;
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
             } else {
                 throw new Error('No se pudo obtener la URL de checkout.');
             }

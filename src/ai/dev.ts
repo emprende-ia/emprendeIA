@@ -5,7 +5,7 @@ config();
 
 import '@/ai/flows/customize-supplier-recommendations.ts';
 import '@/ai/flows/suggest-relevant-suppliers.ts';
-import '@/ai/flows/create-stripe-checkout-session.ts';
+import '@/ai/flows/create-checkout-session.ts';
 import '@/ai/flows/stripe-webhook.ts';
 import '@/ai/flows/analyze-business-idea.ts';
 import '@/ai/flows/generate-action-plan.ts';
@@ -21,4 +21,3 @@ import '@/ai/flows/generate-module-audio.ts';
 import '@/ai/flows/regenerate-brand-elements.ts';
 import '@/ai/flows/generate-campaign-task-audio.ts';
 import '@/ai/flows/test-stripe-checkout.ts';
-
