@@ -66,27 +66,31 @@ function LoginPageContent() {
     if (!auth) return;
     setIsSigningIn(true);
 
-    try {
-      initiateEmailSignIn(auth, values.email, values.password);
-      // The onAuthStateChanged listener in the provider will handle redirection
-      // on successful login. This approach provides a better UX.
-      // We can show a toast here to inform the user.
-      toast({
-        title: "Iniciando sesión...",
-        description: "Serás redirigido en un momento.",
-      });
-    } catch (error: any) {
-      let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        description = 'Los datos son incorrectos. Verifica tu correo y contraseña.';
+    initiateEmailSignIn(
+      auth,
+      values.email,
+      values.password,
+      () => {
+        // onSuccess: Listener will handle redirect, toast provides feedback
+        toast({
+          title: "Iniciando sesión...",
+          description: "Serás redirigido en un momento.",
+        });
+      },
+      (error) => {
+        // onError: Handle specific auth errors here
+        let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          description = 'Los datos son incorrectos. Verifica tu correo y contraseña.';
+        }
+        toast({
+          title: "Error de inicio de sesión",
+          description: description,
+          variant: "destructive",
+        });
+        setIsSigningIn(false); // Stop loading only on error
       }
-      toast({
-        title: "Error de inicio de sesión",
-        description: description,
-        variant: "destructive",
-      });
-      setIsSigningIn(false); // Only stop loading on error
-    }
+    );
   };
 
   const handleGoogleSignIn = async () => {
