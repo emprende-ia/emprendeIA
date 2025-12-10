@@ -78,10 +78,11 @@ export function PricingSection() {
             return;
         }
 
-        if (!priceId) {
+        if (!priceId || priceId.startsWith('price_xx')) {
             toast({
-                title: 'Plan no disponible',
-                description: 'Este plan no requiere un pago.',
+                title: 'Plan no configurado',
+                description: 'El administrador necesita configurar los IDs de precios de Stripe en el archivo .env.',
+                variant: 'destructive'
             });
             return;
         }
@@ -89,11 +90,9 @@ export function PricingSection() {
         setIsLoading(priceId);
 
         try {
-            // Step 1: Ensure the customer document exists.
             const customerDocRef = doc(firestore, 'customers', user.uid);
             await setDoc(customerDocRef, { email: user.email }, { merge: true });
 
-            // Step 2: Create the checkout session document in the sub-collection.
             const checkoutSessionsCollection = collection(firestore, 'customers', user.uid, 'checkout_sessions');
             const newSessionDoc = await addDoc(checkoutSessionsCollection, {
                 price: priceId,
@@ -105,7 +104,6 @@ export function PricingSection() {
                 customer_email: user.email || undefined,
             });
 
-            // Step 3: Wait for the Stripe extension to populate the checkout URL.
             const unsubscribe = onSnapshot(
                 newSessionDoc,
                 (snapshot) => {
