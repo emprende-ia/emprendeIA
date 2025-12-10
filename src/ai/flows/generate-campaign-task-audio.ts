@@ -56,32 +56,14 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Step 1: Manually construct a simple, direct prompt string to avoid recursive errors.
-    const simplePrompt = `
-        You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
-        Explain the following marketing task in Spanish, keeping it concise (around 150 words).
+    // Step 1: Manually construct a simple, direct prompt string.
+    // This avoids using ai.definePrompt for script generation, which was causing a recursive error.
+    const simplePrompt = `¡Hola! Analicemos juntos esta tarea. La tarea es "${input.taskToExplain}" para tu campaña "${input.campaignTitle}". El objetivo es comunicar: "${input.campaignMessage}". Esta tarea es importante porque te ayuda a conectar con tu audiencia en ${input.campaignChannel}. Un buen primer paso es pensar en una acción pequeña que puedas hacer ahora mismo. ¡Vamos con todo!`;
 
-        Campaign: "${input.campaignTitle}"
-        Channel: "${input.campaignChannel}"
-        Task to explain: "${input.taskToExplain}"
-
-        Explain what this task means, why it's important for their campaign, and give them a concrete tip to get started.
-        Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
-    `;
-
-    // Step 2: Generate the script using the simple text prompt.
-    const { text: script } = await ai.generate({
-        prompt: simplePrompt,
-    });
-
-    if (!script) {
-        throw new Error("Audio script generation failed.");
-    }
-    
-    // Step 3: Use the generated script as input for the TTS model.
+    // Step 2: Use the generated script as input for the TTS model.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
-        prompt: script,
+        prompt: simplePrompt,
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
@@ -96,7 +78,7 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
         throw new Error("Audio generation failed, no media was returned.");
     }
     
-    // The TTS model returns raw PCM data in a data URI. We need to convert it to WAV.
+    // Step 3: The TTS model returns raw PCM data in a data URI. We need to convert it to WAV.
     const pcmData = Buffer.from(media.url.substring(media.url.indexOf(',') + 1), 'base64');
     const wavData = await toWav(pcmData);
 

@@ -54,10 +54,10 @@ const generateModuleAudioFlow = ai.defineFlow(
   },
   async ({ textToSpeak }) => {
     
-    // Step 1: Convert the provided text into speech using a professional female voice.
+    // Step 1: Convert the provided text directly into speech.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
-        prompt: textToSpeak,
+        prompt: textToSpeak, // Pass the text directly to the TTS model.
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
