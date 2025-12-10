@@ -49,7 +49,8 @@ async function toWav(pcmData: Buffer): Promise<string> {
 }
 
 const audioPrompt = ai.definePrompt({
-    name: 'generateCampaignTaskAudioPrompt',
+    name: 'generateCampaignTaskAudioScriptPrompt',
+    model: 'googleai/gemini-2.5-flash',
     input: { schema: GenerateCampaignTaskAudioInputSchema },
     prompt: `You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
       Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
@@ -74,8 +75,7 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
   async (input) => {
     
     // Step 1: Generate the script using the text-oriented prompt
-    const scriptResponse = await audioPrompt(input);
-    const script = scriptResponse.text;
+    const { text: script } = await ai.generate({ prompt: audioPrompt, input });
 
     if (!script) {
         throw new Error("Audio script generation failed.");
