@@ -73,9 +73,18 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
   },
   async (input) => {
     
+    // Step 1: Generate the script using the text-oriented prompt
+    const scriptResponse = await audioPrompt(input);
+    const script = scriptResponse.text;
+
+    if (!script) {
+        throw new Error("Audio script generation failed.");
+    }
+    
+    // Step 2: Use the generated script as input for the TTS model
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
-        prompt: await audioPrompt(input),
+        prompt: script,
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
