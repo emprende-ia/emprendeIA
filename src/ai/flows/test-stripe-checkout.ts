@@ -14,8 +14,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
-  getDoc,
-  setDoc,
   addDoc,
   onSnapshot,
   collection,
@@ -55,18 +53,10 @@ const testStripeCheckoutFlow = ai.defineFlow(
       throw new Error('User must be authenticated.');
     }
 
-    // 1. Ensure customer document exists in Firestore for the Stripe extension's security rules
-    const customerRef = doc(db, 'customers', userId);
-    const customerSnap = await getDoc(customerRef);
-    if (!customerSnap.exists()) {
-      // This is a crucial step. The Stripe extension's default security rules
-      // often require the parent customer document to exist before allowing writes
-      // to subcollections like checkout_sessions.
-      await setDoc(customerRef, {});
-    }
-
-    // 2. Create the checkout session document in the subcollection
-    const checkoutSessionsCollection = collection(customerRef, 'checkout_sessions');
+    // 1. Create the checkout session document in the subcollection.
+    // The Stripe extension's security rules will handle the creation of the parent
+    // customer document if the user has the correct 'create' permission on the `customers/{userId}` path.
+    const checkoutSessionsCollection = collection(db, 'customers', userId, 'checkout_sessions');
     const newSessionRef = await addDoc(checkoutSessionsCollection, {
       price: 'price_1SH8EJPvgBWnIXuYe5lVi9h2', // Test price ID
       quantity: 1,
@@ -75,7 +65,7 @@ const testStripeCheckoutFlow = ai.defineFlow(
       mode: 'payment', // For a one-time payment test
     });
 
-    // 3. Wait for the Stripe extension to populate the URL
+    // 2. Wait for the Stripe extension to populate the URL
     return new Promise((resolve, reject) => {
       const unsubscribe = onSnapshot(
         newSessionRef,

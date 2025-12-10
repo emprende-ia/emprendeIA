@@ -38,6 +38,15 @@ service cloud.firestore {
     }
 
     /**
+     * @description Allows write access to customer data for the Stripe extension. This is critical for creating checkout sessions.
+     * @path /customers/{userId}
+     * @allow (create): An authenticated user can create their own customer document.
+     */
+    match /customers/{userId} {
+        allow create: if isOwner(userId);
+    }
+    
+    /**
      * @description Allows read and write access to customer data for the Stripe extension. This is critical for creating checkout sessions.
      * @path /customers/{userId}/checkout_sessions/{sessionId}
      * @allow (create, get, delete): An authenticated user can create, read, and delete their own checkout sessions.
