@@ -24,7 +24,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+  
     /**
      * @description Allows public read access to supplier profiles. Write access is not granted in this prototype.
      * @path /suppliers/{supplierId}
