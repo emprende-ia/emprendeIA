@@ -168,88 +168,92 @@ export function AppHeader() {
             </Link>
         </Button>
 
-         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                    <EllipsisVertical className="h-4 w-4" />
-                    <span className="sr-only">Herramientas rápidas</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Herramientas Rápidas</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                   <ViabilityAnalysisViewer isMenuItem={true} />
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <MisRutasModule isMenuItem={true} />
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <MisCampanasModule isMenuItem={true} />
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                             <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full">
-                                <Lightbulb className="mr-2 h-4 w-4" /> Conceptos de Marketing
-                            </div>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-3xl">
-                            <DialogHeader>
-                                <DialogTitle className="font-headline text-2xl">Conceptos Clave de Marketing</DialogTitle>
-                                <DialogDescription>Una guía rápida para entender los pilares del marketing digital.</DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4 max-h-[70vh] overflow-y-auto">
-                                <BrandCampaign />
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/start')}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Reformular mi Negocio
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        {isClient && (
+          <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <EllipsisVertical className="h-4 w-4" />
+                        <span className="sr-only">Herramientas rápidas</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Herramientas Rápidas</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                       <ViabilityAnalysisViewer isMenuItem={true} />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        <MisRutasModule isMenuItem={true} />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        <MisCampanasModule isMenuItem={true} />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                 <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full">
+                                    <Lightbulb className="mr-2 h-4 w-4" /> Conceptos de Marketing
+                                </div>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-3xl">
+                                <DialogHeader>
+                                    <DialogTitle className="font-headline text-2xl">Conceptos Clave de Marketing</DialogTitle>
+                                    <DialogDescription>Una guía rápida para entender los pilares del marketing digital.</DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 max-h-[70vh] overflow-y-auto">
+                                    <BrandCampaign />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/start')}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Reformular mi Negocio
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
-        {isUserLoading ? (
-          <Button variant="outline" size="icon" disabled>
-            <UserIcon className="h-4 w-4" />
-          </Button>
-        ) : user ? (
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10 border-2 border-primary/50">
-                  <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'Usuario'} />
-                  <AvatarFallback className='bg-primary/20'>{getInitials(user.displayName)}</AvatarFallback>
-                </Avatar>
+            {isUserLoading ? (
+              <Button variant="outline" size="icon" disabled>
+                <UserIcon className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar sesión</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button asChild variant="outline">
-            <Link href="/login">
-            <UserIcon className="mr-2 h-4 w-4" />
-            Iniciar Sesión
-            </Link>
-        </Button>
+            ) : user ? (
+               <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10 border-2 border-primary/50">
+                      <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'Usuario'} />
+                      <AvatarFallback className='bg-primary/20'>{getInitials(user.displayName)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar sesión</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/login">
+                <UserIcon className="mr-2 h-4 w-4" />
+                Iniciar Sesión
+                </Link>
+            </Button>
+            )}
+          </>
         )}
       </div>
     </header>
