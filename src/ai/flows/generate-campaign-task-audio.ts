@@ -48,24 +48,6 @@ async function toWav(pcmData: Buffer): Promise<string> {
     });
 }
 
-const audioPrompt = ai.definePrompt({
-    name: 'generateCampaignTaskAudioScriptPrompt',
-    model: 'googleai/gemini-2.5-flash',
-    input: { schema: GenerateCampaignTaskAudioInputSchema },
-    prompt: `You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
-      Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
-      Your entire output must be the spoken audio, in Spanish.
-
-      The user is working on the campaign "{{{campaignTitle}}}" on the channel "{{{campaignChannel}}}". The key message is "{{{campaignMessage}}}".
-      
-      The specific task they need help with is: "{{{taskToExplain}}}"
-
-      Explain what this task means in simple terms, why it's important for their campaign, and give them a concrete tip to get started.
-      Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
-    `,
-});
-
-
 const generateCampaignTaskAudioFlow = ai.defineFlow(
   {
     name: 'generateCampaignTaskAudioFlow',
@@ -74,15 +56,27 @@ const generateCampaignTaskAudioFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Step 1: Generate the script using the text-oriented prompt
-    const result = await audioPrompt(input);
-    const script = result.text;
+    // Step 1: Manually construct the prompt string to avoid recursion issues.
+    const scriptPrompt = `You are an expert marketing coach speaking to an entrepreneur. Your tone is encouraging, clear, and action-oriented.
+      Your task is to provide a short audio explanation (around 150 words) to help the user understand and complete a specific marketing task.
+      Your entire output must be the spoken audio, in Spanish.
+
+      The user is working on the campaign "${input.campaignTitle}" on the channel "${input.campaignChannel}". The key message is "${input.campaignMessage}".
+      
+      The specific task they need help with is: "${input.taskToExplain}"
+
+      Explain what this task means in simple terms, why it's important for their campaign, and give them a concrete tip to get started.
+      Example structure: "¡Hola! Esta tarea es clave para tu campaña. Se trata de... Es importante porque te ayudará a... Un buen primer paso es... ¡Vamos con todo!"
+    `;
+
+    // Step 2: Generate the script using the text-oriented model.
+    const { text: script } = await ai.generate({ prompt: scriptPrompt });
 
     if (!script) {
         throw new Error("Audio script generation failed.");
     }
     
-    // Step 2: Use the generated script as input for the TTS model
+    // Step 3: Use the generated script as input for the TTS model.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
         prompt: script,

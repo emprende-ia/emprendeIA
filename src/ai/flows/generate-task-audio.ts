@@ -48,26 +48,6 @@ async function toWav(pcmData: Buffer): Promise<string> {
     });
 }
 
-const audioPrompt = ai.definePrompt({
-    name: 'generateTaskAudioScriptPrompt',
-    model: 'googleai/gemini-2.5-flash',
-    input: { schema: GenerateTaskAudioInputSchema },
-    prompt: `You are an expert business coach, speaking to an entrepreneur. Your tone is encouraging, clear, and practical.
-      Your task is to create a short audio script (around 150-200 words) to help the user complete a specific task.
-      Do not use technical jargon. Explain things as you would to a smart friend.
-      Your entire output must be the script itself, in Spanish.
-
-      The user needs help with the following task:
-      - Título: {{{taskTitle}}}
-      - Objetivo: {{{taskObjective}}}
-      - Contenido Clave: {{{taskContent}}}
-      - Acción a realizar: {{{taskAction}}}
-
-      Start by encouraging them, then clearly explain what they need to do and why it's important, focusing on the action.
-      Example structure: "¡Hola! No te preocupes, esta tarea es más sencilla de lo que parece y es clave para... Para empezar, enfócate en... Esto te ayudará a... Recuerda, lo importante es dar el primer paso. ¡Mucho éxito!"
-    `,
-});
-
 const generateTaskAudioFlow = ai.defineFlow(
   {
     name: 'generateTaskAudioFlow',
@@ -76,15 +56,30 @@ const generateTaskAudioFlow = ai.defineFlow(
   },
   async (input) => {
 
-    // Step 1: Generate the script using the text-oriented prompt
-    const result = await audioPrompt(input);
-    const script = result.text;
+    // Step 1: Manually construct the prompt string to avoid recursion issues with ai.definePrompt templating.
+    const scriptPrompt = `You are an expert business coach, speaking to an entrepreneur. Your tone is encouraging, clear, and practical.
+      Your task is to create a short audio script (around 150-200 words) to help the user complete a specific task.
+      Do not use technical jargon. Explain things as you would to a smart friend.
+      Your entire output must be the script itself, in Spanish.
+
+      The user needs help with the following task:
+      - Título: ${input.taskTitle}
+      - Objetivo: ${input.taskObjective}
+      - Contenido Clave: ${input.taskContent}
+      - Acción a realizar: ${input.taskAction}
+
+      Start by encouraging them, then clearly explain what they need to do and why it's important, focusing on the action.
+      Example structure: "¡Hola! No te preocupes, esta tarea es más sencilla de lo que parece y es clave para... Para empezar, enfócate en... Esto te ayudará a... Recuerda, lo importante es dar el primer paso. ¡Mucho éxito!"
+    `;
+    
+    // Step 2: Generate the script using the text-oriented model.
+    const { text: script } = await ai.generate({ prompt: scriptPrompt });
 
     if (!script) {
         throw new Error("Audio script generation failed.");
     }
     
-    // Step 2: Use the generated script as input for the TTS model
+    // Step 3: Use the generated script as input for the TTS model.
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
         prompt: script,
