@@ -91,7 +91,10 @@ export function PricingSection() {
 
         try {
             const customerDocRef = doc(firestore, 'customers', user.uid);
-            await setDoc(customerDocRef, { email: user.email }, { merge: true });
+            await setDoc(customerDocRef, { 
+              email: user.email,
+              stripeId: null 
+            }, { merge: true });
 
             const checkoutSessionsCollection = collection(firestore, 'customers', user.uid, 'checkout_sessions');
             const newSessionDoc = await addDoc(checkoutSessionsCollection, {
