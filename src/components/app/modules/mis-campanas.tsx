@@ -17,6 +17,78 @@ import { es } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 
+const AudioPlayer = ({
+    isLoading,
+    isPlaying,
+    progress,
+    onPlayPauseClick,
+    onGenerateClick
+}: {
+    isLoading: boolean,
+    isPlaying: boolean,
+    progress: number,
+    onPlayPauseClick: () => void,
+    onGenerateClick: () => void
+}) => {
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (progress / 100) * circumference;
+
+    if (isLoading) {
+        return (
+            <Button size="sm" variant="outline" disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generando...
+            </Button>
+        );
+    }
+    
+    // If progress > 0, it means audio has been generated at least once
+    if (progress > 0 || isPlaying) {
+         return (
+            <div className="relative flex items-center justify-center">
+                <svg className="w-10 h-10 transform -rotate-90" >
+                    <circle
+                        className="text-muted"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r={radius}
+                        cx="20"
+                        cy="20"
+                    />
+                    <circle
+                        className="text-primary"
+                        strokeWidth="3"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        stroke="currentColor"
+                        fill="transparent"
+                        r={radius}
+                        cx="20"
+                        cy="20"
+                    />
+                </svg>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute rounded-full h-8 w-8"
+                    onClick={onPlayPauseClick}
+                >
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+            </div>
+        );
+    }
+
+    return (
+        <Button size="sm" variant="outline" onClick={onGenerateClick}>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Necesito ayuda
+        </Button>
+    );
+};
+
 function SavedCampaignsList() {
     const { user } = useUser();
     const firestore = useFirestore();
@@ -28,6 +100,7 @@ function SavedCampaignsList() {
     // State to manage the active audio
     const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0);
     const audioRef = useRef<HTMLAudioElement>(null);
 
 
@@ -50,11 +123,12 @@ function SavedCampaignsList() {
         toggleCampaignTaskCompletion(firestore, user.uid, campaignId, taskDescription, isCompleted);
     };
 
-    const handleAudioHelp = async (campaignId: string, taskDescription: string, taskIndex: number) => {
+    const handleGenerateAudio = async (campaignId: string, taskDescription: string, taskIndex: number) => {
         const audioKey = `${campaignId}-${taskIndex}`;
 
-        if (audioRef.current && activeAudio?.key === audioKey) {
-            handlePlay();
+        // If this audio is already active, just play/pause
+        if (activeAudio?.key === audioKey && audioRef.current) {
+            handlePlayPause();
             return;
         }
         
@@ -62,6 +136,8 @@ function SavedCampaignsList() {
         if (!campaign || !user || !firestore) return;
 
         setIsAudioLoading(audioKey);
+        setAudioProgress(0);
+
         try {
             const result = await generateCampaignTaskAudio({
                 campaignTitle: campaign.campaignIdea.title,
@@ -74,7 +150,7 @@ function SavedCampaignsList() {
 
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
-                handlePlay();
+                audioRef.current.play(); // Auto-play on generation
             }
 
         } catch (error) {
@@ -85,12 +161,14 @@ function SavedCampaignsList() {
         }
     };
     
-    const handlePlay = () => {
-        audioRef.current?.play();
-    };
-
-    const handlePause = () => {
-        audioRef.current?.pause();
+    const handlePlayPause = () => {
+        if (audioRef.current) {
+            if (audioRef.current.paused) {
+                audioRef.current.play();
+            } else {
+                audioRef.current.pause();
+            }
+        }
     };
 
 
@@ -101,18 +179,24 @@ function SavedCampaignsList() {
         const onEnded = () => setIsPlaying(false);
         const onPlay = () => setIsPlaying(true);
         const onPause = () => setIsPlaying(false);
+        const onTimeUpdate = () => {
+            if(audioElement.duration > 0) {
+                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
+            }
+        }
     
         audioElement.addEventListener('ended', onEnded);
         audioElement.addEventListener('play', onPlay);
         audioElement.addEventListener('pause', onPause);
+        audioElement.addEventListener('timeupdate', onTimeUpdate);
     
-        // Cleanup function to remove event listeners
         return () => {
             audioElement.removeEventListener('ended', onEnded);
             audioElement.removeEventListener('play', onPlay);
             audioElement.removeEventListener('pause', onPause);
+            audioElement.removeEventListener('timeupdate', onTimeUpdate);
         };
-    }, [activeAudio]);
+    }, []);
 
 
     if (isLoading) {
@@ -174,8 +258,8 @@ function SavedCampaignsList() {
                                                  const audioKey = `${campaign.id}-${index}`;
                                                  const isCurrentAudio = activeAudio?.key === audioKey;
                                                  return (
-                                                    <div key={index} className="p-3 bg-secondary/50 rounded-md space-y-3">
-                                                        <div className="flex items-start gap-3">
+                                                    <div key={index} className="p-4 bg-secondary/50 rounded-md flex items-start justify-between gap-4">
+                                                        <div className="flex items-start gap-3 flex-1">
                                                             <Checkbox 
                                                                 id={`task-${campaign.id}-${index}`}
                                                                 checked={isCompleted}
@@ -186,30 +270,13 @@ function SavedCampaignsList() {
                                                                 {task}
                                                             </label>
                                                         </div>
-                                                        <div className="pl-7 flex items-center gap-2">
-                                                          {!isCurrentAudio && (
-                                                            <Button size="sm" variant="outline" onClick={() => handleAudioHelp(campaign.id, task, index)} disabled={!!isAudioLoading}>
-                                                              {isAudioLoading === audioKey ? (
-                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                              ) : (
-                                                                <HelpCircle className="mr-2 h-4 w-4" />
-                                                              )}
-                                                              {isAudioLoading === audioKey ? 'Generando...' : 'Necesito ayuda'}
-                                                            </Button>
-                                                          )}
-                                                          {isCurrentAudio && !isPlaying && (
-                                                            <Button size="sm" variant="outline" onClick={handlePlay}>
-                                                              <Play className="mr-2 h-4 w-4" />
-                                                              Reproducir
-                                                            </Button>
-                                                          )}
-                                                          {isCurrentAudio && isPlaying && (
-                                                            <Button size="sm" variant="outline" onClick={handlePause}>
-                                                              <Pause className="mr-2 h-4 w-4" />
-                                                              Pausar
-                                                            </Button>
-                                                          )}
-                                                        </div>
+                                                        <AudioPlayer
+                                                            isLoading={isAudioLoading === audioKey}
+                                                            isPlaying={isCurrentAudio && isPlaying}
+                                                            progress={isCurrentAudio ? audioProgress : 0}
+                                                            onPlayPauseClick={handlePlayPause}
+                                                            onGenerateClick={() => handleGenerateAudio(campaign.id, task, index)}
+                                                        />
                                                     </div>
                                                  )
                                             })}
@@ -259,3 +326,5 @@ export function MisCampanasModule({ isMenuItem = false }: MisCampanasModuleProps
     </Dialog>
   );
 }
+
+    

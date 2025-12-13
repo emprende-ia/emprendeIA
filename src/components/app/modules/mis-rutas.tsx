@@ -81,6 +81,78 @@ const playSuccessSound = () => {
     }
 };
 
+const AudioPlayer = ({
+    isLoading,
+    isPlaying,
+    progress,
+    onPlayPauseClick,
+    onGenerateClick
+}: {
+    isLoading: boolean,
+    isPlaying: boolean,
+    progress: number,
+    onPlayPauseClick: () => void,
+    onGenerateClick: () => void
+}) => {
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (progress / 100) * circumference;
+
+    if (isLoading) {
+        return (
+            <Button size="sm" variant="outline" disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generando...
+            </Button>
+        );
+    }
+    
+    // If progress > 0, it means audio has been generated at least once
+    if (progress > 0 || isPlaying) {
+         return (
+            <div className="relative flex items-center justify-center">
+                <svg className="w-10 h-10 transform -rotate-90" >
+                    <circle
+                        className="text-muted"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r={radius}
+                        cx="20"
+                        cy="20"
+                    />
+                    <circle
+                        className="text-primary"
+                        strokeWidth="3"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        stroke="currentColor"
+                        fill="transparent"
+                        r={radius}
+                        cx="20"
+                        cy="20"
+                    />
+                </svg>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute rounded-full h-8 w-8"
+                    onClick={onPlayPauseClick}
+                >
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+            </div>
+        );
+    }
+
+    return (
+        <Button size="sm" variant="outline" onClick={onGenerateClick}>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Necesito ayuda
+        </Button>
+    );
+};
+
 
 function SavedPathsList() {
     const { user } = useUser();
@@ -93,6 +165,7 @@ function SavedPathsList() {
     // State for audio playback
     const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0);
     const audioRef = useRef<HTMLAudioElement>(null);
 
     // State for motivational alert
@@ -145,11 +218,11 @@ function SavedPathsList() {
         toggleTaskCompletion(firestore, user.uid, pathId, taskTitle, isCompleted);
     };
 
-    const handleAudioHelp = async (pathId: string, taskTitle: string, stepIndex: number) => {
+    const handleGenerateAudio = async (pathId: string, stepIndex: number) => {
         const audioKey = `${pathId}-${stepIndex}`;
 
-        if (audioRef.current && activeAudio?.key === audioKey) {
-            handlePlay();
+        if (activeAudio?.key === audioKey && audioRef.current) {
+            handlePlayPause();
             return;
         }
 
@@ -157,6 +230,8 @@ function SavedPathsList() {
         if (!path || !user || !firestore) return;
 
         setIsAudioLoading(audioKey);
+        setAudioProgress(0);
+        
         try {
             const step = path.pathData.ruta_aprendizaje[stepIndex];
             const result = await generateTaskAudio({
@@ -170,7 +245,7 @@ function SavedPathsList() {
 
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
-                handlePlay();
+                audioRef.current.play();
             }
             
         } catch (error) {
@@ -181,12 +256,14 @@ function SavedPathsList() {
         }
     };
     
-    const handlePlay = () => {
-        audioRef.current?.play();
-    };
-
-    const handlePause = () => {
-        audioRef.current?.pause();
+    const handlePlayPause = () => {
+        if (audioRef.current) {
+            if (audioRef.current.paused) {
+                audioRef.current.play();
+            } else {
+                audioRef.current.pause();
+            }
+        }
     };
 
     useEffect(() => {
@@ -196,18 +273,24 @@ function SavedPathsList() {
         const onEnded = () => setIsPlaying(false);
         const onPlay = () => setIsPlaying(true);
         const onPause = () => setIsPlaying(false);
+        const onTimeUpdate = () => {
+            if(audioElement.duration > 0) {
+                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
+            }
+        }
     
         audioElement.addEventListener('ended', onEnded);
         audioElement.addEventListener('play', onPlay);
         audioElement.addEventListener('pause', onPause);
+        audioElement.addEventListener('timeupdate', onTimeUpdate);
     
-        // Cleanup function to remove event listeners
         return () => {
             audioElement.removeEventListener('ended', onEnded);
             audioElement.removeEventListener('play', onPlay);
             audioElement.removeEventListener('pause', onPause);
+            audioElement.removeEventListener('timeupdate', onTimeUpdate);
         };
-    }, [activeAudio]);
+    }, []);
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -256,45 +339,28 @@ function SavedPathsList() {
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent className="space-y-4 pl-8">
-                                                <div className="flex items-start gap-3 p-4 bg-secondary/50 rounded-md">
-                                                    <Checkbox 
-                                                        id={`task-${path.id}-${index}`}
-                                                        checked={isCompleted}
-                                                        onCheckedChange={(checked) => handleTaskToggle(path.id, step.tarea_del_dia, !!checked)}
-                                                        className="mt-1"
+                                                <div className="flex items-start justify-between gap-4 p-4 bg-secondary/50 rounded-md">
+                                                    <div className="flex items-start gap-3 flex-1">
+                                                        <Checkbox 
+                                                            id={`task-${path.id}-${index}`}
+                                                            checked={isCompleted}
+                                                            onCheckedChange={(checked) => handleTaskToggle(path.id, step.tarea_del_dia, !!checked)}
+                                                            className="mt-1"
+                                                        />
+                                                        <label htmlFor={`task-${path.id}-${index}`} className="flex-1">
+                                                            <p className="font-semibold">Tarea del Día:</p>
+                                                            <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{step.tarea_del_dia}</p>
+                                                        </label>
+                                                    </div>
+                                                    <AudioPlayer
+                                                        isLoading={isAudioLoading === audioKey}
+                                                        isPlaying={isCurrentAudio && isPlaying}
+                                                        progress={isCurrentAudio ? audioProgress : 0}
+                                                        onPlayPauseClick={handlePlayPause}
+                                                        onGenerateClick={() => handleGenerateAudio(path.id, index)}
                                                     />
-                                                    <label htmlFor={`task-${path.id}-${index}`} className="flex-1">
-                                                        <p className="font-semibold">Tarea del Día:</p>
-                                                        <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{step.tarea_del_dia}</p>
-                                                    </label>
                                                 </div>
                                                 
-                                                <div className="flex items-center gap-2">
-                                                    {!isCurrentAudio && (
-                                                      <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, step.tarea_del_dia, index)} disabled={!!isAudioLoading}>
-                                                        {isAudioLoading === audioKey ? (
-                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        ) : (
-                                                            <HelpCircle className="mr-2 h-4 w-4" />
-                                                        )}
-                                                        {isAudioLoading === audioKey ? 'Generando...' : 'Necesito ayuda'}
-                                                      </Button>
-                                                    )}
-                                                    {isCurrentAudio && !isPlaying && (
-                                                      <Button size="sm" variant="outline" onClick={handlePlay}>
-                                                          <Play className="mr-2 h-4 w-4" />
-                                                          Reproducir
-                                                      </Button>
-                                                    )}
-                                                    {isCurrentAudio && isPlaying && (
-                                                        <Button size="sm" variant="outline" onClick={handlePause}>
-                                                            <Pause className="mr-2 h-4 w-4" />
-                                                            Pausar
-                                                        </Button>
-                                                    )}
-                                                </div>
-
-
                                                 <div>
                                                     <h4 className="font-semibold text-sm">Contenido Clave:</h4>
                                                     <ul className="list-disc list-inside text-sm text-muted-foreground pl-2">
@@ -398,3 +464,5 @@ export function MisRutasModule({ isMenuItem = false }: MisRutasModuleProps) {
     </Dialog>
   );
 }
+
+    
