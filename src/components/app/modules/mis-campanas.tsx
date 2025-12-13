@@ -56,11 +56,11 @@ function SavedCampaignsList() {
         const campaign = campaigns.find(c => c.id === campaignId);
         if (!campaign || !user || !firestore) return;
 
-        const cachedAudioUrl = campaign.taskAudios?.[taskDescription];
+        const cachedAudio = campaign.taskAudios?.find(audio => audio.taskKey === taskDescription);
 
-        if (cachedAudioUrl) {
+        if (cachedAudio) {
             setPlayingAudio(audioKey);
-            const audio = new Audio(cachedAudioUrl);
+            const audio = new Audio(cachedAudio.audioUrl);
             audio.play();
             audio.onended = () => setPlayingAudio(null);
             return;

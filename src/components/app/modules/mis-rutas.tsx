@@ -152,11 +152,11 @@ function SavedPathsList() {
         const path = paths.find(p => p.id === pathId);
         if (!path || !user || !firestore) return;
 
-        const cachedAudioUrl = path.taskAudios?.[taskTitle];
+        const cachedAudio = path.taskAudios?.find(audio => audio.taskKey === taskTitle);
 
-        if (cachedAudioUrl) {
+        if (cachedAudio) {
             setPlayingAudio(audioKey);
-            const audio = new Audio(cachedAudioUrl);
+            const audio = new Audio(cachedAudio.audioUrl);
             audio.play();
             audio.onended = () => setPlayingAudio(null);
             return;

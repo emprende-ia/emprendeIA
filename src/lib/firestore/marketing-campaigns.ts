@@ -26,13 +26,18 @@ const CampaignPlanSchema = z.object({
 
 export type CampaignIdea = z.infer<typeof CampaignIdeaSchema>;
 
+interface TaskAudio {
+    taskKey: string;
+    audioUrl: string;
+}
+
 export interface MarketingCampaign {
   id: string;
   createdAt: Date;
   campaignIdea: CampaignIdea;
   campaignPlan: CampaignPlan;
   completedTasks: string[];
-  taskAudios?: Record<string, string>;
+  taskAudios?: TaskAudio[];
 }
 
 /**
@@ -69,7 +74,7 @@ export async function saveCampaign(
     campaignIdea,
     campaignPlan,
     completedTasks: [],
-    taskAudios: {},
+    taskAudios: [],
   };
 
   try {
@@ -137,17 +142,20 @@ export async function saveTaskAudioForCampaign(
         throw new Error("User and Campaign IDs are required.");
     }
     const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
-    const fieldToUpdate = `taskAudios.${taskDescription.replace(/\./g, '_')}`; // Sanitize dots in keys
+    const newAudioEntry: TaskAudio = {
+      taskKey: taskDescription,
+      audioUrl: audioUrl,
+    };
 
     try {
         await updateDoc(campaignDoc, {
-            [fieldToUpdate]: audioUrl
+            taskAudios: arrayUnion(newAudioEntry)
         });
     } catch (error) {
         const permissionError = new FirestorePermissionError({
             path: campaignDoc.path,
             operation: 'update',
-            requestResourceData: { [fieldToUpdate]: audioUrl },
+            requestResourceData: { taskAudios: [newAudioEntry] },
         });
         errorEmitter.emit('permission-error', permissionError);
         throw error;
@@ -183,7 +191,7 @@ export function getMarketingCampaigns(
         campaignIdea: data.campaignIdea,
         campaignPlan: data.campaignPlan,
         completedTasks: data.completedTasks || [],
-        taskAudios: data.taskAudios || {},
+        taskAudios: data.taskAudios || [],
       } as MarketingCampaign;
     });
     onUpdate(campaigns);

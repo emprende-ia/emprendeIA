@@ -6,12 +6,17 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { GenerateActionPlanOutput } from '@/ai/flows/generate-action-plan';
 
+interface TaskAudio {
+    taskKey: string;
+    audioUrl: string;
+}
+
 export interface LearningPath {
   id: string;
   createdAt: Date;
   pathData: GenerateActionPlanOutput;
   completedTasks: string[];
-  taskAudios?: Record<string, string>;
+  taskAudios?: TaskAudio[];
 }
 
 /**
@@ -34,7 +39,7 @@ export function saveLearningPath(
     createdAt: serverTimestamp(),
     pathData: pathData,
     completedTasks: [],
-    taskAudios: {},
+    taskAudios: [],
   };
 
   addDoc(pathsCollection, dataToSave)
@@ -99,18 +104,20 @@ export async function saveTaskAudioForPath(
       throw new Error("User and Path IDs are required.");
   }
   const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
-  // Use dot notation to update a specific field in a map
-  const fieldToUpdate = `taskAudios.${taskTitle.replace(/\./g, '_')}`; // Sanitize dots in keys
+  const newAudioEntry: TaskAudio = {
+      taskKey: taskTitle,
+      audioUrl: audioUrl,
+  };
   
   try {
     await updateDoc(pathDoc, {
-        [fieldToUpdate]: audioUrl
+        taskAudios: arrayUnion(newAudioEntry)
     });
   } catch (error) {
     const permissionError = new FirestorePermissionError({
       path: pathDoc.path,
       operation: 'update',
-      requestResourceData: { [fieldToUpdate]: audioUrl },
+      requestResourceData: { taskAudios: [newAudioEntry] },
     });
     errorEmitter.emit('permission-error', permissionError);
     throw error;
@@ -145,7 +152,7 @@ export function getLearningPaths(
         createdAt: createdAt,
         pathData: data.pathData,
         completedTasks: data.completedTasks || [],
-        taskAudios: data.taskAudios || {},
+        taskAudios: data.taskAudios || [],
       } as LearningPath;
     });
     onUpdate(paths);
