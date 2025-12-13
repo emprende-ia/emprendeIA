@@ -32,6 +32,7 @@ export interface MarketingCampaign {
   campaignIdea: CampaignIdea;
   campaignPlan: CampaignPlan;
   completedTasks: string[];
+  taskAudios: { taskKey: string; audioUrl: string; }[];
 }
 
 /**
@@ -68,6 +69,7 @@ export async function saveCampaign(
     campaignIdea,
     campaignPlan,
     completedTasks: [],
+    taskAudios: [],
   };
 
   try {
@@ -82,6 +84,38 @@ export async function saveCampaign(
     // Re-throw the original error to be caught by the caller
     throw error;
   }
+}
+
+/**
+ * Saves a generated audio URL for a specific task in a campaign.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param campaignId - The ID of the campaign.
+ * @param taskKey - A unique identifier for the task.
+ * @param audioUrl - The data URI of the generated audio.
+ */
+export function saveTaskAudioForCampaign(
+    firestore: Firestore,
+    userId: string,
+    campaignId: string,
+    taskKey: string,
+    audioUrl: string
+): void {
+    if (!userId || !campaignId) return;
+    const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
+    const audioData = { taskKey, audioUrl };
+
+    updateDoc(campaignDoc, {
+        taskAudios: arrayUnion(audioData),
+    })
+    .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+            path: campaignDoc.path,
+            operation: 'update',
+            requestResourceData: { taskAudios: [audioData] },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
 }
 
 /**

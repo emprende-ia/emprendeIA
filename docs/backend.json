@@ -173,6 +173,18 @@
             "type": "string"
           },
           "description": "An array of task titles that have been marked as completed."
+        },
+        "taskAudios": {
+            "type": "array",
+            "description": "A list of generated audios for specific tasks.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "taskKey": {"type": "string"},
+                    "audioUrl": {"type": "string"}
+                },
+                "required": ["taskKey", "audioUrl"]
+            }
         }
       },
       "required": ["createdAt", "pathData"]
@@ -201,6 +213,18 @@
             "type": "string"
           },
           "description": "An array of task titles that have been marked as completed."
+        },
+        "taskAudios": {
+            "type": "array",
+            "description": "A list of generated audios for specific campaign tasks.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "taskKey": {"type": "string"},
+                    "audioUrl": {"type": "string"}
+                },
+                "required": ["taskKey", "audioUrl"]
+            }
         }
       },
       "required": ["createdAt", "campaignIdea", "campaignPlan"]

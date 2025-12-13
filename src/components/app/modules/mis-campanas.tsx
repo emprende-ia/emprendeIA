@@ -5,10 +5,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useUser, useFirestore } from '@/firebase';
-import { getMarketingCampaigns, toggleCampaignTaskCompletion, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
+import { getMarketingCampaigns, toggleCampaignTaskCompletion, saveTaskAudioForCampaign, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
 import { generateCampaignTaskAudio } from '@/ai/flows/generate-campaign-task-audio';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Target, Check, Circle, Workflow, HelpCircle, AudioWaveform, Play, Pause } from "lucide-react";
+import { Loader2, Target, Workflow, HelpCircle, Play, Pause } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -123,18 +123,30 @@ function SavedCampaignsList() {
         toggleCampaignTaskCompletion(firestore, user.uid, campaignId, taskDescription, isCompleted);
     };
 
-    const handleGenerateAudio = async (campaignId: string, taskDescription: string, taskIndex: number) => {
-        const audioKey = `${campaignId}-${taskIndex}`;
+    const handleAudioHelp = async (campaignId: string, task: string) => {
+        const audioKey = `${campaignId}-${task}`;
 
         // If this audio is already active, just play/pause
         if (activeAudio?.key === audioKey && audioRef.current) {
             handlePlayPause();
             return;
         }
-        
+
         const campaign = campaigns.find(c => c.id === campaignId);
         if (!campaign || !user || !firestore) return;
-
+        
+        // Check if audio is already saved
+        const savedAudio = campaign.taskAudios.find(audio => audio.taskKey === task);
+        if (savedAudio) {
+            setActiveAudio({ key: audioKey, url: savedAudio.audioUrl });
+            if (audioRef.current) {
+                audioRef.current.src = savedAudio.audioUrl;
+                audioRef.current.play();
+            }
+            return;
+        }
+        
+        // If not saved, generate it
         setIsAudioLoading(audioKey);
         setAudioProgress(0);
 
@@ -143,10 +155,13 @@ function SavedCampaignsList() {
                 campaignTitle: campaign.campaignIdea.title,
                 campaignChannel: campaign.campaignIdea.channel,
                 campaignMessage: campaign.campaignIdea.keyMessage,
-                taskToExplain: taskDescription,
+                taskToExplain: task,
             });
             
             setActiveAudio({ key: audioKey, url: result.audioUrl });
+
+            // Save the newly generated audio
+            saveTaskAudioForCampaign(firestore, user.uid, campaignId, task, result.audioUrl);
 
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
@@ -255,8 +270,10 @@ function SavedCampaignsList() {
                                             <p className="font-semibold text-sm pt-2">Tareas a Realizar:</p>
                                             {campaign.campaignPlan.actionableTasks.map((task, index) => {
                                                  const isCompleted = campaign.completedTasks.includes(task);
-                                                 const audioKey = `${campaign.id}-${index}`;
+                                                 const audioKey = `${campaign.id}-${task}`;
                                                  const isCurrentAudio = activeAudio?.key === audioKey;
+                                                 const savedAudio = campaign.taskAudios.find(audio => audio.taskKey === task);
+
                                                  return (
                                                     <div key={index} className="p-4 bg-secondary/50 rounded-md flex items-start justify-between gap-4">
                                                         <div className="flex items-start gap-3 flex-1">
@@ -273,9 +290,9 @@ function SavedCampaignsList() {
                                                         <AudioPlayer
                                                             isLoading={isAudioLoading === audioKey}
                                                             isPlaying={isCurrentAudio && isPlaying}
-                                                            progress={isCurrentAudio ? audioProgress : 0}
+                                                            progress={isCurrentAudio ? audioProgress : (savedAudio ? 100 : 0)}
                                                             onPlayPauseClick={handlePlayPause}
-                                                            onGenerateClick={() => handleGenerateAudio(campaign.id, task, index)}
+                                                            onGenerateClick={() => handleAudioHelp(campaign.id, task)}
                                                         />
                                                     </div>
                                                  )
@@ -326,5 +343,3 @@ export function MisCampanasModule({ isMenuItem = false }: MisCampanasModuleProps
     </Dialog>
   );
 }
-
-    
