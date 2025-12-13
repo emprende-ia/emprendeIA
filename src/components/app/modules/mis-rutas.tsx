@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -9,7 +9,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
-import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, PlayCircle, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
+import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, Play, Pause, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -88,9 +88,13 @@ function SavedPathsList() {
     const [paths, setPaths] = useState<LearningPath[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
-    const [playingAudio, setPlayingAudio] = useState<string | null>(null);
     const { toast } = useToast();
     
+    // State for audio playback
+    const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const audioRef = useRef<HTMLAudioElement>(null);
+
     // State for motivational alert
     const [alertContent, setAlertContent] = useState<{ title: string, description: string, icon: React.ReactNode } | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -144,11 +148,19 @@ function SavedPathsList() {
     const handleAudioHelp = async (pathId: string, taskTitle: string, stepIndex: number) => {
         const audioKey = `${pathId}-${stepIndex}`;
 
-        if (playingAudio === audioKey) {
-            setPlayingAudio(null);
+        // If clicking the same button, toggle play/pause
+        if (audioRef.current && activeAudio?.key === audioKey) {
+            if (isPlaying) {
+                audioRef.current.pause();
+                setIsPlaying(false);
+            } else {
+                audioRef.current.play();
+                setIsPlaying(true);
+            }
             return;
         }
 
+        // If a new button is clicked, generate new audio
         const path = paths.find(p => p.id === pathId);
         if (!path || !user || !firestore) return;
 
@@ -161,11 +173,15 @@ function SavedPathsList() {
                 taskContent: step.contenido_clave.join(', '),
                 taskAction: step.tarea_del_dia,
             });
+
+            setActiveAudio({ key: audioKey, url: result.audioUrl });
+
+            if (audioRef.current) {
+                audioRef.current.src = result.audioUrl;
+                audioRef.current.play();
+                setIsPlaying(true);
+            }
             
-            setPlayingAudio(audioKey);
-            const audio = new Audio(result.audioUrl);
-            audio.play();
-            audio.onended = () => setPlayingAudio(null);
         } catch (error) {
             console.error("Error generating audio:", error);
             toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
@@ -173,6 +189,24 @@ function SavedPathsList() {
             setIsAudioLoading(null);
         }
     };
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+        const onEnded = () => setIsPlaying(false);
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+
+        if (audioElement) {
+            audioElement.addEventListener('ended', onEnded);
+            audioElement.addEventListener('play', onPlay);
+            audioElement.addEventListener('pause', onPause);
+            return () => {
+                audioElement.removeEventListener('ended', onEnded);
+                audioElement.removeEventListener('play', onPlay);
+                audioElement.removeEventListener('pause', onPause);
+            };
+        }
+    }, [audioRef]);
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -210,6 +244,7 @@ function SavedPathsList() {
                                 {path.pathData.ruta_aprendizaje.map((step, index) => {
                                     const isCompleted = path.completedTasks.includes(step.tarea_del_dia);
                                     const audioKey = `${path.id}-${index}`;
+                                    const isCurrentAudio = activeAudio?.key === audioKey;
                                     
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
@@ -234,15 +269,23 @@ function SavedPathsList() {
                                                 </div>
                                                 
                                                 <div className="flex items-center gap-2">
-                                                    <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, step.tarea_del_dia, index)} disabled={!!isAudioLoading}>
+                                                    <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, step.tarea_del_dia, index)} disabled={!!isAudioLoading && isAudioLoading !== audioKey}>
                                                          {isAudioLoading === audioKey ? (
                                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                         ) : playingAudio === audioKey ? (
-                                                             <AudioWaveform className="mr-2 h-4 w-4" />
+                                                         ) : isCurrentAudio && isPlaying ? (
+                                                            <Pause className="mr-2 h-4 w-4" />
+                                                         ) : isCurrentAudio && !isPlaying ? (
+                                                            <Play className="mr-2 h-4 w-4" />
                                                          ) : (
                                                             <HelpCircle className="mr-2 h-4 w-4" />
                                                          )}
-                                                         {playingAudio === audioKey ? 'Reproduciendo...' : 'Necesito ayuda con esta tarea'}
+                                                          {isAudioLoading === audioKey
+                                                            ? 'Generando...'
+                                                            : isCurrentAudio && isPlaying
+                                                            ? 'Pausar'
+                                                            : isCurrentAudio && !isPlaying
+                                                            ? 'Reproducir'
+                                                            : 'Necesito ayuda'}
                                                     </Button>
                                                 </div>
 
@@ -291,6 +334,8 @@ function SavedPathsList() {
                     </Card>
                 )
             })}
+
+            <audio ref={audioRef} />
 
             {alertContent && (
                 <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
