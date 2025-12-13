@@ -176,10 +176,7 @@
         },
         "taskAudios": {
           "type": "object",
-          "description": "A map of task titles to their generated audio data URIs.",
-          "additionalProperties": {
-            "type": "string"
-          }
+          "description": "A map of task titles to their generated audio data URIs."
         }
       },
       "required": ["createdAt", "pathData"]
@@ -211,10 +208,7 @@
         },
         "taskAudios": {
           "type": "object",
-          "description": "A map of task titles to their generated audio data URIs.",
-          "additionalProperties": {
-            "type": "string"
-          }
+          "description": "A map of task titles to their generated audio data URIs."
         }
       },
       "required": ["createdAt", "campaignIdea", "campaignPlan"]
@@ -377,5 +371,3 @@
     ]
   }
 }
-
-    
