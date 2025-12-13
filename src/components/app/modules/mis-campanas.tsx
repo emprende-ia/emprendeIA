@@ -17,7 +17,7 @@ import { es } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 
-const AudioPlayer = ({
+const AudioPlayerWithProgress = ({
     isLoading,
     isPlaying,
     progress,
@@ -32,34 +32,46 @@ const AudioPlayer = ({
     onPauseClick: () => void,
     onGenerateClick: () => void
 }) => {
-
     if (isLoading) {
         return (
-            <Button size="sm" variant="outline" disabled>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generando...
+            <Button size="icon" variant="ghost" disabled className="h-10 w-10">
+                <Loader2 className="h-4 w-4 animate-spin" />
             </Button>
         );
     }
-    
+
     if (progress > 0) {
-         return (
-            <div className="flex items-center gap-2">
+        return (
+            <div className="relative h-10 w-10">
+                <svg className="absolute inset-0" viewBox="0 0 36 36">
+                    <path
+                        className="text-secondary"
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.83
+                          a 15.9155 15.9155 0 0 1 0 -31.83"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                    />
+                    <path
+                        className="text-primary"
+                        strokeDasharray={`${progress}, 100`}
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.83
+                          a 15.9155 15.9155 0 0 1 0 -31.83"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                    />
+                </svg>
                 <Button
                     size="icon"
                     variant="ghost"
-                    onClick={onPlayClick}
-                    disabled={isPlaying}
+                    onClick={isPlaying ? onPauseClick : onPlayClick}
+                    className="absolute inset-0 m-auto h-8 w-8 rounded-full bg-secondary/50 hover:bg-secondary"
                 >
-                    <Play className="h-4 w-4" />
-                </Button>
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={onPauseClick}
-                    disabled={!isPlaying}
-                >
-                    <Pause className="h-4 w-4" />
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
             </div>
         );
@@ -78,12 +90,13 @@ function SavedCampaignsList() {
     const firestore = useFirestore();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
     const { toast } = useToast();
     
     // State to manage the active audio
     const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
+    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0);
     const audioRef = useRef<HTMLAudioElement>(null);
 
 
@@ -110,6 +123,15 @@ function SavedCampaignsList() {
         const audioKey = `${campaign.id}-${task}`;
 
         if (!user || !firestore) return;
+
+        if (activeAudio?.key === audioKey && audioRef.current) {
+            if (isPlaying) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play();
+            }
+            return;
+        }
         
         setIsAudioLoading(audioKey);
 
@@ -155,16 +177,26 @@ function SavedCampaignsList() {
     
         const onPlay = () => setIsPlaying(true);
         const onPause = () => setIsPlaying(false);
-        const onEnded = () => setIsPlaying(false);
+        const onEnded = () => {
+            setIsPlaying(false);
+            setAudioProgress(0);
+        };
+        const onTimeUpdate = () => {
+            if (audioElement.duration > 0) {
+                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
+            }
+        };
     
         audioElement.addEventListener('play', onPlay);
         audioElement.addEventListener('pause', onPause);
         audioElement.addEventListener('ended', onEnded);
+        audioElement.addEventListener('timeupdate', onTimeUpdate);
     
         return () => {
             audioElement.removeEventListener('play', onPlay);
             audioElement.removeEventListener('pause', onPause);
             audioElement.removeEventListener('ended', onEnded);
+            audioElement.removeEventListener('timeupdate', onTimeUpdate);
         };
     }, []);
 
@@ -241,10 +273,10 @@ function SavedCampaignsList() {
                                                                 {task}
                                                             </label>
                                                         </div>
-                                                        <AudioPlayer
+                                                        <AudioPlayerWithProgress
                                                             isLoading={isAudioLoading === audioKey}
                                                             isPlaying={isCurrentAudio && isPlaying}
-                                                            progress={isCurrentAudio ? 1 : 0}
+                                                            progress={isCurrentAudio ? audioProgress : 0}
                                                             onPlayClick={handlePlay}
                                                             onPauseClick={handlePause}
                                                             onGenerateClick={() => handleAudioHelp(campaign, task)}
