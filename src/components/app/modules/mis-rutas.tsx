@@ -148,19 +148,11 @@ function SavedPathsList() {
     const handleAudioHelp = async (pathId: string, taskTitle: string, stepIndex: number) => {
         const audioKey = `${pathId}-${stepIndex}`;
 
-        // If clicking the same button, toggle play/pause
         if (audioRef.current && activeAudio?.key === audioKey) {
-            if (isPlaying) {
-                audioRef.current.pause();
-                setIsPlaying(false);
-            } else {
-                audioRef.current.play();
-                setIsPlaying(true);
-            }
+            audioRef.current.play();
             return;
         }
 
-        // If a new button is clicked, generate new audio
         const path = paths.find(p => p.id === pathId);
         if (!path || !user || !firestore) return;
 
@@ -179,7 +171,6 @@ function SavedPathsList() {
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
                 audioRef.current.play();
-                setIsPlaying(true);
             }
             
         } catch (error) {
@@ -188,6 +179,14 @@ function SavedPathsList() {
         } finally {
             setIsAudioLoading(null);
         }
+    };
+    
+    const handlePlay = () => {
+        audioRef.current?.play();
+    };
+
+    const handlePause = () => {
+        audioRef.current?.pause();
     };
 
     useEffect(() => {
@@ -269,24 +268,28 @@ function SavedPathsList() {
                                                 </div>
                                                 
                                                 <div className="flex items-center gap-2">
-                                                    <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, step.tarea_del_dia, index)} disabled={!!isAudioLoading && isAudioLoading !== audioKey}>
-                                                         {isAudioLoading === audioKey ? (
+                                                    {!isCurrentAudio && (
+                                                      <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, step.tarea_del_dia, index)} disabled={!!isAudioLoading}>
+                                                        {isAudioLoading === audioKey ? (
                                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                         ) : isCurrentAudio && isPlaying ? (
-                                                            <Pause className="mr-2 h-4 w-4" />
-                                                         ) : isCurrentAudio && !isPlaying ? (
-                                                            <Play className="mr-2 h-4 w-4" />
-                                                         ) : (
+                                                        ) : (
                                                             <HelpCircle className="mr-2 h-4 w-4" />
-                                                         )}
-                                                          {isAudioLoading === audioKey
-                                                            ? 'Generando...'
-                                                            : isCurrentAudio && isPlaying
-                                                            ? 'Pausar'
-                                                            : isCurrentAudio && !isPlaying
-                                                            ? 'Reproducir'
-                                                            : 'Necesito ayuda'}
-                                                    </Button>
+                                                        )}
+                                                        {isAudioLoading === audioKey ? 'Generando...' : 'Necesito ayuda'}
+                                                      </Button>
+                                                    )}
+                                                    {isCurrentAudio && !isPlaying && (
+                                                      <Button size="sm" variant="outline" onClick={handlePlay}>
+                                                          <Play className="mr-2 h-4 w-4" />
+                                                          Reproducir
+                                                      </Button>
+                                                    )}
+                                                    {isCurrentAudio && isPlaying && (
+                                                        <Button size="sm" variant="outline" onClick={handlePause}>
+                                                            <Pause className="mr-2 h-4 w-4" />
+                                                            Pausar
+                                                        </Button>
+                                                    )}
                                                 </div>
 
 

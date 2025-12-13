@@ -54,13 +54,7 @@ function SavedCampaignsList() {
         const audioKey = `${campaignId}-${taskIndex}`;
 
         if (audioRef.current && activeAudio?.key === audioKey) {
-            if (isPlaying) {
-                audioRef.current.pause();
-                setIsPlaying(false);
-            } else {
-                audioRef.current.play();
-                setIsPlaying(true);
-            }
+            audioRef.current.play();
             return;
         }
         
@@ -81,7 +75,6 @@ function SavedCampaignsList() {
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
                 audioRef.current.play();
-                setIsPlaying(true);
             }
 
         } catch (error) {
@@ -91,6 +84,15 @@ function SavedCampaignsList() {
             setIsAudioLoading(null);
         }
     };
+    
+    const handlePlay = () => {
+        audioRef.current?.play();
+    };
+
+    const handlePause = () => {
+        audioRef.current?.pause();
+    };
+
 
     useEffect(() => {
         const audioElement = audioRef.current;
@@ -182,26 +184,29 @@ function SavedCampaignsList() {
                                                                 {task}
                                                             </label>
                                                         </div>
-                                                        <div className="pl-7">
-                                                            <Button size="sm" variant="outline" onClick={() => handleAudioHelp(campaign.id, task, index)} disabled={!!isAudioLoading && isAudioLoading !== audioKey}>
-                                                                {isAudioLoading === audioKey ? (
-                                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                                ) : isCurrentAudio && isPlaying ? (
-                                                                    <Pause className="mr-2 h-4 w-4" />
-                                                                ) : isCurrentAudio && !isPlaying ? (
-                                                                    <Play className="mr-2 h-4 w-4" />
-                                                                ) : (
-                                                                    <HelpCircle className="mr-2 h-4 w-4" />
-                                                                )}
-
-                                                                {isAudioLoading === audioKey
-                                                                    ? 'Generando...'
-                                                                    : isCurrentAudio && isPlaying
-                                                                    ? 'Pausar'
-                                                                    : isCurrentAudio && !isPlaying
-                                                                    ? 'Reproducir'
-                                                                    : 'Necesito ayuda'}
+                                                        <div className="pl-7 flex items-center gap-2">
+                                                          {!isCurrentAudio && (
+                                                            <Button size="sm" variant="outline" onClick={() => handleAudioHelp(campaign.id, task, index)} disabled={!!isAudioLoading}>
+                                                              {isAudioLoading === audioKey ? (
+                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                              ) : (
+                                                                <HelpCircle className="mr-2 h-4 w-4" />
+                                                              )}
+                                                              {isAudioLoading === audioKey ? 'Generando...' : 'Necesito ayuda'}
                                                             </Button>
+                                                          )}
+                                                          {isCurrentAudio && !isPlaying && (
+                                                            <Button size="sm" variant="outline" onClick={handlePlay}>
+                                                              <Play className="mr-2 h-4 w-4" />
+                                                              Reproducir
+                                                            </Button>
+                                                          )}
+                                                          {isCurrentAudio && isPlaying && (
+                                                            <Button size="sm" variant="outline" onClick={handlePause}>
+                                                              <Pause className="mr-2 h-4 w-4" />
+                                                              Pausar
+                                                            </Button>
+                                                          )}
                                                         </div>
                                                     </div>
                                                  )
