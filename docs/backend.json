@@ -175,8 +175,11 @@
           "description": "An array of task titles that have been marked as completed."
         },
         "taskAudios": {
-            "type": "object",
-            "description": "A map of task titles to their generated audio data URIs."
+          "type": "object",
+          "description": "A map of task titles to their generated audio data URIs.",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "required": ["createdAt", "pathData"]
@@ -207,8 +210,11 @@
           "description": "An array of task titles that have been marked as completed."
         },
         "taskAudios": {
-            "type": "object",
-            "description": "A map of task titles to their generated audio data URIs."
+          "type": "object",
+          "description": "A map of task titles to their generated audio data URIs.",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "required": ["createdAt", "campaignIdea", "campaignPlan"]
@@ -371,3 +377,5 @@
     ]
   }
 }
+
+    
