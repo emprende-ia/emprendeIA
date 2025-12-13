@@ -6,17 +6,11 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { GenerateActionPlanOutput } from '@/ai/flows/generate-action-plan';
 
-interface TaskAudio {
-    taskKey: string;
-    audioUrl: string;
-}
-
 export interface LearningPath {
   id: string;
   createdAt: Date;
   pathData: GenerateActionPlanOutput;
   completedTasks: string[];
-  taskAudios?: TaskAudio[];
 }
 
 /**
@@ -39,7 +33,6 @@ export function saveLearningPath(
     createdAt: serverTimestamp(),
     pathData: pathData,
     completedTasks: [],
-    taskAudios: [],
   };
 
   addDoc(pathsCollection, dataToSave)
@@ -83,45 +76,6 @@ export function toggleTaskCompletion(
       });
       errorEmitter.emit('permission-error', permissionError);
     });
-}
-
-/**
- * Saves a generated audio URL for a specific task in a learning path.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param pathId - The ID of the learning path.
- * @param taskTitle - The title of the task.
- * @param audioUrl - The data URI of the audio to save.
- */
-export async function saveTaskAudioForPath(
-  firestore: Firestore,
-  userId: string,
-  pathId: string,
-  taskTitle: string,
-  audioUrl: string
-): Promise<void> {
-  if (!userId || !pathId) {
-      throw new Error("User and Path IDs are required.");
-  }
-  const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
-  const newAudioEntry: TaskAudio = {
-      taskKey: taskTitle,
-      audioUrl: audioUrl,
-  };
-  
-  try {
-    await updateDoc(pathDoc, {
-        taskAudios: arrayUnion(newAudioEntry)
-    });
-  } catch (error) {
-    const permissionError = new FirestorePermissionError({
-      path: pathDoc.path,
-      operation: 'update',
-      requestResourceData: { taskAudios: [newAudioEntry] },
-    });
-    errorEmitter.emit('permission-error', permissionError);
-    throw error;
-  }
 }
 
 /**

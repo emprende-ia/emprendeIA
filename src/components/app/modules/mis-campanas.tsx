@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useUser, useFirestore } from '@/firebase';
-import { getMarketingCampaigns, toggleCampaignTaskCompletion, saveTaskAudioForCampaign, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
+import { getMarketingCampaigns, toggleCampaignTaskCompletion, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
 import { generateCampaignTaskAudio } from '@/ai/flows/generate-campaign-task-audio';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Target, Check, Circle, Workflow, HelpCircle, AudioWaveform } from "lucide-react";
@@ -56,16 +56,6 @@ function SavedCampaignsList() {
         const campaign = campaigns.find(c => c.id === campaignId);
         if (!campaign || !user || !firestore) return;
 
-        const cachedAudio = campaign.taskAudios?.find(audio => audio.taskKey === taskDescription);
-
-        if (cachedAudio) {
-            setPlayingAudio(audioKey);
-            const audio = new Audio(cachedAudio.audioUrl);
-            audio.play();
-            audio.onended = () => setPlayingAudio(null);
-            return;
-        }
-
         setIsAudioLoading(audioKey);
         try {
             const result = await generateCampaignTaskAudio({
@@ -75,14 +65,11 @@ function SavedCampaignsList() {
                 taskToExplain: taskDescription,
             });
             
-            await saveTaskAudioForCampaign(firestore, user.uid, campaignId, taskDescription, result.audioUrl);
-
             setPlayingAudio(audioKey);
             const audio = new Audio(result.audioUrl);
             audio.play();
             audio.onended = () => setPlayingAudio(null);
 
-            toast({ title: '¡Audio de ayuda listo!', description: 'El audio se ha guardado para futuras consultas.' });
         } catch (error) {
             console.error("Error generating audio:", error);
             toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });

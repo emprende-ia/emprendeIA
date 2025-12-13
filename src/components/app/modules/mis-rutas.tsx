@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getLearningPaths, toggleTaskCompletion, saveTaskAudioForPath, type LearningPath } from '@/lib/firestore/learning-paths';
+import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
 import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, PlayCircle, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -152,16 +152,6 @@ function SavedPathsList() {
         const path = paths.find(p => p.id === pathId);
         if (!path || !user || !firestore) return;
 
-        const cachedAudio = path.taskAudios?.find(audio => audio.taskKey === taskTitle);
-
-        if (cachedAudio) {
-            setPlayingAudio(audioKey);
-            const audio = new Audio(cachedAudio.audioUrl);
-            audio.play();
-            audio.onended = () => setPlayingAudio(null);
-            return;
-        }
-
         setIsAudioLoading(audioKey);
         try {
             const step = path.pathData.ruta_aprendizaje[stepIndex];
@@ -172,13 +162,10 @@ function SavedPathsList() {
                 taskAction: step.tarea_del_dia,
             });
             
-            await saveTaskAudioForPath(firestore, user.uid, pathId, taskTitle, result.audioUrl);
             setPlayingAudio(audioKey);
             const audio = new Audio(result.audioUrl);
             audio.play();
             audio.onended = () => setPlayingAudio(null);
-
-            toast({ title: '¡Audio de ayuda listo!', description: 'El audio se ha guardado para futuras consultas.' });
         } catch (error) {
             console.error("Error generating audio:", error);
             toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });

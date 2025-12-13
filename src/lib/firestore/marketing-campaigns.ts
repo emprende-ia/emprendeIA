@@ -26,18 +26,12 @@ const CampaignPlanSchema = z.object({
 
 export type CampaignIdea = z.infer<typeof CampaignIdeaSchema>;
 
-interface TaskAudio {
-    taskKey: string;
-    audioUrl: string;
-}
-
 export interface MarketingCampaign {
   id: string;
   createdAt: Date;
   campaignIdea: CampaignIdea;
   campaignPlan: CampaignPlan;
   completedTasks: string[];
-  taskAudios?: TaskAudio[];
 }
 
 /**
@@ -74,7 +68,6 @@ export async function saveCampaign(
     campaignIdea,
     campaignPlan,
     completedTasks: [],
-    taskAudios: [],
   };
 
   try {
@@ -121,45 +114,6 @@ export function toggleCampaignTaskCompletion(
       });
       errorEmitter.emit('permission-error', permissionError);
     });
-}
-
-/**
- * Saves a generated audio URL for a specific task in a marketing campaign.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param campaignId - The ID of the campaign.
- * @param taskDescription - The description of the task.
- * @param audioUrl - The data URI of the audio to save.
- */
-export async function saveTaskAudioForCampaign(
-  firestore: Firestore,
-  userId: string,
-  campaignId: string,
-  taskDescription: string,
-  audioUrl: string
-): Promise<void> {
-    if (!userId || !campaignId) {
-        throw new Error("User and Campaign IDs are required.");
-    }
-    const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
-    const newAudioEntry: TaskAudio = {
-      taskKey: taskDescription,
-      audioUrl: audioUrl,
-    };
-
-    try {
-        await updateDoc(campaignDoc, {
-            taskAudios: arrayUnion(newAudioEntry)
-        });
-    } catch (error) {
-        const permissionError = new FirestorePermissionError({
-            path: campaignDoc.path,
-            operation: 'update',
-            requestResourceData: { taskAudios: [newAudioEntry] },
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw error;
-    }
 }
 
 /**
