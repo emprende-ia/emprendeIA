@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getLearningPaths, toggleTaskCompletion, saveTaskAudioForPath, type LearningPath } from '@/lib/firestore/learning-paths';
+import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
 import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, Play, Pause, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -85,18 +85,17 @@ const AudioPlayer = ({
     isLoading,
     isPlaying,
     progress,
-    onPlayPauseClick,
+    onPlayClick,
+    onPauseClick,
     onGenerateClick
 }: {
     isLoading: boolean,
     isPlaying: boolean,
     progress: number,
-    onPlayPauseClick: () => void,
+    onPlayClick: () => void,
+    onPauseClick: () => void,
     onGenerateClick: () => void
 }) => {
-    const radius = 18;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (progress / 100) * circumference;
 
     if (isLoading) {
         return (
@@ -107,39 +106,24 @@ const AudioPlayer = ({
         );
     }
     
-    // If progress > 0, it means audio has been generated at least once
-    if (progress > 0 || isPlaying) {
+    if (progress > 0) {
          return (
-            <div className="relative flex items-center justify-center">
-                <svg className="w-10 h-10 transform -rotate-90" >
-                    <circle
-                        className="text-muted"
-                        strokeWidth="3"
-                        stroke="currentColor"
-                        fill="transparent"
-                        r={radius}
-                        cx="20"
-                        cy="20"
-                    />
-                    <circle
-                        className="text-primary"
-                        strokeWidth="3"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        stroke="currentColor"
-                        fill="transparent"
-                        r={radius}
-                        cx="20"
-                        cy="20"
-                    />
-                </svg>
+            <div className="flex items-center gap-2">
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="absolute rounded-full h-8 w-8"
-                    onClick={onPlayPauseClick}
+                    onClick={onPlayClick}
+                    disabled={isPlaying}
                 >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    <Play className="h-4 w-4" />
+                </Button>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={onPauseClick}
+                    disabled={!isPlaying}
+                >
+                    <Pause className="h-4 w-4" />
                 </Button>
             </div>
         );
@@ -165,7 +149,6 @@ function SavedPathsList() {
     // State for audio playback
     const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [audioProgress, setAudioProgress] = useState(0);
     const audioRef = useRef<HTMLAudioElement>(null);
 
     // State for motivational alert
@@ -218,37 +201,13 @@ function SavedPathsList() {
         toggleTaskCompletion(firestore, user.uid, pathId, taskTitle, isCompleted);
     };
 
-    const handleAudioHelp = async (pathId: string, stepIndex: number) => {
-        const path = paths.find(p => p.id === pathId);
-        const step = path?.pathData.ruta_aprendizaje[stepIndex];
-        if(!step || !path) return;
-
+    const handleAudioHelp = async (path: LearningPath, step: LearningPath['pathData']['ruta_aprendizaje'][0]) => {
         const taskKey = step.tarea_del_dia;
-        const audioKey = `${pathId}-${taskKey}`;
-
-        if (activeAudio?.key === audioKey && audioRef.current) {
-            handlePlayPause();
-            return;
-        }
+        const audioKey = `${path.id}-${taskKey}`;
 
         if (!user || !firestore) return;
-
-        if (!path.taskAudios) {
-            path.taskAudios = [];
-        }
-
-        const savedAudio = path.taskAudios.find(audio => audio.taskKey === taskKey);
-        if (savedAudio) {
-            setActiveAudio({ key: audioKey, url: savedAudio.audioUrl });
-            if (audioRef.current) {
-                audioRef.current.src = savedAudio.audioUrl;
-                audioRef.current.play();
-            }
-            return;
-        }
         
         setIsAudioLoading(audioKey);
-        setAudioProgress(0);
         
         try {
             const result = await generateTaskAudio({
@@ -259,8 +218,6 @@ function SavedPathsList() {
             });
             
             setActiveAudio({ key: audioKey, url: result.audioUrl });
-            
-            saveTaskAudioForPath(firestore, user.uid, pathId, taskKey, result.audioUrl);
 
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
@@ -275,13 +232,15 @@ function SavedPathsList() {
         }
     };
     
-    const handlePlayPause = () => {
+    const handlePlay = () => {
         if (audioRef.current) {
-            if (audioRef.current.paused) {
-                audioRef.current.play();
-            } else {
-                audioRef.current.pause();
-            }
+            audioRef.current.play();
+        }
+    };
+
+    const handlePause = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
         }
     };
 
@@ -289,25 +248,18 @@ function SavedPathsList() {
         const audioElement = audioRef.current;
         if (!audioElement) return;
     
-        const onEnded = () => setIsPlaying(false);
         const onPlay = () => setIsPlaying(true);
         const onPause = () => setIsPlaying(false);
-        const onTimeUpdate = () => {
-            if(audioElement.duration > 0) {
-                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
-            }
-        }
+        const onEnded = () => setIsPlaying(false);
     
-        audioElement.addEventListener('ended', onEnded);
         audioElement.addEventListener('play', onPlay);
         audioElement.addEventListener('pause', onPause);
-        audioElement.addEventListener('timeupdate', onTimeUpdate);
+        audioElement.addEventListener('ended', onEnded);
     
         return () => {
-            audioElement.removeEventListener('ended', onEnded);
             audioElement.removeEventListener('play', onPlay);
             audioElement.removeEventListener('pause', onPause);
-            audioElement.removeEventListener('timeupdate', onTimeUpdate);
+            audioElement.removeEventListener('ended', onEnded);
         };
     }, []);
 
@@ -349,7 +301,6 @@ function SavedPathsList() {
                                     const isCompleted = path.completedTasks.includes(taskKey);
                                     const audioKey = `${path.id}-${taskKey}`;
                                     const isCurrentAudio = activeAudio?.key === audioKey;
-                                    const savedAudio = path.taskAudios?.find(audio => audio.taskKey === taskKey);
                                     
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
@@ -376,9 +327,10 @@ function SavedPathsList() {
                                                     <AudioPlayer
                                                         isLoading={isAudioLoading === audioKey}
                                                         isPlaying={isCurrentAudio && isPlaying}
-                                                        progress={isCurrentAudio ? audioProgress : (savedAudio ? 100 : 0)}
-                                                        onPlayPauseClick={handlePlayPause}
-                                                        onGenerateClick={() => handleAudioHelp(path.id, index)}
+                                                        progress={isCurrentAudio ? 1 : 0}
+                                                        onPlayClick={handlePlay}
+                                                        onPauseClick={handlePause}
+                                                        onGenerateClick={() => handleAudioHelp(path, step)}
                                                     />
                                                 </div>
                                                 

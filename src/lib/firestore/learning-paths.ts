@@ -11,7 +11,6 @@ export interface LearningPath {
   createdAt: Date;
   pathData: GenerateActionPlanOutput;
   completedTasks: string[];
-  taskAudios: { taskKey: string; audioUrl: string; }[];
 }
 
 /**
@@ -34,7 +33,6 @@ export function saveLearningPath(
     createdAt: serverTimestamp(),
     pathData: pathData,
     completedTasks: [],
-    taskAudios: [],
   };
 
   addDoc(pathsCollection, dataToSave)
@@ -47,39 +45,6 @@ export function saveLearningPath(
       errorEmitter.emit('permission-error', permissionError);
     });
 }
-
-/**
- * Saves a generated audio URL for a specific task in a learning path.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param pathId - The ID of the learning path.
- * @param taskKey - A unique identifier for the task (e.g., the task title).
- * @param audioUrl - The data URI of the generated audio.
- */
-export function saveTaskAudioForPath(
-    firestore: Firestore,
-    userId: string,
-    pathId: string,
-    taskKey: string,
-    audioUrl: string
-): void {
-    if (!userId || !pathId) return;
-    const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
-    const audioData = { taskKey, audioUrl };
-
-    updateDoc(pathDoc, {
-        taskAudios: arrayUnion(audioData),
-    })
-    .catch((error) => {
-        const permissionError = new FirestorePermissionError({
-            path: pathDoc.path,
-            operation: 'update',
-            requestResourceData: { taskAudios: [audioData] },
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-}
-
 
 /**
  * Toggles the completion status of a task within a specific learning path.
@@ -141,7 +106,6 @@ export function getLearningPaths(
         createdAt: createdAt,
         pathData: data.pathData,
         completedTasks: data.completedTasks || [],
-        taskAudios: data.taskAudios || [],
       } as LearningPath;
     });
     onUpdate(paths);
