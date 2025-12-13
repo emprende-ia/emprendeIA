@@ -54,7 +54,7 @@ function SavedCampaignsList() {
         const audioKey = `${campaignId}-${taskIndex}`;
 
         if (audioRef.current && activeAudio?.key === audioKey) {
-            audioRef.current.play();
+            handlePlay();
             return;
         }
         
@@ -74,7 +74,7 @@ function SavedCampaignsList() {
 
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
-                audioRef.current.play();
+                handlePlay();
             }
 
         } catch (error) {
@@ -96,21 +96,23 @@ function SavedCampaignsList() {
 
     useEffect(() => {
         const audioElement = audioRef.current;
+        if (!audioElement) return;
+    
         const onEnded = () => setIsPlaying(false);
         const onPlay = () => setIsPlaying(true);
         const onPause = () => setIsPlaying(false);
-
-        if (audioElement) {
-            audioElement.addEventListener('ended', onEnded);
-            audioElement.addEventListener('play', onPlay);
-            audioElement.addEventListener('pause', onPause);
-            return () => {
-                audioElement.removeEventListener('ended', onEnded);
-                audioElement.removeEventListener('play', onPlay);
-                audioElement.removeEventListener('pause', onPause);
-            };
-        }
-    }, [audioRef]);
+    
+        audioElement.addEventListener('ended', onEnded);
+        audioElement.addEventListener('play', onPlay);
+        audioElement.addEventListener('pause', onPause);
+    
+        // Cleanup function to remove event listeners
+        return () => {
+            audioElement.removeEventListener('ended', onEnded);
+            audioElement.removeEventListener('play', onPlay);
+            audioElement.removeEventListener('pause', onPause);
+        };
+    }, [activeAudio]);
 
 
     if (isLoading) {

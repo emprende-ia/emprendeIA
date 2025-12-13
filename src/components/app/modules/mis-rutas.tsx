@@ -149,7 +149,7 @@ function SavedPathsList() {
         const audioKey = `${pathId}-${stepIndex}`;
 
         if (audioRef.current && activeAudio?.key === audioKey) {
-            audioRef.current.play();
+            handlePlay();
             return;
         }
 
@@ -170,7 +170,7 @@ function SavedPathsList() {
 
             if (audioRef.current) {
                 audioRef.current.src = result.audioUrl;
-                audioRef.current.play();
+                handlePlay();
             }
             
         } catch (error) {
@@ -191,21 +191,23 @@ function SavedPathsList() {
 
     useEffect(() => {
         const audioElement = audioRef.current;
+        if (!audioElement) return;
+    
         const onEnded = () => setIsPlaying(false);
         const onPlay = () => setIsPlaying(true);
         const onPause = () => setIsPlaying(false);
-
-        if (audioElement) {
-            audioElement.addEventListener('ended', onEnded);
-            audioElement.addEventListener('play', onPlay);
-            audioElement.addEventListener('pause', onPause);
-            return () => {
-                audioElement.removeEventListener('ended', onEnded);
-                audioElement.removeEventListener('play', onPlay);
-                audioElement.removeEventListener('pause', onPause);
-            };
-        }
-    }, [audioRef]);
+    
+        audioElement.addEventListener('ended', onEnded);
+        audioElement.addEventListener('play', onPlay);
+        audioElement.addEventListener('pause', onPause);
+    
+        // Cleanup function to remove event listeners
+        return () => {
+            audioElement.removeEventListener('ended', onEnded);
+            audioElement.removeEventListener('play', onPlay);
+            audioElement.removeEventListener('pause', onPause);
+        };
+    }, [activeAudio]);
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
