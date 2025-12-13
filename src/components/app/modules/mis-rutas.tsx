@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
+import { getLearningPaths, toggleTaskCompletion, saveTaskAudioForPath, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
 import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, PlayCircle, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -88,7 +88,7 @@ function SavedPathsList() {
     const [paths, setPaths] = useState<LearningPath[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
-    const [generatedAudios, setGeneratedAudios] = useState<Record<string, string>>({});
+    const [playingAudio, setPlayingAudio] = useState<string | null>(null);
     const { toast } = useToast();
     
     // State for motivational alert
@@ -141,14 +141,30 @@ function SavedPathsList() {
         toggleTaskCompletion(firestore, user.uid, pathId, taskTitle, isCompleted);
     };
 
-    const handleAudioHelp = async (pathId: string, stepIndex: number) => {
+    const handleAudioHelp = async (pathId: string, taskTitle: string, stepIndex: number) => {
         const audioKey = `${pathId}-${stepIndex}`;
+
+        if (playingAudio === audioKey) {
+            setPlayingAudio(null);
+            return;
+        }
+
+        const path = paths.find(p => p.id === pathId);
+        if (!path || !user || !firestore) return;
+
+        const cachedAudioUrl = path.taskAudios?.[taskTitle];
+
+        if (cachedAudioUrl) {
+            setPlayingAudio(audioKey);
+            const audio = new Audio(cachedAudioUrl);
+            audio.play();
+            audio.onended = () => setPlayingAudio(null);
+            return;
+        }
+
         setIsAudioLoading(audioKey);
         try {
-            const path = paths.find(p => p.id === pathId);
-            if (!path) return;
             const step = path.pathData.ruta_aprendizaje[stepIndex];
-
             const result = await generateTaskAudio({
                 taskTitle: step.titulo,
                 taskObjective: step.objetivo_de_aprendizaje,
@@ -156,9 +172,13 @@ function SavedPathsList() {
                 taskAction: step.tarea_del_dia,
             });
             
-            setGeneratedAudios(prev => ({...prev, [audioKey]: result.audioUrl }));
-            
-            toast({ title: '¡Audio de ayuda listo!', description: 'Presiona el botón de reproducir para escucharlo.' });
+            await saveTaskAudioForPath(firestore, user.uid, pathId, taskTitle, result.audioUrl);
+            setPlayingAudio(audioKey);
+            const audio = new Audio(result.audioUrl);
+            audio.play();
+            audio.onended = () => setPlayingAudio(null);
+
+            toast({ title: '¡Audio de ayuda listo!', description: 'El audio se ha guardado para futuras consultas.' });
         } catch (error) {
             console.error("Error generating audio:", error);
             toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
@@ -203,7 +223,6 @@ function SavedPathsList() {
                                 {path.pathData.ruta_aprendizaje.map((step, index) => {
                                     const isCompleted = path.completedTasks.includes(step.tarea_del_dia);
                                     const audioKey = `${path.id}-${index}`;
-                                    const audioUrl = generatedAudios[audioKey];
                                     
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
@@ -228,18 +247,16 @@ function SavedPathsList() {
                                                 </div>
                                                 
                                                 <div className="flex items-center gap-2">
-                                                   {audioUrl ? (
-                                                        <audio controls src={audioUrl} className="h-8" />
-                                                   ) : (
-                                                    <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, index)} disabled={!!isAudioLoading}>
+                                                    <Button size="sm" variant="outline" onClick={() => handleAudioHelp(path.id, step.tarea_del_dia, index)} disabled={!!isAudioLoading}>
                                                          {isAudioLoading === audioKey ? (
                                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                         ) : playingAudio === audioKey ? (
+                                                             <AudioWaveform className="mr-2 h-4 w-4" />
                                                          ) : (
                                                             <HelpCircle className="mr-2 h-4 w-4" />
                                                          )}
-                                                         Necesito ayuda con esta tarea
+                                                         {playingAudio === audioKey ? 'Reproduciendo...' : 'Necesito ayuda con esta tarea'}
                                                     </Button>
-                                                   )}
                                                 </div>
 
 
@@ -319,7 +336,7 @@ export function MisRutasModule({ isMenuItem = false }: MisRutasModuleProps) {
   
   const TriggerComponent = isMenuItem ? 'div' : Button;
   const triggerProps = isMenuItem
-    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full" }
+    ? { className: "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 w-full" }
     : { className: "w-full font-bold" };
 
 

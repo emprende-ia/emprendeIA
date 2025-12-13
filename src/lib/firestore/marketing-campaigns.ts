@@ -32,6 +32,7 @@ export interface MarketingCampaign {
   campaignIdea: CampaignIdea;
   campaignPlan: CampaignPlan;
   completedTasks: string[];
+  taskAudios?: Record<string, string>;
 }
 
 /**
@@ -68,6 +69,7 @@ export async function saveCampaign(
     campaignIdea,
     campaignPlan,
     completedTasks: [],
+    taskAudios: {},
   };
 
   try {
@@ -117,6 +119,42 @@ export function toggleCampaignTaskCompletion(
 }
 
 /**
+ * Saves a generated audio URL for a specific task in a marketing campaign.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param campaignId - The ID of the campaign.
+ * @param taskDescription - The description of the task.
+ * @param audioUrl - The data URI of the audio to save.
+ */
+export async function saveTaskAudioForCampaign(
+  firestore: Firestore,
+  userId: string,
+  campaignId: string,
+  taskDescription: string,
+  audioUrl: string
+): Promise<void> {
+    if (!userId || !campaignId) {
+        throw new Error("User and Campaign IDs are required.");
+    }
+    const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
+    const fieldToUpdate = `taskAudios.${taskDescription.replace(/\./g, '_')}`; // Sanitize dots in keys
+
+    try {
+        await updateDoc(campaignDoc, {
+            [fieldToUpdate]: audioUrl
+        });
+    } catch (error) {
+        const permissionError = new FirestorePermissionError({
+            path: campaignDoc.path,
+            operation: 'update',
+            requestResourceData: { [fieldToUpdate]: audioUrl },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw error;
+    }
+}
+
+/**
  * Retrieves all saved marketing campaigns for a user in real-time.
  * @param firestore - The Firestore instance.
  * @param userId - The ID of the user.
@@ -145,6 +183,7 @@ export function getMarketingCampaigns(
         campaignIdea: data.campaignIdea,
         campaignPlan: data.campaignPlan,
         completedTasks: data.completedTasks || [],
+        taskAudios: data.taskAudios || {},
       } as MarketingCampaign;
     });
     onUpdate(campaigns);

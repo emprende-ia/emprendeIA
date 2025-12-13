@@ -5,10 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useUser, useFirestore } from '@/firebase';
-import { getMarketingCampaigns, toggleCampaignTaskCompletion, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
+import { getMarketingCampaigns, toggleCampaignTaskCompletion, saveTaskAudioForCampaign, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
 import { generateCampaignTaskAudio } from '@/ai/flows/generate-campaign-task-audio';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Target, Check, Circle, Workflow, HelpCircle } from "lucide-react";
+import { Loader2, Target, Check, Circle, Workflow, HelpCircle, AudioWaveform } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,7 @@ function SavedCampaignsList() {
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
-    const [generatedAudios, setGeneratedAudios] = useState<Record<string, string>>({});
+    const [playingAudio, setPlayingAudio] = useState<string | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -45,25 +45,44 @@ function SavedCampaignsList() {
         toggleCampaignTaskCompletion(firestore, user.uid, campaignId, taskDescription, isCompleted);
     };
 
-    const handleAudioHelp = async (campaignId: string, taskIndex: number) => {
+    const handleAudioHelp = async (campaignId: string, taskDescription: string, taskIndex: number) => {
         const audioKey = `${campaignId}-${taskIndex}`;
+        
+        if (playingAudio === audioKey) {
+            setPlayingAudio(null);
+            return;
+        }
+
+        const campaign = campaigns.find(c => c.id === campaignId);
+        if (!campaign || !user || !firestore) return;
+
+        const cachedAudioUrl = campaign.taskAudios?.[taskDescription];
+
+        if (cachedAudioUrl) {
+            setPlayingAudio(audioKey);
+            const audio = new Audio(cachedAudioUrl);
+            audio.play();
+            audio.onended = () => setPlayingAudio(null);
+            return;
+        }
+
         setIsAudioLoading(audioKey);
         try {
-            const campaign = campaigns.find(c => c.id === campaignId);
-            const task = campaign?.campaignPlan.actionableTasks[taskIndex];
-
-            if (!campaign || !task) return;
-
             const result = await generateCampaignTaskAudio({
                 campaignTitle: campaign.campaignIdea.title,
                 campaignChannel: campaign.campaignIdea.channel,
                 campaignMessage: campaign.campaignIdea.keyMessage,
-                taskToExplain: task,
+                taskToExplain: taskDescription,
             });
             
-            setGeneratedAudios(prev => ({...prev, [audioKey]: result.audioUrl }));
-            
-            toast({ title: '¡Audio de ayuda listo!', description: 'Presiona el botón de reproducir para escucharlo.' });
+            await saveTaskAudioForCampaign(firestore, user.uid, campaignId, taskDescription, result.audioUrl);
+
+            setPlayingAudio(audioKey);
+            const audio = new Audio(result.audioUrl);
+            audio.play();
+            audio.onended = () => setPlayingAudio(null);
+
+            toast({ title: '¡Audio de ayuda listo!', description: 'El audio se ha guardado para futuras consultas.' });
         } catch (error) {
             console.error("Error generating audio:", error);
             toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
@@ -130,7 +149,6 @@ function SavedCampaignsList() {
                                             {campaign.campaignPlan.actionableTasks.map((task, index) => {
                                                  const isCompleted = campaign.completedTasks.includes(task);
                                                  const audioKey = `${campaign.id}-${index}`;
-                                                 const audioUrl = generatedAudios[audioKey];
                                                  return (
                                                     <div key={index} className="p-3 bg-secondary/50 rounded-md space-y-3">
                                                         <div className="flex items-start gap-3">
@@ -145,18 +163,16 @@ function SavedCampaignsList() {
                                                             </label>
                                                         </div>
                                                         <div className="pl-7">
-                                                        {audioUrl ? (
-                                                            <audio controls src={audioUrl} className="h-8" />
-                                                        ) : (
-                                                            <Button size="sm" variant="outline" onClick={() => handleAudioHelp(campaign.id, index)} disabled={!!isAudioLoading}>
+                                                            <Button size="sm" variant="outline" onClick={() => handleAudioHelp(campaign.id, task, index)} disabled={!!isAudioLoading}>
                                                                 {isAudioLoading === audioKey ? (
                                                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                ) : playingAudio === audioKey ? (
+                                                                    <AudioWaveform className="mr-2 h-4 w-4" />
                                                                 ) : (
                                                                     <HelpCircle className="mr-2 h-4 w-4" />
                                                                 )}
-                                                                Necesito ayuda con esta tarea
+                                                                {playingAudio === audioKey ? 'Reproduciendo...' : 'Necesito ayuda con esta tarea'}
                                                             </Button>
-                                                        )}
                                                         </div>
                                                     </div>
                                                  )

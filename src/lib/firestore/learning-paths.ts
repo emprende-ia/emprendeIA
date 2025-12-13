@@ -11,6 +11,7 @@ export interface LearningPath {
   createdAt: Date;
   pathData: GenerateActionPlanOutput;
   completedTasks: string[];
+  taskAudios?: Record<string, string>;
 }
 
 /**
@@ -33,6 +34,7 @@ export function saveLearningPath(
     createdAt: serverTimestamp(),
     pathData: pathData,
     completedTasks: [],
+    taskAudios: {},
   };
 
   addDoc(pathsCollection, dataToSave)
@@ -79,6 +81,43 @@ export function toggleTaskCompletion(
 }
 
 /**
+ * Saves a generated audio URL for a specific task in a learning path.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param pathId - The ID of the learning path.
+ * @param taskTitle - The title of the task.
+ * @param audioUrl - The data URI of the audio to save.
+ */
+export async function saveTaskAudioForPath(
+  firestore: Firestore,
+  userId: string,
+  pathId: string,
+  taskTitle: string,
+  audioUrl: string
+): Promise<void> {
+  if (!userId || !pathId) {
+      throw new Error("User and Path IDs are required.");
+  }
+  const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
+  // Use dot notation to update a specific field in a map
+  const fieldToUpdate = `taskAudios.${taskTitle.replace(/\./g, '_')}`; // Sanitize dots in keys
+  
+  try {
+    await updateDoc(pathDoc, {
+        [fieldToUpdate]: audioUrl
+    });
+  } catch (error) {
+    const permissionError = new FirestorePermissionError({
+      path: pathDoc.path,
+      operation: 'update',
+      requestResourceData: { [fieldToUpdate]: audioUrl },
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    throw error;
+  }
+}
+
+/**
  * Retrieves all saved learning paths for a user in real-time.
  * @param firestore - The Firestore instance.
  * @param userId - The ID of the user.
@@ -106,6 +145,7 @@ export function getLearningPaths(
         createdAt: createdAt,
         pathData: data.pathData,
         completedTasks: data.completedTasks || [],
+        taskAudios: data.taskAudios || {},
       } as LearningPath;
     });
     onUpdate(paths);
