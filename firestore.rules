@@ -130,31 +130,21 @@ service cloud.firestore {
     /**
      * @description Enforces that only the authenticated user can access their own learning paths.
      * @path /users/{userId}/learningPaths/{pathId}
-     * @allow (create): The user can create a learning path if the userId matches their auth UID.
-     * @allow (get, list): The user can read their own learning paths if the userId matches their auth UID.
-     * @allow (update, delete): The user can update or delete their own learning paths if the userId matches their auth UID and the document exists.
-     * @deny (create, get, list, update, delete): Denies operations if the user is not authenticated or the user ID does not match the authenticated user's ID.
+     * @allow (read, write): The user can manage their own learning paths.
      * @principle Enforces user-ownership for learning paths.
      */
     match /users/{userId}/learningPaths/{pathId} {
-      allow create: if isOwner(userId);
-      allow get, list: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     /**
      * @description Enforces that only the authenticated user can access their own marketing campaigns.
      * @path /users/{userId}/marketingCampaigns/{campaignId}
-     * @allow (create): The user can create a marketing campaign if the userId matches their auth UID.
-     * @allow (get, list): The user can read their own marketing campaigns if the userId matches their auth UID.
-     * @allow (update, delete): The user can update or delete their own marketing campaigns if the userId matches their auth UID and the document exists.
-     * @deny (create, get, list, update, delete): Denies operations if the user is not authenticated or the user ID does not match the authenticated user's ID.
+     * @allow (read, write): The user can manage their own marketing campaigns.
      * @principle Enforces user-ownership for marketing campaigns.
      */
     match /users/{userId}/marketingCampaigns/{campaignId} {
-      allow create: if isOwner(userId);
-      allow get, list: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     /**
