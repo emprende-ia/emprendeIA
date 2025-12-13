@@ -134,6 +134,10 @@ function SavedCampaignsList() {
 
         const campaign = campaigns.find(c => c.id === campaignId);
         if (!campaign || !user || !firestore) return;
+
+        if (!campaign.taskAudios) {
+            campaign.taskAudios = [];
+        }
         
         // Check if audio is already saved
         const savedAudio = campaign.taskAudios.find(audio => audio.taskKey === task);
@@ -272,7 +276,7 @@ function SavedCampaignsList() {
                                                  const isCompleted = campaign.completedTasks.includes(task);
                                                  const audioKey = `${campaign.id}-${task}`;
                                                  const isCurrentAudio = activeAudio?.key === audioKey;
-                                                 const savedAudio = campaign.taskAudios.find(audio => audio.taskKey === task);
+                                                 const savedAudio = campaign.taskAudios?.find(audio => audio.taskKey === task);
 
                                                  return (
                                                     <div key={index} className="p-4 bg-secondary/50 rounded-md flex items-start justify-between gap-4">

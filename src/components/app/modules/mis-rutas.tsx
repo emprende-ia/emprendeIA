@@ -219,8 +219,9 @@ function SavedPathsList() {
     };
 
     const handleAudioHelp = async (pathId: string, stepIndex: number) => {
-        const step = paths.find(p => p.id === pathId)?.pathData.ruta_aprendizaje[stepIndex];
-        if(!step) return;
+        const path = paths.find(p => p.id === pathId);
+        const step = path?.pathData.ruta_aprendizaje[stepIndex];
+        if(!step || !path) return;
 
         const taskKey = step.tarea_del_dia;
         const audioKey = `${pathId}-${taskKey}`;
@@ -230,8 +231,11 @@ function SavedPathsList() {
             return;
         }
 
-        const path = paths.find(p => p.id === pathId);
-        if (!path || !user || !firestore) return;
+        if (!user || !firestore) return;
+
+        if (!path.taskAudios) {
+            path.taskAudios = [];
+        }
 
         const savedAudio = path.taskAudios.find(audio => audio.taskKey === taskKey);
         if (savedAudio) {
@@ -345,7 +349,7 @@ function SavedPathsList() {
                                     const isCompleted = path.completedTasks.includes(taskKey);
                                     const audioKey = `${path.id}-${taskKey}`;
                                     const isCurrentAudio = activeAudio?.key === audioKey;
-                                    const savedAudio = path.taskAudios.find(audio => audio.taskKey === taskKey);
+                                    const savedAudio = path.taskAudios?.find(audio => audio.taskKey === taskKey);
                                     
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
