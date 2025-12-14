@@ -110,7 +110,8 @@ export async function saveTaskAudioForCampaign(
   const audioId = `${taskKey.replace(/\s+/g, '-')}-${Date.now()}.wav`;
   const storageRef = ref(storage, `users/${userId}/audios/${audioId}`);
   
-  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url');
+  const metadata = { contentType: 'audio/wav' };
+  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url', metadata);
   
   // 2. Get Download URL
   const downloadURL = await getDownloadURL(uploadResult.ref);

@@ -73,7 +73,8 @@ export async function saveTaskAudioForPath(
   const storageRef = ref(storage, `users/${userId}/audios/${audioId}`);
   
   // The 'data_url' string format is used for base64-encoded strings with a data URL prefix
-  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url');
+  const metadata = { contentType: 'audio/wav' };
+  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url', metadata);
   
   // 2. Get Download URL
   const downloadURL = await getDownloadURL(uploadResult.ref);
