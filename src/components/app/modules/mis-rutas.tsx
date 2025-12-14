@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -81,71 +82,182 @@ const playSuccessSound = () => {
     }
 };
 
-const AudioPlayerWithProgress = ({
-    isLoading,
-    isPlaying,
-    progress,
-    onPlayClick,
-    onPauseClick,
-    onGenerateClick
+const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
+
+const AudioPlayer = ({
+  taskKey,
+  onGenerate,
 }: {
-    isLoading: boolean,
-    isPlaying: boolean,
-    progress: number,
-    onPlayClick: () => void,
-    onPauseClick: () => void,
-    onGenerateClick: () => void
+  taskKey: string;
+  onGenerate: (taskKey: string) => void;
 }) => {
-    if (isLoading) {
-        return (
-            <Button size="icon" variant="ghost" disabled className="h-10 w-10">
-                <Loader2 className="h-4 w-4 animate-spin" />
-            </Button>
-        );
-    }
+  const {
+    activeAudio,
+    audioRef,
+    isAudioLoading,
+    isPlaying,
+    audioProgress,
+    audioTime,
+    handlePlay,
+    handlePause,
+  } = useAudioPlayer();
 
-    if (progress > 0) {
-        return (
-            <div className="relative h-10 w-10">
-                <svg className="absolute inset-0" viewBox="0 0 36 36">
-                    <path
-                        className="text-secondary"
-                        d="M18 2.0845
-                          a 15.9155 15.9155 0 0 1 0 31.83
-                          a 15.9155 15.9155 0 0 1 0 -31.83"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    />
-                    <path
-                        className="text-primary"
-                        strokeDasharray={`${progress}, 100`}
-                        d="M18 2.0845
-                          a 15.9155 15.9155 0 0 1 0 31.83
-                          a 15.9155 15.9155 0 0 1 0 -31.83"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                    />
-                </svg>
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={isPlaying ? onPauseClick : onPlayClick}
-                    className="absolute inset-0 m-auto h-8 w-8 rounded-full bg-secondary/50 hover:bg-secondary"
-                >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-            </div>
-        );
-    }
+  const isCurrentAudio = activeAudio?.key === taskKey;
+  const isLoading = isAudioLoading === taskKey;
 
+  if (isLoading) {
     return (
-        <Button size="sm" variant="outline" onClick={onGenerateClick}>
-            <HelpCircle className="mr-2 h-4 w-4" />
-            Necesito ayuda
+      <Button size="sm" variant="outline" disabled className="w-full justify-start">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Generando audio...
+      </Button>
+    );
+  }
+  
+  if (isCurrentAudio && activeAudio?.url) {
+    return (
+      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={isPlaying ? handlePause : handlePlay}
+          className="h-8 w-8 flex-shrink-0 rounded-full text-primary hover:bg-primary/20 hover:text-primary"
+        >
+          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
+        <div className="flex-grow space-y-1">
+            <div className="relative h-1 w-full bg-primary/20 rounded-full">
+                <div 
+                    className="absolute h-1 bg-primary rounded-full"
+                    style={{ width: `${audioProgress}%`}}
+                />
+            </div>
+            <div className="flex justify-between text-xs text-primary/80">
+                <span>{formatTime(audioTime.currentTime)}</span>
+                <span>{formatTime(audioTime.duration)}</span>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Button size="sm" variant="outline" onClick={() => onGenerate(taskKey)} className="w-full justify-start">
+      <HelpCircle className="mr-2 h-4 w-4" />
+      Necesito ayuda con esta tarea
+    </Button>
+  );
+};
+
+
+const AudioPlayerContext = React.createContext<ReturnType<typeof useProvideAudioPlayer> | null>(null);
+
+const useProvideAudioPlayer = () => {
+    const [activeAudio, setActiveAudio] = useState<{ key: string; url: string } | null>(null);
+    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0);
+    const [audioTime, setAudioTime] = useState({ currentTime: 0, duration: 0 });
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+        if (!audioElement) return;
+
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+        const onEnded = () => {
+            setIsPlaying(false);
+            setAudioProgress(0);
+        };
+        const onTimeUpdate = () => {
+            if (audioElement.duration > 0) {
+                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
+                setAudioTime(prev => ({ ...prev, currentTime: audioElement.currentTime }));
+            }
+        };
+        const onLoadedData = () => {
+            setAudioTime({ currentTime: 0, duration: audioElement.duration });
+        }
+
+        audioElement.addEventListener('play', onPlay);
+        audioElement.addEventListener('pause', onPause);
+        audioElement.addEventListener('ended', onEnded);
+        audioElement.addEventListener('timeupdate', onTimeUpdate);
+        audioElement.addEventListener('loadeddata', onLoadedData);
+
+        return () => {
+            audioElement.removeEventListener('play', onPlay);
+            audioElement.removeEventListener('pause', onPause);
+            audioElement.removeEventListener('ended', onEnded);
+            audioElement.removeEventListener('timeupdate', onTimeUpdate);
+            audioElement.removeEventListener('loadeddata', onLoadedData);
+        };
+    }, []);
+
+    const handlePlay = () => audioRef.current?.play();
+    const handlePause = () => audioRef.current?.pause();
+
+    const generateAndPlayAudio = async (
+        taskKey: string,
+        generatorFn: () => Promise<{ audioUrl: string }>
+    ) => {
+        if (activeAudio?.key === taskKey && audioRef.current) {
+            isPlaying ? handlePause() : handlePlay();
+            return;
+        }
+
+        setIsAudioLoading(taskKey);
+        setAudioProgress(0);
+        setAudioTime({ currentTime: 0, duration: 0 });
+        try {
+            const { audioUrl } = await generatorFn();
+            setActiveAudio({ key: taskKey, url: audioUrl });
+            if (audioRef.current) {
+                audioRef.current.src = audioUrl;
+                audioRef.current.play();
+            }
+        } catch (error) {
+            console.error("Error generating audio:", error);
+            toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
+        } finally {
+            setIsAudioLoading(null);
+        }
+    };
+
+    return {
+        activeAudio,
+        audioRef,
+        isAudioLoading,
+        isPlaying,
+        audioProgress,
+        audioTime,
+        handlePlay,
+        handlePause,
+        generateAndPlayAudio
+    };
+};
+
+const useAudioPlayer = () => {
+    const context = useContext(AudioPlayerContext);
+    if (!context) {
+        throw new Error('useAudioPlayer must be used within an AudioPlayerProvider');
+    }
+    return context;
+};
+
+const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const audioPlayer = useProvideAudioPlayer();
+    return (
+        <AudioPlayerContext.Provider value={audioPlayer}>
+            {children}
+            <audio ref={audioPlayer.audioRef} />
+        </AudioPlayerContext.Provider>
     );
 };
 
@@ -155,20 +267,14 @@ function SavedPathsList() {
     const firestore = useFirestore();
     const [paths, setPaths] = useState<LearningPath[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { toast } = useToast();
     
-    // State for audio playback
-    const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
-    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [audioProgress, setAudioProgress] = useState(0);
-    const audioRef = useRef<HTMLAudioElement>(null);
-
     // State for motivational alert
     const [alertContent, setAlertContent] = useState<{ title: string, description: string, icon: React.ReactNode } | null>(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     // Track shown milestones to prevent re-showing alerts {pathId: [milestone1, milestone2]}
     const [shownMilestones, setShownMilestones] = useState<Record<string, number[]>>({});
+
+    const { generateAndPlayAudio } = useAudioPlayer();
 
     useEffect(() => {
         if (user && firestore) {
@@ -214,87 +320,15 @@ function SavedPathsList() {
         toggleTaskCompletion(firestore, user.uid, pathId, taskTitle, isCompleted);
     };
 
-    const handleAudioHelp = async (path: LearningPath, step: LearningPath['pathData']['ruta_aprendizaje'][0]) => {
-        const taskKey = step.tarea_del_dia;
-        const audioKey = `${path.id}-${taskKey}`;
-
-        if (!user || !firestore) return;
-
-        // If this audio is already active, just play/pause
-        if (activeAudio?.key === audioKey && audioRef.current) {
-            if (isPlaying) {
-                audioRef.current.pause();
-            } else {
-                audioRef.current.play();
-            }
-            return;
-        }
-        
-        setIsAudioLoading(audioKey);
-        
-        try {
-            const result = await generateTaskAudio({
-                taskTitle: step.titulo,
-                taskObjective: step.objetivo_de_aprendizaje,
-                taskContent: step.contenido_clave.join(', '),
-                taskAction: step.tarea_del_dia,
-            });
-            
-            setActiveAudio({ key: audioKey, url: result.audioUrl });
-
-            if (audioRef.current) {
-                audioRef.current.src = result.audioUrl;
-                audioRef.current.play();
-            }
-            
-        } catch (error) {
-            console.error("Error generating audio:", error);
-            toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
-        } finally {
-            setIsAudioLoading(null);
-        }
+    const handleAudioHelp = (path: LearningPath, step: LearningPath['pathData']['ruta_aprendizaje'][0]) => {
+        const taskKey = `${path.id}-${step.tarea_del_dia}`;
+        generateAndPlayAudio(taskKey, () => generateTaskAudio({
+            taskTitle: step.titulo,
+            taskObjective: step.objetivo_de_aprendizaje,
+            taskContent: step.contenido_clave.join(', '),
+            taskAction: step.tarea_del_dia,
+        }));
     };
-    
-    const handlePlay = () => {
-        if (audioRef.current) {
-            audioRef.current.play();
-        }
-    };
-
-    const handlePause = () => {
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
-    };
-
-    useEffect(() => {
-        const audioElement = audioRef.current;
-        if (!audioElement) return;
-
-        const onPlay = () => setIsPlaying(true);
-        const onPause = () => setIsPlaying(false);
-        const onEnded = () => {
-            setIsPlaying(false);
-            setAudioProgress(0); // Reset progress on end
-        };
-        const onTimeUpdate = () => {
-            if (audioElement.duration > 0) {
-                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
-            }
-        };
-
-        audioElement.addEventListener('play', onPlay);
-        audioElement.addEventListener('pause', onPause);
-        audioElement.addEventListener('ended', onEnded);
-        audioElement.addEventListener('timeupdate', onTimeUpdate);
-
-        return () => {
-            audioElement.removeEventListener('play', onPlay);
-            audioElement.removeEventListener('pause', onPause);
-            audioElement.removeEventListener('ended', onEnded);
-            audioElement.removeEventListener('timeupdate', onTimeUpdate);
-        };
-    }, []);
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -332,8 +366,6 @@ function SavedPathsList() {
                                 {path.pathData.ruta_aprendizaje.map((step, index) => {
                                     const taskKey = step.tarea_del_dia;
                                     const isCompleted = path.completedTasks.includes(taskKey);
-                                    const audioKey = `${path.id}-${taskKey}`;
-                                    const isCurrentAudio = activeAudio?.key === audioKey;
                                     
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
@@ -357,13 +389,9 @@ function SavedPathsList() {
                                                             <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{taskKey}</p>
                                                         </label>
                                                     </div>
-                                                    <AudioPlayerWithProgress
-                                                        isLoading={isAudioLoading === audioKey}
-                                                        isPlaying={isCurrentAudio && isPlaying}
-                                                        progress={isCurrentAudio ? audioProgress : 0}
-                                                        onPlayClick={handlePlay}
-                                                        onPauseClick={handlePause}
-                                                        onGenerateClick={() => handleAudioHelp(path, step)}
+                                                    <AudioPlayer 
+                                                        taskKey={`${path.id}-${taskKey}`}
+                                                        onGenerate={() => handleAudioHelp(path, step)}
                                                     />
                                                 </div>
                                                 
@@ -411,8 +439,6 @@ function SavedPathsList() {
                     </Card>
                 )
             })}
-
-            <audio ref={audioRef} />
 
             {alertContent && (
                 <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
@@ -464,7 +490,9 @@ export function MisRutasModule({ isMenuItem = false }: MisRutasModuleProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 max-h-[70vh] overflow-y-auto">
-            <SavedPathsList />
+            <AudioPlayerProvider>
+                <SavedPathsList />
+            </AudioPlayerProvider>
         </div>
       </DialogContent>
     </Dialog>

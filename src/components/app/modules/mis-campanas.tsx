@@ -1,14 +1,15 @@
 
+
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { getMarketingCampaigns, toggleCampaignTaskCompletion, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
 import { generateCampaignTaskAudio } from '@/ai/flows/generate-campaign-task-audio';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Target, Workflow, HelpCircle, Play, Pause } from "lucide-react";
+import { Loader2, Target, Workflow, HelpCircle, Play, Pause, AudioWaveform } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,88 +18,192 @@ import { es } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 
-const AudioPlayerWithProgress = ({
-    isLoading,
-    isPlaying,
-    progress,
-    onPlayClick,
-    onPauseClick,
-    onGenerateClick
+const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
+
+const AudioPlayer = ({
+  taskKey,
+  onGenerate,
 }: {
-    isLoading: boolean,
-    isPlaying: boolean,
-    progress: number,
-    onPlayClick: () => void,
-    onPauseClick: () => void,
-    onGenerateClick: () => void
+  taskKey: string;
+  onGenerate: (taskKey: string) => void;
 }) => {
-    if (isLoading) {
-        return (
-            <Button size="icon" variant="ghost" disabled className="h-10 w-10">
-                <Loader2 className="h-4 w-4 animate-spin" />
-            </Button>
-        );
-    }
+  const {
+    activeAudio,
+    isAudioLoading,
+    isPlaying,
+    audioProgress,
+    audioTime,
+    handlePlay,
+    handlePause,
+  } = useAudioPlayer();
 
-    if (progress > 0) {
-        return (
-            <div className="relative h-10 w-10">
-                <svg className="absolute inset-0" viewBox="0 0 36 36">
-                    <path
-                        className="text-secondary"
-                        d="M18 2.0845
-                          a 15.9155 15.9155 0 0 1 0 31.83
-                          a 15.9155 15.9155 0 0 1 0 -31.83"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    />
-                    <path
-                        className="text-primary"
-                        strokeDasharray={`${progress}, 100`}
-                        d="M18 2.0845
-                          a 15.9155 15.9155 0 0 1 0 31.83
-                          a 15.9155 15.9155 0 0 1 0 -31.83"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                    />
-                </svg>
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={isPlaying ? onPauseClick : onPlayClick}
-                    className="absolute inset-0 m-auto h-8 w-8 rounded-full bg-secondary/50 hover:bg-secondary"
-                >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-            </div>
-        );
-    }
+  const isCurrentAudio = activeAudio?.key === taskKey;
+  const isLoading = isAudioLoading === taskKey;
 
+  if (isLoading) {
     return (
-        <Button size="sm" variant="outline" onClick={onGenerateClick}>
-            <HelpCircle className="mr-2 h-4 w-4" />
-            Necesito ayuda
+      <Button size="sm" variant="outline" disabled className="w-full justify-start">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Generando audio...
+      </Button>
+    );
+  }
+  
+  if (isCurrentAudio && activeAudio?.url) {
+    return (
+      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={isPlaying ? handlePause : handlePlay}
+          className="h-8 w-8 flex-shrink-0 rounded-full text-primary hover:bg-primary/20 hover:text-primary"
+        >
+          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
+        <div className="flex-grow space-y-1">
+            <div className="relative h-1 w-full bg-primary/20 rounded-full">
+                <div 
+                    className="absolute h-1 bg-primary rounded-full"
+                    style={{ width: `${audioProgress}%`}}
+                />
+            </div>
+            <div className="flex justify-between text-xs text-primary/80">
+                <span>{formatTime(audioTime.currentTime)}</span>
+                <span>{formatTime(audioTime.duration)}</span>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Button size="sm" variant="outline" onClick={() => onGenerate(taskKey)} className="w-full justify-start">
+      <HelpCircle className="mr-2 h-4 w-4" />
+      Necesito ayuda con esta tarea
+    </Button>
+  );
+};
+
+
+const AudioPlayerContext = React.createContext<ReturnType<typeof useProvideAudioPlayer> | null>(null);
+
+const useProvideAudioPlayer = () => {
+    const [activeAudio, setActiveAudio] = useState<{ key: string; url: string } | null>(null);
+    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0);
+    const [audioTime, setAudioTime] = useState({ currentTime: 0, duration: 0 });
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const audioElement = audioRef.current;
+        if (!audioElement) return;
+
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+        const onEnded = () => {
+            setIsPlaying(false);
+            setAudioProgress(0);
+        };
+        const onTimeUpdate = () => {
+            if (audioElement.duration > 0) {
+                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
+                setAudioTime(prev => ({ ...prev, currentTime: audioElement.currentTime }));
+            }
+        };
+        const onLoadedData = () => {
+            setAudioTime({ currentTime: 0, duration: audioElement.duration });
+        }
+
+        audioElement.addEventListener('play', onPlay);
+        audioElement.addEventListener('pause', onPause);
+        audioElement.addEventListener('ended', onEnded);
+        audioElement.addEventListener('timeupdate', onTimeUpdate);
+        audioElement.addEventListener('loadeddata', onLoadedData);
+
+        return () => {
+            audioElement.removeEventListener('play', onPlay);
+            audioElement.removeEventListener('pause', onPause);
+            audioElement.removeEventListener('ended', onEnded);
+            audioElement.removeEventListener('timeupdate', onTimeUpdate);
+            audioElement.removeEventListener('loadeddata', onLoadedData);
+        };
+    }, []);
+
+    const handlePlay = () => audioRef.current?.play();
+    const handlePause = () => audioRef.current?.pause();
+
+    const generateAndPlayAudio = async (
+        taskKey: string,
+        generatorFn: () => Promise<{ audioUrl: string }>
+    ) => {
+        if (activeAudio?.key === taskKey && audioRef.current) {
+            isPlaying ? handlePause() : handlePlay();
+            return;
+        }
+
+        setIsAudioLoading(taskKey);
+        setAudioProgress(0);
+        setAudioTime({ currentTime: 0, duration: 0 });
+        try {
+            const { audioUrl } = await generatorFn();
+            setActiveAudio({ key: taskKey, url: audioUrl });
+            if (audioRef.current) {
+                audioRef.current.src = audioUrl;
+                audioRef.current.play();
+            }
+        } catch (error) {
+            console.error("Error generating audio:", error);
+            toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
+        } finally {
+            setIsAudioLoading(null);
+        }
+    };
+
+    return {
+        activeAudio,
+        audioRef,
+        isAudioLoading,
+        isPlaying,
+        audioProgress,
+        audioTime,
+        handlePlay,
+        handlePause,
+        generateAndPlayAudio
+    };
+};
+
+const useAudioPlayer = () => {
+    const context = useContext(AudioPlayerContext);
+    if (!context) {
+        throw new Error('useAudioPlayer must be used within an AudioPlayerProvider');
+    }
+    return context;
+};
+
+const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const audioPlayer = useProvideAudioPlayer();
+    return (
+        <AudioPlayerContext.Provider value={audioPlayer}>
+            {children}
+            <audio ref={audioPlayer.audioRef} />
+        </AudioPlayerContext.Provider>
     );
 };
+
 
 function SavedCampaignsList() {
     const { user } = useUser();
     const firestore = useFirestore();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { toast } = useToast();
-    
-    // State to manage the active audio
-    const [activeAudio, setActiveAudio] = useState<{ key: string; url: string; } | null>(null);
-    const [isAudioLoading, setIsAudioLoading] = useState<string | null>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [audioProgress, setAudioProgress] = useState(0);
-    const audioRef = useRef<HTMLAudioElement>(null);
 
+    const { generateAndPlayAudio } = useAudioPlayer();
 
     useEffect(() => {
         if (user && firestore) {
@@ -119,87 +224,15 @@ function SavedCampaignsList() {
         toggleCampaignTaskCompletion(firestore, user.uid, campaignId, taskDescription, isCompleted);
     };
 
-    const handleAudioHelp = async (campaign: MarketingCampaign, task: string) => {
-        const audioKey = `${campaign.id}-${task}`;
-
-        if (!user || !firestore) return;
-
-        if (activeAudio?.key === audioKey && audioRef.current) {
-            if (isPlaying) {
-                audioRef.current.pause();
-            } else {
-                audioRef.current.play();
-            }
-            return;
-        }
-        
-        setIsAudioLoading(audioKey);
-
-        try {
-            const result = await generateCampaignTaskAudio({
-                campaignTitle: campaign.campaignIdea.title,
-                campaignChannel: campaign.campaignIdea.channel,
-                campaignMessage: campaign.campaignIdea.keyMessage,
-                taskToExplain: task,
-            });
-            
-            setActiveAudio({ key: audioKey, url: result.audioUrl });
-
-            if (audioRef.current) {
-                audioRef.current.src = result.audioUrl;
-                audioRef.current.play();
-            }
-
-        } catch (error) {
-            console.error("Error generating audio:", error);
-            toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
-        } finally {
-            setIsAudioLoading(null);
-        }
+    const handleAudioHelp = (campaign: MarketingCampaign, task: string) => {
+        const taskKey = `${campaign.id}-${task}`;
+        generateAndPlayAudio(taskKey, () => generateCampaignTaskAudio({
+            campaignTitle: campaign.campaignIdea.title,
+            campaignChannel: campaign.campaignIdea.channel,
+            campaignMessage: campaign.campaignIdea.keyMessage,
+            taskToExplain: task,
+        }));
     };
-    
-    const handlePlay = () => {
-        if (audioRef.current) {
-            audioRef.current.play();
-        }
-    };
-
-    const handlePause = () => {
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
-    };
-
-
-    useEffect(() => {
-        const audioElement = audioRef.current;
-        if (!audioElement) return;
-    
-        const onPlay = () => setIsPlaying(true);
-        const onPause = () => setIsPlaying(false);
-        const onEnded = () => {
-            setIsPlaying(false);
-            setAudioProgress(0);
-        };
-        const onTimeUpdate = () => {
-            if (audioElement.duration > 0) {
-                setAudioProgress((audioElement.currentTime / audioElement.duration) * 100);
-            }
-        };
-    
-        audioElement.addEventListener('play', onPlay);
-        audioElement.addEventListener('pause', onPause);
-        audioElement.addEventListener('ended', onEnded);
-        audioElement.addEventListener('timeupdate', onTimeUpdate);
-    
-        return () => {
-            audioElement.removeEventListener('play', onPlay);
-            audioElement.removeEventListener('pause', onPause);
-            audioElement.removeEventListener('ended', onEnded);
-            audioElement.removeEventListener('timeupdate', onTimeUpdate);
-        };
-    }, []);
-
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -257,8 +290,6 @@ function SavedCampaignsList() {
                                             <p className="font-semibold text-sm pt-2">Tareas a Realizar:</p>
                                             {campaign.campaignPlan.actionableTasks.map((task, index) => {
                                                  const isCompleted = campaign.completedTasks.includes(task);
-                                                 const audioKey = `${campaign.id}-${task}`;
-                                                 const isCurrentAudio = activeAudio?.key === audioKey;
                                                  
                                                  return (
                                                     <div key={index} className="p-4 bg-secondary/50 rounded-md flex items-start justify-between gap-4">
@@ -273,14 +304,10 @@ function SavedCampaignsList() {
                                                                 {task}
                                                             </label>
                                                         </div>
-                                                        <AudioPlayerWithProgress
-                                                            isLoading={isAudioLoading === audioKey}
-                                                            isPlaying={isCurrentAudio && isPlaying}
-                                                            progress={isCurrentAudio ? audioProgress : 0}
-                                                            onPlayClick={handlePlay}
-                                                            onPauseClick={handlePause}
-                                                            onGenerateClick={() => handleAudioHelp(campaign, task)}
-                                                        />
+                                                         <AudioPlayer 
+                                                            taskKey={`${campaign.id}-${task}`}
+                                                            onGenerate={() => handleAudioHelp(campaign, task)}
+                                                         />
                                                     </div>
                                                  )
                                             })}
@@ -292,7 +319,6 @@ function SavedCampaignsList() {
                     </Card>
                 )
             })}
-             <audio ref={audioRef} />
         </div>
     );
 }
@@ -324,7 +350,9 @@ export function MisCampanasModule({ isMenuItem = false }: MisCampanasModuleProps
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 max-h-[70vh] overflow-y-auto">
-            <SavedCampaignsList />
+            <AudioPlayerProvider>
+              <SavedCampaignsList />
+            </AudioPlayerProvider>
         </div>
       </DialogContent>
     </Dialog>
