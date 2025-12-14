@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useStorage } from '@/firebase';
 import { getMarketingCampaigns, toggleCampaignTaskCompletion, saveTaskAudioForCampaign, type MarketingCampaign } from '@/lib/firestore/marketing-campaigns';
 import { generateCampaignTaskAudio } from '@/ai/flows/generate-campaign-task-audio';
 import { useToast } from '@/hooks/use-toast';
@@ -206,10 +206,12 @@ const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children
 function SavedCampaignsList() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const storage = useStorage();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const { generateAndPlayAudio } = useAudioPlayer();
+    const { toast } = useToast();
 
     useEffect(() => {
         if (user && firestore) {
@@ -231,7 +233,7 @@ function SavedCampaignsList() {
     };
 
     const handleAudioHelp = (campaign: MarketingCampaign, task: string) => {
-        if (!user || !firestore) return;
+        if (!user || !firestore || !storage) return;
         const taskKey = `${campaign.id}-${task}`;
         generateAndPlayAudio(taskKey, 
             () => generateCampaignTaskAudio({
@@ -240,8 +242,12 @@ function SavedCampaignsList() {
                 campaignMessage: campaign.campaignIdea.keyMessage,
                 taskToExplain: task,
             }),
-            (audioUrl) => {
-                saveTaskAudioForCampaign(firestore, user.uid, campaign.id, task, audioUrl);
+            async (audioDataUrl) => {
+                 try {
+                    await saveTaskAudioForCampaign(storage, firestore, user.uid, campaign.id, taskKey, audioDataUrl);
+                } catch(e) {
+                    toast({title: "Error al guardar", description: "No se pudo guardar el audio en tu cuenta.", variant: "destructive"})
+                }
             }
         );
     };
@@ -374,5 +380,3 @@ export function MisCampanasModule({ isMenuItem = false }: MisCampanasModuleProps
     </Dialog>
   );
 }
-
-    

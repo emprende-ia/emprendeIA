@@ -2,6 +2,7 @@
 'use client';
 
 import { Firestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, query, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { z } from 'zod';
@@ -87,36 +88,51 @@ export async function saveCampaign(
 }
 
 /**
- * Saves a generated audio URL for a specific task in a marketing campaign.
+ * Uploads a base64 audio string to Firebase Storage and saves the download URL in Firestore.
+ * @param storage - The Firebase Storage instance.
  * @param firestore - The Firestore instance.
  * @param userId - The ID of the user.
  * @param campaignId - The ID of the marketing campaign.
  * @param taskKey - The unique identifier for the task.
- * @param audioUrl - The data URL of the generated audio.
+ * @param audioDataUrl - The data URL of the generated audio (e.g., 'data:audio/wav;base64,...').
  */
-export function saveTaskAudioForCampaign(
+export async function saveTaskAudioForCampaign(
+  storage: FirebaseStorage,
   firestore: Firestore,
   userId: string,
   campaignId: string,
   taskKey: string,
-  audioUrl: string
-): void {
-  if (!userId || !campaignId) return;
+  audioDataUrl: string
+): Promise<void> {
+  if (!userId || !campaignId) throw new Error("User ID and Campaign ID are required.");
+
+  // 1. Upload to Storage
+  const audioId = `${taskKey.replace(/\s+/g, '-')}-${Date.now()}.wav`;
+  const storageRef = ref(storage, `users/${userId}/audios/${audioId}`);
+  
+  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url');
+  
+  // 2. Get Download URL
+  const downloadURL = await getDownloadURL(uploadResult.ref);
+
+  // 3. Save URL to Firestore
   const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
-  const audioData = { taskKey, audioUrl };
+  const audioData = { taskKey, audioUrl: downloadURL };
   const updateData = {
     taskAudios: arrayUnion(audioData),
   };
 
-  updateDoc(campaignDoc, updateData)
-    .catch((error) => {
-      const permissionError = new FirestorePermissionError({
-        path: campaignDoc.path,
-        operation: 'update',
-        requestResourceData: updateData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
+  try {
+    await updateDoc(campaignDoc, updateData);
+  } catch (error) {
+    const permissionError = new FirestorePermissionError({
+      path: campaignDoc.path,
+      operation: 'update',
+      requestResourceData: updateData,
     });
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
 }
 
 
@@ -196,5 +212,3 @@ export function getMarketingCampaigns(
 
   return unsubscribe;
 }
-
-    

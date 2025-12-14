@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useStorage } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getLearningPaths, toggleTaskCompletion, saveTaskAudioForPath, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
@@ -270,6 +270,7 @@ const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children
 function SavedPathsList() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const storage = useStorage();
     const [paths, setPaths] = useState<LearningPath[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -280,6 +281,7 @@ function SavedPathsList() {
     const [shownMilestones, setShownMilestones] = useState<Record<string, number[]>>({});
 
     const { generateAndPlayAudio } = useAudioPlayer();
+    const { toast } = useToast();
 
     useEffect(() => {
         if (user && firestore) {
@@ -326,7 +328,7 @@ function SavedPathsList() {
     };
 
     const handleAudioHelp = (path: LearningPath, step: LearningPath['pathData']['ruta_aprendizaje'][0]) => {
-        if (!user || !firestore) return;
+        if (!user || !firestore || !storage) return;
         const taskKey = `${path.id}-${step.tarea_del_dia}`;
 
         generateAndPlayAudio(
@@ -337,9 +339,12 @@ function SavedPathsList() {
                 taskContent: step.contenido_clave.join(', '),
                 taskAction: step.tarea_del_dia,
             }),
-            (audioUrl) => {
-                // This callback saves the generated audio URL
-                saveTaskAudioForPath(firestore, user.uid, path.id, taskKey, audioUrl);
+            async (audioDataUrl) => {
+                try {
+                    await saveTaskAudioForPath(storage, firestore, user.uid, path.id, taskKey, audioDataUrl);
+                } catch(e) {
+                    toast({title: "Error al guardar", description: "No se pudo guardar el audio en tu cuenta.", variant: "destructive"})
+                }
             }
         );
     };
@@ -517,5 +522,3 @@ export function MisRutasModule({ isMenuItem = false }: MisRutasModuleProps) {
     </Dialog>
   );
 }
-
-    

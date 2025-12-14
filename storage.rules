@@ -3,11 +3,11 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read and write access to all files for any authenticated user.
-    // This is suitable for this application as the files (logos) are not sensitive
-    // and are segregated by user ID in the code logic.
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+    
+    // Rule: User can only read/write to their own folder.
+    // The path contains the user's ID, which we match against their auth UID.
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
