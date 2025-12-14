@@ -29,9 +29,9 @@ const plans = [
     isPrimary: false,
   },
   {
-    name: 'Plus',
+    name: 'Plan Oro',
     icon: Sparkles,
-    price: '$19',
+    price: '$99.00 MXN',
     priceId: process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID,
     description: 'Ideal para emprendedores que buscan optimizar su cadena de suministro.',
     features: [
@@ -40,13 +40,13 @@ const plans = [
       'Búsquedas ilimitadas',
       'Soporte por correo electrónico',
     ],
-    cta: 'Obtener Plan Plus',
+    cta: 'Obtener Plan Oro',
     isPrimary: true,
   },
   {
-    name: 'Premium',
+    name: 'Plan Diamante',
     icon: Gem,
-    price: '$49',
+    price: '$149.00 MXN',
     priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID,
     description: 'Para negocios que necesitan analítica avanzada y máxima visibilidad.',
     features: [
@@ -55,7 +55,7 @@ const plans = [
       'Analíticas de perfil de proveedor',
       'Soporte prioritario 24/7',
     ],
-    cta: 'Obtener Plan Premium',
+    cta: 'Obtener Plan Diamante',
     isPrimary: false,
   },
 ];
