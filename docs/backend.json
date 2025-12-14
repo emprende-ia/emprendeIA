@@ -39,9 +39,14 @@
         "photoURL": {
           "type": "string",
           "description": "URL of the user's profile picture."
+        },
+        "plan": {
+          "type": "string",
+          "enum": ["básico", "oro", "diamante"],
+          "description": "The user's subscription plan."
         }
       },
-      "required": ["displayName", "email"]
+      "required": ["displayName", "email", "plan"]
     },
     "Note": {
       "title": "Note",
@@ -385,5 +390,3 @@
     ]
   }
 }
-
-    

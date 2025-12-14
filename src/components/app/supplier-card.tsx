@@ -44,6 +44,14 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
       });
       return;
     }
+     if (user.plan === 'básico') {
+      toast({
+        title: 'Función Premium',
+        description: 'Mejora tu plan para guardar proveedores.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsSaving(true);
     try {
       const supplierData: SavedSupplierData = {
@@ -97,7 +105,7 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving || !user}>
+                    <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving || !user || user.plan === 'básico'}>
                         {isSaving ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -107,9 +115,9 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
                     </Button>
                   </div>
                 </TooltipTrigger>
-                {!user && (
+                {(!user || user.plan === 'básico') && (
                   <TooltipContent>
-                    <p>Inicia sesión para guardar</p>
+                    <p>Necesitas un plan de pago para guardar proveedores.</p>
                   </TooltipContent>
                 )}
               </Tooltip>

@@ -117,6 +117,10 @@ export function GuiaPasoAPasoModule() {
       toast({ title: 'Error', description: 'No se pudo guardar la guía. Asegúrate de haber iniciado sesión.', variant: 'destructive' });
       return;
     }
+     if (user.plan === 'básico') {
+      toast({ title: 'Función Premium', description: 'Necesitas un plan de pago para guardar las rutas de aprendizaje.', variant: 'destructive' });
+      return;
+    }
     saveLearningPath(firestore, user.uid, learningPath);
     toast({ title: '¡Guía guardada!', description: 'Puedes ver tus guías guardadas en "Mis Rutas".' });
     handleClose();
@@ -206,10 +210,10 @@ export function GuiaPasoAPasoModule() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className='w-full'>
-                            <Button onClick={handleSavePath} disabled={!user} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
+                            <Button onClick={handleSavePath} disabled={!user || user.plan === 'básico'} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
                           </div>
                         </TooltipTrigger>
-                        {!user && <TooltipContent><p>Inicia sesión para guardar tu guía</p></TooltipContent>}
+                        {(!user || user.plan === 'básico') && <TooltipContent><p>Necesitas un plan de pago para guardar esta guía.</p></TooltipContent>}
                       </Tooltip>
                     </TooltipProvider>
                     <Button onClick={resetForm} variant="outline"><RefreshCw className="mr-2 h-4 w-4" /> Generar otra guía</Button>
