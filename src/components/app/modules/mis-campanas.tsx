@@ -46,7 +46,7 @@ const AudioPlayer = ({
 
   if (isLoading) {
     return (
-      <Button size="sm" variant="outline" disabled className="w-full justify-start">
+      <Button size="sm" variant="outline" disabled className="w-full justify-start mt-2">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         Generando audio...
       </Button>
@@ -55,7 +55,7 @@ const AudioPlayer = ({
   
   if (isCurrentAudio && activeAudio?.url) {
     return (
-      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20 hover:bg-primary/20 transition-colors">
+      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20 hover:bg-primary/20 transition-colors mt-2">
         <Button
           size="icon"
           variant="ghost"
@@ -81,7 +81,7 @@ const AudioPlayer = ({
   }
 
   return (
-    <Button size="sm" variant="outline" onClick={() => onGenerate(taskKey)} className="w-full justify-start">
+    <Button size="sm" variant="outline" onClick={() => onGenerate(taskKey)} className="w-full justify-start mt-2">
       <AudioWaveform className="mr-2 h-4 w-4" />
       Audio-guía de la tarea
     </Button>
@@ -292,8 +292,8 @@ function SavedCampaignsList() {
                                                  const isCompleted = campaign.completedTasks.includes(task);
                                                  
                                                  return (
-                                                    <div key={index} className="p-4 bg-secondary/50 rounded-md flex items-start justify-between gap-4">
-                                                        <div className="flex items-start gap-3 flex-1">
+                                                    <div key={index} className="p-4 bg-secondary/50 rounded-md">
+                                                        <div className="flex items-start gap-3">
                                                             <Checkbox 
                                                                 id={`task-${campaign.id}-${index}`}
                                                                 checked={isCompleted}
