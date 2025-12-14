@@ -55,7 +55,7 @@ const AudioPlayer = ({
   
   if (isCurrentAudio && activeAudio?.url) {
     return (
-      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20">
+      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20 hover:bg-primary/20 transition-colors">
         <Button
           size="icon"
           variant="ghost"
@@ -82,8 +82,8 @@ const AudioPlayer = ({
 
   return (
     <Button size="sm" variant="outline" onClick={() => onGenerate(taskKey)} className="w-full justify-start">
-      <HelpCircle className="mr-2 h-4 w-4" />
-      Necesito ayuda con esta tarea
+      <AudioWaveform className="mr-2 h-4 w-4" />
+      Audio-guía de la tarea
     </Button>
   );
 };
