@@ -244,15 +244,8 @@ function SavedCampaignsList() {
             }),
             async (audioDataUrl) => {
                  try {
+                    // The onSnapshot listener will automatically update the UI.
                     await saveTaskAudioForCampaign(storage, firestore, user.uid, campaign.id, taskKey, audioDataUrl);
-                     // Manually update local state for immediate feedback
-                    setCampaigns(prevCampaigns => prevCampaigns.map(c => {
-                        if (c.id === campaign.id) {
-                            const newAudios = [...(c.taskAudios || []), { taskKey, audioUrl: audioDataUrl }];
-                            return { ...c, taskAudios: newAudios };
-                        }
-                        return c;
-                    }));
                 } catch(e) {
                     toast({title: "Error al guardar", description: "No se pudo guardar el audio en tu cuenta.", variant: "destructive"})
                 }

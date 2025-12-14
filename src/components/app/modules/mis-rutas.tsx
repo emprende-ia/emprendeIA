@@ -341,15 +341,8 @@ function SavedPathsList() {
             }),
             async (audioDataUrl) => {
                 try {
+                    // The onSnapshot listener will automatically update the UI.
                     await saveTaskAudioForPath(storage, firestore, user.uid, path.id, taskKey, audioDataUrl);
-                    // Manually update local state for immediate feedback
-                    setPaths(prevPaths => prevPaths.map(p => {
-                        if (p.id === path.id) {
-                            const newAudios = [...(p.taskAudios || []), { taskKey, audioUrl: audioDataUrl }];
-                            return { ...p, taskAudios: newAudios };
-                        }
-                        return p;
-                    }));
                 } catch(e) {
                     toast({title: "Error al guardar", description: "No se pudo guardar el audio en tu cuenta.", variant: "destructive"})
                 }
