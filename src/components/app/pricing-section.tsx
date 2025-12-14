@@ -194,9 +194,9 @@ export function PricingSection() {
                     router.push('/dashboard');
                   }
                 }}
-                disabled={!!isLoading && plan.priceId !== null}
+                disabled={!!isLoading}
               >
-                {isLoading === plan.priceId ? (
+                {isLoading && plan.priceId ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
                   plan.cta
