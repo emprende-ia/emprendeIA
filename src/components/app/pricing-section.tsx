@@ -187,8 +187,14 @@ export function PricingSection() {
                 size="lg"
                 className="w-full"
                 variant={plan.isPrimary ? 'default' : 'outline'}
-                onClick={() => handleCheckout(plan.priceId)}
-                disabled={!!isLoading}
+                onClick={() => {
+                  if (plan.priceId) {
+                    handleCheckout(plan.priceId);
+                  } else {
+                    router.push('/dashboard');
+                  }
+                }}
+                disabled={!!isLoading && plan.priceId !== null}
               >
                 {isLoading === plan.priceId ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
