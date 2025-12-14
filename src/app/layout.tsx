@@ -4,7 +4,6 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
-import Script from 'next/script';
 import React from 'react';
 
 export default function RootLayout({
@@ -21,8 +20,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
         
-        <Script id="theme-loader" strategy="beforeInteractive">
-          {`
+        <script id="theme-loader" dangerouslySetInnerHTML={{ __html: `
             (function() {
               try {
                 const theme = localStorage.getItem('theme');
@@ -36,8 +34,7 @@ export default function RootLayout({
                 console.error('Failed to access localStorage for theme', e);
               }
             })();
-          `}
-        </Script>
+          `}} />
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
