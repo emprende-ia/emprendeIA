@@ -342,6 +342,14 @@ function SavedPathsList() {
             async (audioDataUrl) => {
                 try {
                     await saveTaskAudioForPath(storage, firestore, user.uid, path.id, taskKey, audioDataUrl);
+                    // Manually update local state for immediate feedback
+                    setPaths(prevPaths => prevPaths.map(p => {
+                        if (p.id === path.id) {
+                            const newAudios = [...(p.taskAudios || []), { taskKey, audioUrl: audioDataUrl }];
+                            return { ...p, taskAudios: newAudios };
+                        }
+                        return p;
+                    }));
                 } catch(e) {
                     toast({title: "Error al guardar", description: "No se pudo guardar el audio en tu cuenta.", variant: "destructive"})
                 }
@@ -407,9 +415,9 @@ function SavedPathsList() {
                                                             onCheckedChange={(checked) => handleTaskToggle(path.id, taskKey, !!checked)}
                                                             className="mt-1"
                                                         />
-                                                        <label htmlFor={`task-${path.id}-${index}`} className="flex-1">
-                                                            <p className="font-semibold">Tarea del Día:</p>
-                                                            <p className={`text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>{taskKey}</p>
+                                                        <label htmlFor={`task-${path.id}-${index}`} className={`flex-1 text-sm ${isCompleted ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                                                             <p className="font-semibold">Tarea del Día:</p>
+                                                            {taskKey}
                                                         </label>
                                                     </div>
                                                      <AudioPlayer 
