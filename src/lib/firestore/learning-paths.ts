@@ -11,6 +11,7 @@ export interface LearningPath {
   createdAt: Date;
   pathData: GenerateActionPlanOutput;
   completedTasks: string[];
+  taskAudios?: { taskKey: string, audioUrl: string }[];
 }
 
 /**
@@ -33,6 +34,7 @@ export function saveLearningPath(
     createdAt: serverTimestamp(),
     pathData: pathData,
     completedTasks: [],
+    taskAudios: [],
   };
 
   addDoc(pathsCollection, dataToSave)
@@ -41,6 +43,39 @@ export function saveLearningPath(
         path: pathsCollection.path,
         operation: 'create',
         requestResourceData: dataToSave,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+}
+
+/**
+ * Saves a generated audio URL for a specific task in a learning path.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param pathId - The ID of the learning path.
+ * @param taskKey - The unique identifier for the task.
+ * @param audioUrl - The data URL of the generated audio.
+ */
+export function saveTaskAudioForPath(
+  firestore: Firestore,
+  userId: string,
+  pathId: string,
+  taskKey: string,
+  audioUrl: string
+): void {
+  if (!userId || !pathId) return;
+  const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
+  const audioData = { taskKey, audioUrl };
+  const updateData = {
+    taskAudios: arrayUnion(audioData),
+  };
+
+  updateDoc(pathDoc, updateData)
+    .catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: pathDoc.path,
+        operation: 'update',
+        requestResourceData: updateData,
       });
       errorEmitter.emit('permission-error', permissionError);
     });
@@ -106,6 +141,7 @@ export function getLearningPaths(
         createdAt: createdAt,
         pathData: data.pathData,
         completedTasks: data.completedTasks || [],
+        taskAudios: data.taskAudios || [],
       } as LearningPath;
     });
     onUpdate(paths);
@@ -120,3 +156,5 @@ export function getLearningPaths(
 
   return unsubscribe;
 }
+
+    

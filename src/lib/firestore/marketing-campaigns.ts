@@ -32,6 +32,7 @@ export interface MarketingCampaign {
   campaignIdea: CampaignIdea;
   campaignPlan: CampaignPlan;
   completedTasks: string[];
+  taskAudios?: { taskKey: string, audioUrl: string }[];
 }
 
 /**
@@ -68,6 +69,7 @@ export async function saveCampaign(
     campaignIdea,
     campaignPlan,
     completedTasks: [],
+    taskAudios: [],
   };
 
   try {
@@ -83,6 +85,40 @@ export async function saveCampaign(
     throw error;
   }
 }
+
+/**
+ * Saves a generated audio URL for a specific task in a marketing campaign.
+ * @param firestore - The Firestore instance.
+ * @param userId - The ID of the user.
+ * @param campaignId - The ID of the marketing campaign.
+ * @param taskKey - The unique identifier for the task.
+ * @param audioUrl - The data URL of the generated audio.
+ */
+export function saveTaskAudioForCampaign(
+  firestore: Firestore,
+  userId: string,
+  campaignId: string,
+  taskKey: string,
+  audioUrl: string
+): void {
+  if (!userId || !campaignId) return;
+  const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
+  const audioData = { taskKey, audioUrl };
+  const updateData = {
+    taskAudios: arrayUnion(audioData),
+  };
+
+  updateDoc(campaignDoc, updateData)
+    .catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: campaignDoc.path,
+        operation: 'update',
+        requestResourceData: updateData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+}
+
 
 /**
  * Toggles the completion status of a task within a specific campaign.
@@ -145,6 +181,7 @@ export function getMarketingCampaigns(
         campaignIdea: data.campaignIdea,
         campaignPlan: data.campaignPlan,
         completedTasks: data.completedTasks || [],
+        taskAudios: data.taskAudios || [],
       } as MarketingCampaign;
     });
     onUpdate(campaigns);
@@ -159,3 +196,5 @@ export function getMarketingCampaigns(
 
   return unsubscribe;
 }
+
+    

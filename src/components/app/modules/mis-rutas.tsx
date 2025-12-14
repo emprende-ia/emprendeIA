@@ -2,15 +2,15 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getLearningPaths, toggleTaskCompletion, type LearningPath } from '@/lib/firestore/learning-paths';
+import { getLearningPaths, toggleTaskCompletion, saveTaskAudioForPath, type LearningPath } from '@/lib/firestore/learning-paths';
 import { generateTaskAudio } from '@/ai/flows/generate-task-audio';
-import { Loader2, Route, BookOpen, GraduationCap, Calendar, Video, FileText, BarChart2, Info, HelpCircle, AudioWaveform, Play, Pause, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
+import { Loader2, Route, BookOpen, GraduationCap, Video, FileText, BarChart2, Info, AudioWaveform, Play, Pause, Award, Sparkles, Rocket, PartyPopper } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -90,9 +90,11 @@ const formatTime = (seconds: number) => {
 
 const AudioPlayer = ({
   taskKey,
+  initialAudioUrl,
   onGenerate,
 }: {
   taskKey: string;
+  initialAudioUrl?: string;
   onGenerate: (taskKey: string) => void;
 }) => {
   const {
@@ -107,6 +109,7 @@ const AudioPlayer = ({
 
   const isCurrentAudio = activeAudio?.key === taskKey;
   const isLoading = isAudioLoading === taskKey;
+  const audioUrl = isCurrentAudio ? activeAudio.url : initialAudioUrl;
 
   if (isLoading) {
     return (
@@ -117,26 +120,26 @@ const AudioPlayer = ({
     );
   }
   
-  if (isCurrentAudio && activeAudio?.url) {
+  if (audioUrl) {
     return (
-      <div className="flex w-full items-center gap-2 rounded-lg bg-primary/10 p-2 border border-primary/20 hover:bg-primary/20 transition-colors mt-2">
+      <div className="flex w-full items-center gap-2 rounded-lg bg-secondary/80 p-2 border border-border hover:bg-secondary transition-colors mt-2">
         <Button
           size="icon"
           variant="ghost"
-          onClick={isPlaying ? handlePause : handlePlay}
-          className="h-8 w-8 flex-shrink-0 rounded-full text-primary hover:bg-primary/20 hover:text-primary"
+          onClick={isPlaying && isCurrentAudio ? handlePause : () => handlePlay(taskKey, audioUrl)}
+          className="h-8 w-8 flex-shrink-0 rounded-full text-foreground hover:bg-primary/20 hover:text-primary"
         >
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          {isPlaying && isCurrentAudio ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
         <div className="flex-grow space-y-1">
-            <div className="relative h-1 w-full bg-primary/20 rounded-full">
+            <div className="relative h-1.5 w-full bg-border rounded-full">
                 <div 
-                    className="absolute h-1 bg-primary rounded-full"
-                    style={{ width: `${audioProgress}%`}}
+                    className="absolute h-1.5 bg-primary rounded-full"
+                    style={{ width: `${isCurrentAudio ? audioProgress : 0}%`}}
                 />
             </div>
-            <div className="flex justify-between text-xs text-primary/80">
-                <span>{formatTime(audioTime.currentTime)}</span>
+            <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{isCurrentAudio ? formatTime(audioTime.currentTime) : '0:00'}</span>
                 <span>{formatTime(audioTime.duration)}</span>
             </div>
         </div>
@@ -147,7 +150,7 @@ const AudioPlayer = ({
   return (
     <Button size="sm" variant="outline" onClick={() => onGenerate(taskKey)} className="w-full justify-start mt-2">
       <AudioWaveform className="mr-2 h-4 w-4" />
-      Audio-guía de la tarea
+      Necesito ayuda (Audio-guía)
     </Button>
   );
 };
@@ -173,6 +176,7 @@ const useProvideAudioPlayer = () => {
         const onEnded = () => {
             setIsPlaying(false);
             setAudioProgress(0);
+            setAudioTime(prev => ({ ...prev, currentTime: 0 }));
         };
         const onTimeUpdate = () => {
             if (audioElement.duration > 0) {
@@ -199,28 +203,30 @@ const useProvideAudioPlayer = () => {
         };
     }, []);
 
-    const handlePlay = () => audioRef.current?.play();
-    const handlePause = () => audioRef.current?.pause();
+    const play = (key: string, url: string) => {
+        if (audioRef.current) {
+            if (activeAudio?.key === key) {
+                audioRef.current.play();
+            } else {
+                setActiveAudio({ key, url });
+                audioRef.current.src = url;
+                audioRef.current.play();
+            }
+        }
+    };
+    const pause = () => audioRef.current?.pause();
 
     const generateAndPlayAudio = async (
         taskKey: string,
-        generatorFn: () => Promise<{ audioUrl: string }>
+        generatorFn: () => Promise<{ audioUrl: string }>,
+        onGenerated: (url: string) => void
     ) => {
-        if (activeAudio?.key === taskKey && audioRef.current) {
-            isPlaying ? handlePause() : handlePlay();
-            return;
-        }
-
+        if (isAudioLoading) return;
         setIsAudioLoading(taskKey);
-        setAudioProgress(0);
-        setAudioTime({ currentTime: 0, duration: 0 });
         try {
             const { audioUrl } = await generatorFn();
-            setActiveAudio({ key: taskKey, url: audioUrl });
-            if (audioRef.current) {
-                audioRef.current.src = audioUrl;
-                audioRef.current.play();
-            }
+            play(taskKey, audioUrl);
+            onGenerated(audioUrl); // Callback to save the URL
         } catch (error) {
             console.error("Error generating audio:", error);
             toast({ title: 'Error', description: 'No se pudo generar el audio de ayuda.', variant: 'destructive' });
@@ -228,7 +234,7 @@ const useProvideAudioPlayer = () => {
             setIsAudioLoading(null);
         }
     };
-
+    
     return {
         activeAudio,
         audioRef,
@@ -236,8 +242,8 @@ const useProvideAudioPlayer = () => {
         isPlaying,
         audioProgress,
         audioTime,
-        handlePlay,
-        handlePause,
+        handlePlay: play,
+        handlePause: pause,
         generateAndPlayAudio
     };
 };
@@ -320,13 +326,22 @@ function SavedPathsList() {
     };
 
     const handleAudioHelp = (path: LearningPath, step: LearningPath['pathData']['ruta_aprendizaje'][0]) => {
+        if (!user || !firestore) return;
         const taskKey = `${path.id}-${step.tarea_del_dia}`;
-        generateAndPlayAudio(taskKey, () => generateTaskAudio({
-            taskTitle: step.titulo,
-            taskObjective: step.objetivo_de_aprendizaje,
-            taskContent: step.contenido_clave.join(', '),
-            taskAction: step.tarea_del_dia,
-        }));
+
+        generateAndPlayAudio(
+            taskKey,
+            () => generateTaskAudio({
+                taskTitle: step.titulo,
+                taskObjective: step.objetivo_de_aprendizaje,
+                taskContent: step.contenido_clave.join(', '),
+                taskAction: step.tarea_del_dia,
+            }),
+            (audioUrl) => {
+                // This callback saves the generated audio URL
+                saveTaskAudioForPath(firestore, user.uid, path.id, taskKey, audioUrl);
+            }
+        );
     };
 
     if (isLoading) {
@@ -347,6 +362,8 @@ function SavedPathsList() {
                 const totalTasks = path.pathData.ruta_aprendizaje.length;
                 const completedTasksCount = path.completedTasks.length;
                 const progress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
+                const taskAudiosMap = new Map((path.taskAudios || []).map(item => [item.taskKey, item.audioUrl]));
+
 
                 return (
                     <Card key={path.id} className="bg-card">
@@ -365,7 +382,9 @@ function SavedPathsList() {
                                 {path.pathData.ruta_aprendizaje.map((step, index) => {
                                     const taskKey = step.tarea_del_dia;
                                     const isCompleted = path.completedTasks.includes(taskKey);
-                                    
+                                    const audioTaskKey = `${path.id}-${taskKey}`;
+                                    const audioUrl = taskAudiosMap.get(audioTaskKey);
+
                                     return (
                                         <AccordionItem value={`item-${index}`} key={index}>
                                             <AccordionTrigger>
@@ -375,7 +394,7 @@ function SavedPathsList() {
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent className="space-y-4 pl-8">
-                                                <div className="p-4 bg-secondary/50 rounded-md">
+                                                <div className="p-3 bg-secondary/50 rounded-md">
                                                     <div className="flex items-start gap-3">
                                                         <Checkbox 
                                                             id={`task-${path.id}-${index}`}
@@ -389,7 +408,8 @@ function SavedPathsList() {
                                                         </label>
                                                     </div>
                                                      <AudioPlayer 
-                                                        taskKey={`${path.id}-${taskKey}`}
+                                                        taskKey={audioTaskKey}
+                                                        initialAudioUrl={audioUrl}
                                                         onGenerate={() => handleAudioHelp(path, step)}
                                                      />
                                                 </div>
@@ -497,3 +517,5 @@ export function MisRutasModule({ isMenuItem = false }: MisRutasModuleProps) {
     </Dialog>
   );
 }
+
+    

@@ -173,6 +173,17 @@
             "type": "string"
           },
           "description": "An array of task titles that have been marked as completed."
+        },
+        "taskAudios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "taskKey": { "type": "string" },
+              "audioUrl": { "type": "string" }
+            }
+          },
+          "description": "An array of objects mapping task keys to their generated audio URLs."
         }
       },
       "required": ["createdAt", "pathData"]
@@ -201,6 +212,17 @@
             "type": "string"
           },
           "description": "An array of task titles that have been marked as completed."
+        },
+        "taskAudios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "taskKey": { "type": "string" },
+              "audioUrl": { "type": "string" }
+            }
+          },
+          "description": "An array of objects mapping task keys to their generated audio URLs."
         }
       },
       "required": ["createdAt", "campaignIdea", "campaignPlan"]
@@ -363,3 +385,5 @@
     ]
   }
 }
+
+    
