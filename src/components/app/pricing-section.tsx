@@ -5,12 +5,12 @@ import { Check, Gem, Sparkles, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { createCheckoutSession } from '@/ai/flows/test-stripe-checkout';
 
 
 const plans = [
@@ -62,13 +62,12 @@ const plans = [
 
 export function PricingSection() {
     const { user } = useUser();
-    const firestore = useFirestore();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const router = useRouter();
 
     const handleCheckout = async (priceId: string | null | undefined) => {
-        if (!user || !firestore) {
+        if (!user) {
             toast({
                 title: 'Inicia sesión para continuar',
                 description: 'Necesitas una cuenta para poder suscribirte a un plan.',
@@ -90,53 +89,17 @@ export function PricingSection() {
         setIsLoading(priceId);
 
         try {
-            const customerDocRef = doc(firestore, 'customers', user.uid);
-            await setDoc(customerDocRef, { 
-              email: user.email,
-              stripeId: null 
-            }, { merge: true });
-
-            const checkoutSessionsCollection = collection(firestore, 'customers', user.uid, 'checkout_sessions');
-            const newSessionDoc = await addDoc(checkoutSessionsCollection, {
-                price: priceId,
-                quantity: 1,
-                success_url: `${window.location.origin}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: window.location.href,
-                mode: 'subscription',
-                client_reference_id: user.uid,
-                customer_email: user.email || undefined,
+            const { checkoutUrl } = await createCheckoutSession({
+                userId: user.uid,
+                priceId: priceId,
+                userEmail: user.email || undefined,
             });
 
-            const unsubscribe = onSnapshot(
-                newSessionDoc,
-                (snapshot) => {
-                    const data = snapshot.data();
-                    if (data?.url) {
-                        unsubscribe();
-                        window.location.href = data.url;
-                    }
-                    if (data?.error) {
-                        unsubscribe();
-                        console.error("Stripe Extension Error:", data.error.message);
-                        toast({
-                            title: 'Error al crear la sesión de pago',
-                            description: `Error de la extensión de Stripe: ${data.error.message}`,
-                            variant: 'destructive',
-                        });
-                        setIsLoading(null);
-                    }
-                },
-                (error) => {
-                    unsubscribe();
-                    console.error("Firestore snapshot error:", error);
-                    toast({
-                        title: 'Error de Firestore',
-                        description: 'No se pudo escuchar los cambios en la sesión de pago.',
-                        variant: 'destructive',
-                    });
-                    setIsLoading(null);
-                }
-            );
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+            } else {
+                 throw new Error('No se recibió la URL de checkout.');
+            }
 
         } catch (error: any) {
              toast({
