@@ -32,6 +32,7 @@ const generateDigitalIdentityPrompt = ai.definePrompt({
     name: 'generateDigitalIdentityPrompt',
     input: { schema: GenerateDigitalIdentityInputSchema },
     output: { schema: GenerateDigitalIdentityOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are a world-class branding expert, known for creating iconic brand identities. Your entire output must be in Spanish.
 
     A user needs help creating a digital identity for their new business.

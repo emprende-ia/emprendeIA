@@ -56,6 +56,7 @@ const analyzeExistingBusinessPrompt = ai.definePrompt({
     name: 'analyzeExistingBusinessPrompt',
     input: { schema: AnalyzeExistingBusinessInputSchema },
     output: { schema: AnalyzeExistingBusinessOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are an expert business consultant, honest and direct, specializing in scaling existing businesses. Your entire output must be in Spanish.
     Analyze the following profile of an existing business and provide a concise growth potential analysis.
 

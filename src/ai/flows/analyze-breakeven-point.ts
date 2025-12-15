@@ -40,6 +40,7 @@ const analyzeBreakevenPointPrompt = ai.definePrompt({
     name: 'analyzeBreakevenPointPrompt',
     input: { schema: AnalyzeBreakevenPointInputSchema },
     output: { schema: AnalyzeBreakevenPointOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are an expert financial analyst for startups. Your task is to calculate the break-even point based on a list of transactions and an average sale price. Your entire output must be in Spanish.
 
     **Business Data:**

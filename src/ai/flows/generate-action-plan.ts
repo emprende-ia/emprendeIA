@@ -63,6 +63,7 @@ const generateActionPlanPrompt = ai.definePrompt({
     name: 'generateActionPlanPrompt',
     input: { schema: GenerateActionPlanInputSchema },
     output: { schema: GenerateActionPlanOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
     prompt: `You are a master micro-learning editor for "Emprende Fácil," an app for entrepreneurs in Mexico. Your mission is to create a hyper-personalized, actionable learning path to help a user achieve their next goal. Use neutral Spanish with occasional Mexican business context.
 
     **User Profile:**
