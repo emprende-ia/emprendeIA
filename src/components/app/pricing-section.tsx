@@ -31,7 +31,7 @@ const plans = [
   {
     name: 'Plan Oro',
     icon: Sparkles,
-    price: '$99.00 MXN',
+    price: '$99.00 MXN/mes',
     priceId: process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID,
     description: 'Ideal para emprendedores que buscan optimizar su cadena de suministro.',
     features: [
@@ -46,7 +46,7 @@ const plans = [
   {
     name: 'Plan Diamante',
     icon: Gem,
-    price: '$149.00 MXN',
+    price: '$149.00 MXN/mes',
     priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID,
     description: 'Para negocios que necesitan analítica avanzada y máxima visibilidad.',
     features: [
@@ -194,9 +194,9 @@ export function PricingSection() {
                     router.push('/dashboard');
                   }
                 }}
-                disabled={!!isLoading}
+                disabled={isLoading !== null}
               >
-                {isLoading && plan.priceId ? (
+                {isLoading === plan.priceId ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
                   plan.cta
