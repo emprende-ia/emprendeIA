@@ -1,6 +1,37 @@
 
 {
   "entities": {
+    "CheckoutSession": {
+        "title": "Checkout Session",
+        "description": "Represents a Stripe checkout session for a user.",
+        "type": "object",
+        "properties": {
+          "price": {
+            "type": "string",
+            "description": "The Stripe Price ID for the item."
+          },
+          "success_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cancel_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["subscription", "payment"]
+          },
+          "status": {
+              "type": "string"
+          },
+          "url": {
+              "type": "string",
+              "format": "uri"
+          }
+        },
+        "required": ["price", "success_url", "cancel_url", "mode"]
+      },
     "ViabilityAnalysis": {
       "title": "Viability Analysis",
       "description": "Represents a saved viability analysis for a user's business idea or existing business.",
@@ -395,6 +426,16 @@
           "entityName": "SavedSupplier",
           "schema": { "$ref": "#/entities/SavedSupplier" },
           "description": "Stores a user's saved supplier profiles."
+        }
+      },
+      {
+        "path": "/customers/{userId}/checkout_sessions/{sessionId}",
+        "definition": {
+          "entityName": "CheckoutSession",
+          "schema": {
+            "$ref": "#/entities/CheckoutSession"
+          },
+          "description": "Stores Stripe checkout sessions for a user."
         }
       }
     ]

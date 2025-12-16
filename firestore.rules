@@ -53,6 +53,27 @@ service cloud.firestore {
     }
 
     /**
+     * @description Stripe Extension: Allows a user to create their own customer document.
+     * @path /customers/{userId}
+     * @allow (create): A user can create their own customer document in Stripe.
+     * @principle User can initiate their own Stripe customer object.
+     */
+     match /customers/{userId} {
+        allow create, write: if isOwner(userId);
+     }
+    
+    /**
+     * @description Stripe Extension: Allows a user to create a checkout session. The extension handles reads/updates.
+     * @path /customers/{userId}/checkout_sessions/{sessionId}
+     * @allow (create): A user can create a checkout session for themselves.
+     * @principle User can initiate a payment flow.
+     */
+     match /customers/{userId}/checkout_sessions/{sessionId} {
+        allow create: if isOwner(userId);
+        allow read, write: if isOwner(userId);
+     }
+
+    /**
      * @description Enforces user-ownership for their viability analysis document.
      * @path /users/{userId}/viabilityAnalysis/latest
      * @allow (read, write): The user can manage their own analysis document.
