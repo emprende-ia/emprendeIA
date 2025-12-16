@@ -79,11 +79,7 @@ export function PricingSection() {
         }
 
         if (!priceId) {
-             toast({
-                title: 'Plan no configurado',
-                description: 'El administrador necesita configurar los IDs de precios de Stripe en el archivo .env.',
-                variant: 'destructive'
-            });
+            router.push('/dashboard');
             return;
         }
 
@@ -203,14 +199,8 @@ export function PricingSection() {
                 size="lg"
                 className="w-full"
                 variant={plan.isPrimary ? 'default' : 'outline'}
-                onClick={() => {
-                  if (plan.priceId) {
-                    handleCheckout(plan.priceId);
-                  } else {
-                    router.push('/dashboard');
-                  }
-                }}
-                disabled={isLoading !== null && isLoading !== plan.priceId}
+                onClick={() => handleCheckout(plan.priceId)}
+                disabled={plan.priceId ? isLoading !== null && isLoading !== plan.priceId : false}
               >
                 {isLoading === plan.priceId ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
