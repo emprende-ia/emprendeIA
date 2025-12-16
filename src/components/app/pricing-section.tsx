@@ -1,16 +1,15 @@
-
 'use client';
 
 import { Check, Gem, Sparkles, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createCheckoutSession } from '@/ai/flows/test-stripe-checkout';
+import { doc, collection, addDoc, onSnapshot, setDoc } from 'firebase/firestore';
 
 
 const plans = [
@@ -62,12 +61,13 @@ const plans = [
 
 export function PricingSection() {
     const { user } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const router = useRouter();
 
     const handleCheckout = async (priceId: string | null | undefined) => {
-        if (!user) {
+        if (!user || !firestore) {
             toast({
                 title: 'Inicia sesión para continuar',
                 description: 'Necesitas una cuenta para poder suscribirte a un plan.',
@@ -89,20 +89,74 @@ export function PricingSection() {
         setIsLoading(priceId);
 
         try {
-            const { checkoutUrl } = await createCheckoutSession({
-                userId: user.uid,
-                priceId: priceId,
-                userEmail: user.email || undefined,
+            // Step 1: Ensure the customer document exists.
+            const customerDocRef = doc(firestore, 'customers', user.uid);
+            await setDoc(customerDocRef, { email: user.email }, { merge: true });
+
+            // Step 2: Create the checkout session document in the sub-collection.
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+            const checkoutSessionsCollection = collection(firestore, 'customers', user.uid, 'checkout_sessions');
+            
+            const newSessionDoc = await addDoc(checkoutSessionsCollection, {
+                price: priceId,
+                success_url: `${appUrl}/dashboard?payment=success`,
+                cancel_url: `${appUrl}/pricing?payment=cancelled`,
+                mode: 'subscription',
+                metadata: {
+                    firebase_uid: user.uid,
+                },
             });
             
-            // Redirect the user to Stripe's checkout page
-            window.location.assign(checkoutUrl);
+            // Step 3: Wait for the Stripe extension to populate the checkout URL.
+            const unsubscribe = onSnapshot(
+                newSessionDoc,
+                (snapshot) => {
+                    const data = snapshot.data();
+                    if (data?.url) {
+                        unsubscribe();
+                        window.location.assign(data.url);
+                    }
+                    if (data?.error) {
+                        unsubscribe();
+                        console.error("Stripe Extension Error:", data.error.message);
+                        toast({
+                            title: 'Error al procesar el pago',
+                            description: data.error.message || 'No se pudo iniciar el proceso de pago. Inténtalo de nuevo.',
+                            variant: 'destructive',
+                        });
+                        setIsLoading(null);
+                    }
+                },
+                (error) => {
+                    unsubscribe();
+                    console.error('onSnapshot error:', error);
+                    toast({
+                        title: 'Error de conexión',
+                        description: 'No se pudo conectar con el servicio de pago.',
+                        variant: 'destructive',
+                    });
+                    setIsLoading(null);
+                }
+            );
+
+            // Add a timeout to prevent the flow from running indefinitely
+            setTimeout(() => {
+                unsubscribe();
+                if (isLoading === priceId) { // Check if we are still loading this specific plan
+                    toast({
+                        title: 'La solicitud tardó demasiado',
+                        description: 'No se pudo obtener la URL de pago. Por favor, revisa la consola y los logs de la extensión de Stripe.',
+                        variant: 'destructive',
+                    });
+                    setIsLoading(null);
+                }
+            }, 40000); // 40-second timeout
 
         } catch (error: any) {
             console.error('Error al iniciar el checkout:', error);
             toast({
                 title: 'Error Inesperado',
-                description: error.message || 'No se pudo iniciar el proceso de pago. Inténtalo de nuevo.',
+                description: error.message || 'No se pudo iniciar el proceso de pago.',
                 variant: 'destructive',
             });
             setIsLoading(null);
@@ -170,5 +224,3 @@ export function PricingSection() {
     </section>
   );
 }
-
-    
