@@ -25,7 +25,7 @@ const plans = [
       'Directorio de proveedores',
       'Búsquedas limitadas',
     ],
-    cta: 'Comenzar Ahora',
+    cta: 'Plan Gratis',
     isPrimary: false,
   },
   {
