@@ -10,7 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createCheckoutSession } from '@/ai/flows/test-stripe-checkout';
+import { addDoc, collection, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 
 const plans = [
@@ -62,12 +63,13 @@ const plans = [
 
 export function PricingSection() {
     const { user } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const router = useRouter();
 
     const handleCheckout = async (priceId: string | null | undefined) => {
-        if (!user) {
+        if (!user || !firestore) {
             toast({
                 title: 'Inicia sesión para continuar',
                 description: 'Necesitas una cuenta para poder suscribirte a un plan.',
@@ -77,8 +79,8 @@ export function PricingSection() {
             return;
         }
 
-        if (!priceId || priceId.startsWith('price_xx')) {
-            toast({
+        if (!priceId) {
+             toast({
                 title: 'Plan no configurado',
                 description: 'El administrador necesita configurar los IDs de precios de Stripe en el archivo .env.',
                 variant: 'destructive'
@@ -89,22 +91,39 @@ export function PricingSection() {
         setIsLoading(priceId);
 
         try {
-            const { checkoutUrl } = await createCheckoutSession({
-                userId: user.uid,
-                priceId: priceId,
-                userEmail: user.email || undefined,
+            // Asegurarse que el documento del customer existe
+            await setDoc(doc(firestore, 'customers', user.uid), { email: user.email }, { merge: true });
+
+            const checkoutSessionRef = await addDoc(
+                collection(firestore, 'customers', user.uid, 'checkout_sessions'),
+                {
+                    price: priceId,
+                    success_url: window.location.origin,
+                    cancel_url: window.location.href,
+                    mode: 'subscription',
+                }
+            );
+
+            onSnapshot(checkoutSessionRef, (snap) => {
+                const { error, url } = snap.data() as { error: { message: string }, url: string };
+                if (error) {
+                    console.error(`An error occurred: ${error.message}`);
+                    toast({
+                        title: 'Error al crear la sesión de pago',
+                        description: error.message,
+                        variant: 'destructive',
+                    });
+                    setIsLoading(null);
+                }
+                if (url) {
+                    window.location.assign(url);
+                }
             });
-
-            if (checkoutUrl) {
-                window.location.href = checkoutUrl;
-            } else {
-                 throw new Error('No se recibió la URL de checkout.');
-            }
-
-        } catch (error: any) {
-             toast({
-                title: 'Error al iniciar el pago',
-                description: error.message || 'No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.',
+        } catch (error) {
+            console.error('Error al iniciar el checkout:', error);
+            toast({
+                title: 'Error Inesperado',
+                description: 'No se pudo iniciar el proceso de pago. Inténtalo de nuevo.',
                 variant: 'destructive',
             });
             setIsLoading(null);

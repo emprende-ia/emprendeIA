@@ -2,21 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, type User as FirebaseAuthUser } from 'firebase/auth';
-import { doc, onSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-import { useAuth, useFirestore } from '@/firebase/provider';
-
-// Define el tipo para el perfil de usuario de Firestore
-export interface UserProfile {
-  displayName: string;
-  email: string;
-  photoURL?: string;
-  createdAt: Date;
-  plan: 'básico' | 'oro' | 'diamante';
-}
-
-// Combina el usuario de Auth con el perfil de Firestore
-export interface User extends FirebaseAuthUser, Partial<UserProfile> {}
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { useAuth } from '@/firebase/provider';
 
 export interface UseUserResult {
   user: User | null;
@@ -26,68 +13,30 @@ export interface UseUserResult {
 
 export function useUser(): UseUserResult {
   const auth = useAuth();
-  const firestore = useFirestore();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(auth?.currentUser || null);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [userError, setUserError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!auth || !firestore) {
+    if (!auth) {
       setIsUserLoading(false);
       return;
     }
 
-    const unsubscribeAuth = onAuthStateChanged(
+    const unsubscribe = onAuthStateChanged(
       auth,
-      (authUser) => {
-        if (authUser) {
-          // Usuario autenticado, ahora escucha su perfil en Firestore
-          const userDocRef = doc(firestore, 'users', authUser.uid);
-          const unsubscribeFirestore = onSnapshot(
-            userDocRef,
-            (docSnapshot) => {
-              if (docSnapshot.exists()) {
-                const profileData = docSnapshot.data() as DocumentData;
-                const combinedUser: User = {
-                  ...authUser,
-                  ...profileData,
-                  createdAt: profileData.createdAt instanceof Timestamp ? profileData.createdAt.toDate() : new Date(),
-                  plan: profileData.plan || 'básico', // Asigna 'básico' si no hay plan
-                };
-                setUser(combinedUser);
-              } else {
-                // Perfil no encontrado, usa solo datos de Auth y un plan básico
-                const guestUser: User = {
-                  ...authUser,
-                  plan: 'básico',
-                };
-                setUser(guestUser);
-              }
-              setIsUserLoading(false);
-            },
-            (error) => {
-              console.error("Error fetching user profile:", error);
-              setUserError(error);
-              setIsUserLoading(false);
-            }
-          );
-          // Retorna la función de desuscripción de Firestore
-          return () => unsubscribeFirestore();
-        } else {
-          // No hay usuario autenticado
-          setUser(null);
-          setIsUserLoading(false);
-        }
+      (firebaseUser) => {
+        setUser(firebaseUser);
+        setIsUserLoading(false);
       },
       (error) => {
-        console.error("Auth state change error:", error);
         setUserError(error);
         setIsUserLoading(false);
       }
     );
 
-    return () => unsubscribeAuth();
-  }, [auth, firestore]);
+    return () => unsubscribe();
+  }, [auth]);
 
   return { user, isUserLoading, userError };
 }

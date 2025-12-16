@@ -1,10 +1,10 @@
 
 /**
  * @file Firestore Security Rules
- * @core-philosophy This ruleset enforces a strict user-ownership model for user-generated content and public read access for supplier data.
+ * @core-philosophy This ruleset enforces a strict user-ownership model for all user-generated content and public read access for general data like suppliers.
  * @data-structure
  *   - /suppliers/{supplierId}: Publicly readable supplier profiles.
- *   - /users/{userId}: Publicly readable user profiles.
+ *   - /users/{userId}: Publicly readable user profiles. All subcollections are private to the user.
  *   - /users/{userId}/searchHistory/{searchId}: Private search history for each user.
  *   - /users/{userId}/transactions/{transactionId}: Private financial transactions for each user.
  *   - /users/{userId}/learningPaths/{pathId}: Private learning paths saved by each user.
@@ -13,12 +13,10 @@
  *   - /users/{userId}/brandIdentity/main: Private brand identity for each user.
  *   - /users/{userId}/savedSuppliers/{supplierId}: Private list of saved suppliers for each user.
  *   - /users/{userId}/viabilityAnalysis/latest: Private document for the user's latest viability analysis.
- *   - /customers/{userId}/checkout_sessions/{sessionId}: Private checkout sessions for Stripe integration.
  * @key-security-decisions
  *   - User listing is disallowed to protect privacy.
  *   - Supplier data is publicly readable.
- *   - User-owned data is strictly limited to the owning user.
- *   - Plan-related fields (`plan`, `planStatus`) are protected from client-side writes.
+ *   - All user-owned data (subcollections under /users/{userId}) is strictly limited to the owning user.
  * @denormalization-for-authorization N/A (ownership is based on path).
  * @structural-segregation Private user data is stored under the /users/{userId} collection, while public supplier data is stored at the top level.
  */
@@ -39,38 +37,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows a user to create and manage their own customer document for Stripe.
-     * @path /customers/{userId}
-     * @allow (create, update): An authenticated user can create or update their own customer document.
-     */
-    match /customers/{userId} {
-        allow read, write: if isOwner(userId);
-    }
-    
-    /**
-     * @description Allows read and write access to customer data for the Stripe extension. This is critical for creating checkout sessions.
-     * @path /customers/{userId}/checkout_sessions/{sessionId}
-     * @allow (read, write): An authenticated user can read and write to their own checkout sessions.
-     * @principle Enforces user-ownership for Stripe checkout session creation.
-     */
-    match /customers/{userId}/checkout_sessions/{sessionId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    /**
      * @description Allows public read access to user profiles. Write access is restricted to the owning user for profile creation and updates.
      * @path /users/{userId}
      * @allow (get, list): Anyone can read user profile data.
-     * @allow (create): A user can create their profile if the userId matches their auth UID.
-     * @allow (update): A user can update their profile if they are the owner and they are not trying to change their plan.
-     * @allow (delete): A user can delete their own profile.
-     * @principle Enforces user-ownership for profile updates and protects subscription fields.
+     * @allow (create, delete): A user can create or delete their own profile if the userId matches their auth UID.
+     * @allow (update): A user can update their own profile if they are the owner and the document already exists.
+     * @principle Enforces user-ownership for profile updates.
      */
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId) && !isChangingPlan();
-      allow delete: if isExistingOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
     }
 
     /**
@@ -179,12 +156,6 @@ service cloud.firestore {
 
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
-    }
-
-    function isChangingPlan() {
-      // Deny the update if the 'plan' or 'planStatus' field is being changed.
-      // These fields should only be modified by the backend (Cloud Function).
-      return request.resource.data.plan != resource.data.plan || request.resource.data.planStatus != resource.data.planStatus;
     }
   }
 }

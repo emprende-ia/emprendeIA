@@ -40,23 +40,13 @@
           "type": "string",
           "description": "URL of the user's profile picture."
         },
-        "plan": {
-          "type": "string",
-          "enum": ["básico", "oro", "diamante"],
-          "description": "The user's subscription plan."
-        },
-        "planStatus": {
-          "type": "string",
-          "enum": ["active", "inactive"],
-          "description": "The status of the user's subscription plan."
-        },
-        "updatedAt": {
+        "createdAt": {
           "type": "string",
           "format": "date-time",
-          "description": "The timestamp of the last update."
+          "description": "The timestamp of when the user was created."
         }
       },
-      "required": ["displayName", "email", "plan"]
+      "required": ["displayName", "email", "createdAt"]
     },
     "Note": {
       "title": "Note",
