@@ -76,11 +76,6 @@ export default function LandingPage() {
                   Iniciar Sesión
               </Link>
             </Button>
-             <Button asChild variant="outline" size="lg" className="w-full text-lg font-bold">
-              <Link href="/start">
-                  Continuar como invitado
-              </Link>
-            </Button>
             <Dialog>
               <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="w-full text-lg font-bold">
