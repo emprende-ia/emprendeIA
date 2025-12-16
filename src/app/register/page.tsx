@@ -165,7 +165,7 @@ function RegisterPageContent() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Crear una Cuenta</CardTitle>
-          <CardDescription className="pt-2">Completa tus datos para unirte a Emprende Fácil</CardDescription>
+          <CardDescription className="pt-2">Completa tus datos para unirte a Emprende IA</CardDescription>
         </CardHeader>
         <CardContent className="p-8 pt-6">
           <Form {...form}>
