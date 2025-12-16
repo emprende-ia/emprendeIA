@@ -12,6 +12,7 @@ import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { defineString } from 'firebase-functions/params';
 
 // Initialize Firebase Admin SDK if not already done
 if (getApps().length === 0) {
@@ -20,10 +21,15 @@ if (getApps().length === 0) {
 
 const db = getFirestore();
 
+// Define Stripe Price IDs from environment variables
+const stripePlusPriceId = defineString('STRIPE_PLUS_PRICE_ID');
+const stripePremiumPriceId = defineString('STRIPE_PREMIUM_PRICE_ID');
+
+
 // Define a mapping from Stripe Price ID to your application's Plan ID
 const priceToPlanMap: { [key: string]: string } = {
-    [process.env.STRIPE_PLUS_PRICE_ID!]: 'oro',
-    [process.env.STRIPE_PREMIUM_PRICE_ID!]: 'diamante',
+    [stripePlusPriceId.value()]: 'oro',
+    [stripePremiumPriceId.value()]: 'diamante',
 };
 
 /**
@@ -50,10 +56,10 @@ export const onCheckoutSessionCompleted = onDocumentWritten(
     
     // Extract necessary data from the session
     const userId = event.params.userId;
-    const priceId = sessionData.price?.id;
+    const priceId = sessionData.line_items?.[0]?.price?.id;
 
     if (!userId || !priceId) {
-        logger.error(`Missing userId or priceId for session ${event.params.sessionId}`);
+        logger.error(`Missing userId or priceId for session ${event.params.sessionId}`, { sessionData });
         return;
     }
     
@@ -79,5 +85,3 @@ export const onCheckoutSessionCompleted = onDocumentWritten(
     }
   }
 );
-
-    
