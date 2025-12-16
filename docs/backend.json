@@ -44,6 +44,16 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp of when the user was created."
+        },
+        "plan": {
+            "type": "string",
+            "enum": ["básico", "oro", "diamante"],
+            "description": "The user's subscription plan."
+        },
+        "planStatus": {
+            "type": "string",
+            "enum": ["active", "inactive"],
+            "description": "The status of the user's subscription."
         }
       },
       "required": ["displayName", "email", "createdAt"]
@@ -390,3 +400,5 @@
     ]
   }
 }
+
+    

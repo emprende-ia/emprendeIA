@@ -37,17 +37,19 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to user profiles. Write access is restricted to the owning user for profile creation and updates.
+     * @description Allows public read access to user profiles, but restricts writes.
      * @path /users/{userId}
      * @allow (get, list): Anyone can read user profile data.
-     * @allow (create, delete): A user can create or delete their own profile if the userId matches their auth UID.
-     * @allow (update): A user can update their own profile if they are the owner and the document already exists.
-     * @principle Enforces user-ownership for profile updates.
+     * @allow (create): A user can create their own profile.
+     * @allow (update): A user can update their profile, but NOT their plan or planStatus.
+     * @deny (delete): Users cannot delete their profiles.
+     * @principle Enforces user-ownership for profile updates while protecting subscription status.
      */
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId) && !isChangingPlan();
+      allow delete: if false;
     }
 
     /**
@@ -157,5 +159,12 @@ service cloud.firestore {
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
+
+    // Helper function to check if a user is trying to change their plan.
+    function isChangingPlan() {
+      return request.resource.data.plan != resource.data.plan || request.resource.data.planStatus != resource.data.planStatus;
+    }
   }
 }
+
+    
