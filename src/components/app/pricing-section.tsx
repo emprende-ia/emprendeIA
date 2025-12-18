@@ -32,7 +32,7 @@ const plans = [
     name: 'Plan Oro',
     icon: Sparkles,
     price: '$99.00 MXN/mes',
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID?.trim(),
     description: 'Ideal para emprendedores que buscan optimizar su cadena de suministro.',
     features: [
       'Recomendaciones priorizadas',
@@ -47,7 +47,7 @@ const plans = [
     name: 'Plan Diamante',
     icon: Gem,
     price: '$149.00 MXN/mes',
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID?.trim(),
     description: 'Para negocios que necesitan analítica avanzada y máxima visibilidad.',
     features: [
       'Todo en Plus',
@@ -68,6 +68,11 @@ export function PricingSection() {
     const router = useRouter();
 
     const handleCheckout = async (priceId: string | null | undefined) => {
+        if (!priceId) {
+            router.push('/dashboard');
+            return;
+        }
+
         if (!user || !firestore) {
             toast({
                 title: 'Inicia sesión para continuar',
@@ -78,19 +83,12 @@ export function PricingSection() {
             return;
         }
 
-        if (!priceId) {
-            router.push('/dashboard');
-            return;
-        }
-
         setIsLoading(priceId);
 
         try {
-            // Step 1: Ensure the customer document exists.
             const customerDocRef = doc(firestore, 'customers', user.uid);
             await setDoc(customerDocRef, { email: user.email }, { merge: true });
 
-            // Step 2: Create the checkout session document in the sub-collection.
             const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
             const checkoutSessionsCollection = collection(firestore, 'customers', user.uid, 'checkout_sessions');
             
@@ -104,7 +102,6 @@ export function PricingSection() {
                 },
             });
             
-            // Step 3: Wait for the Stripe extension to populate the checkout URL.
             const unsubscribe = onSnapshot(
                 newSessionDoc,
                 (snapshot) => {
@@ -136,10 +133,9 @@ export function PricingSection() {
                 }
             );
 
-            // Add a timeout to prevent the flow from running indefinitely
             setTimeout(() => {
                 unsubscribe();
-                if (isLoading === priceId) { // Check if we are still loading this specific plan
+                if (isLoading === priceId) { 
                     toast({
                         title: 'La solicitud tardó demasiado',
                         description: 'No se pudo obtener la URL de pago. Por favor, revisa la consola y los logs de la extensión de Stripe.',
@@ -147,7 +143,7 @@ export function PricingSection() {
                     });
                     setIsLoading(null);
                 }
-            }, 40000); // 40-second timeout
+            }, 40000);
 
         } catch (error: any) {
             console.error('Error al iniciar el checkout:', error);
@@ -200,7 +196,7 @@ export function PricingSection() {
                 className="w-full"
                 variant={plan.isPrimary ? 'default' : 'outline'}
                 onClick={() => handleCheckout(plan.priceId)}
-                disabled={plan.priceId ? isLoading !== null && isLoading !== plan.priceId : false}
+                disabled={isLoading !== null && isLoading !== plan.priceId}
               >
                 {isLoading === plan.priceId ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
