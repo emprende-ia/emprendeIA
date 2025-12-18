@@ -196,7 +196,7 @@ export function PricingSection() {
                 className="w-full"
                 variant={plan.isPrimary ? 'default' : 'outline'}
                 onClick={() => handleCheckout(plan.priceId)}
-                disabled={isLoading !== null && isLoading !== plan.priceId}
+                disabled={isLoading !== null && plan.priceId !== null && isLoading !== plan.priceId}
               >
                 {isLoading === plan.priceId ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
