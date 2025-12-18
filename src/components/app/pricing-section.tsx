@@ -191,19 +191,30 @@ export function PricingSection() {
               </ul>
             </CardContent>
             <CardFooter>
-               <Button
-                size="lg"
-                className="w-full"
-                variant={plan.isPrimary ? 'default' : 'outline'}
-                onClick={() => handleCheckout(plan.priceId)}
-                disabled={isLoading !== null && plan.priceId !== null && isLoading !== plan.priceId}
-              >
-                {isLoading === plan.priceId ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                {plan.priceId ? (
+                    <Button
+                        size="lg"
+                        className="w-full"
+                        variant={plan.isPrimary ? 'default' : 'outline'}
+                        onClick={() => handleCheckout(plan.priceId)}
+                        disabled={isLoading !== null}
+                    >
+                        {isLoading === plan.priceId ? (
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        ) : (
+                            plan.cta
+                        )}
+                    </Button>
                 ) : (
-                  plan.cta
+                    <Button
+                        size="lg"
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => router.push('/dashboard')}
+                    >
+                        {plan.cta}
+                    </Button>
                 )}
-              </Button>
             </CardFooter>
           </Card>
         ))}
