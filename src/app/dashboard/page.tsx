@@ -178,7 +178,7 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="relative z-10 flex flex-col h-full p-6">
                         <CardHeader className="flex-grow p-0">
                             <div className="flex items-center gap-3 mb-2">
