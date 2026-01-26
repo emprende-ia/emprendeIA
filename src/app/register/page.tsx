@@ -78,13 +78,10 @@ function RegisterPageContent() {
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      await updateProfile(user, {
+      await updateProfile(userCredential.user, {
         displayName: values.username,
       });
-
-      await getOrCreateUserProfile(firestore, user, {
+      await getOrCreateUserProfile(firestore, userCredential.user, {
         fullName: values.fullName,
         age: values.age,
       });
@@ -101,7 +98,7 @@ function RegisterPageContent() {
         if (error.code === 'auth/email-already-in-use') {
             description = "Este correo electrónico ya está en uso. Intenta con otro.";
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
+            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         }
         toast({
             title: "Error de Registro",
@@ -116,26 +113,21 @@ function RegisterPageContent() {
   const handleGoogleSignIn = async () => {
     if (!auth || !firestore) return;
     setIsGoogleSigningIn(true);
-    const provider = new GoogleAuthProvider();
-
     try {
-      const userCredential = await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
       await getOrCreateUserProfile(firestore, userCredential.user);
-      
       router.push('/start');
-
     } catch (error: any) {
         console.error("Google Sign-In Error:", error);
         let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
         if (error.code === 'auth/popup-closed-by-user') {
-            // User closed the popup, not a real error.
             setIsGoogleSigningIn(false);
             return;
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
+            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
-            description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos (*.cloudworkstations.dev, localhost, etc.).";
+            description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada con tus dominios autorizados (*.cloudworkstations.dev, localhost, etc.).";
         }
         
         toast({
@@ -226,7 +218,11 @@ function RegisterPageContent() {
                 </p>
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground pt-4 border-t">
-                Al registrarte, aceptas nuestros Términos de Servicio y{' '}
+                Al registrarte, aceptas nuestros{' '}
+                <Link href="/terms" className="underline hover:text-primary">
+                    Términos de Servicio
+                </Link>
+                {' '}y{' '}
                 <Link href="/privacy" className="underline hover:text-primary">
                     Política de Privacidad
                 </Link>
