@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search } from "lucide-react";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, Lightbulb } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
@@ -14,12 +13,18 @@ import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { BrandCampaign } from "@/components/app/modules/brand-campaign";
 
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
@@ -77,7 +82,6 @@ export default function DashboardPage() {
         <div className="pt-6">
             <h2 className="text-2xl font-bold mb-4 text-center">Todas las Herramientas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
                     <div className="relative h-40 w-full">
                         <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" fill className="object-cover" />
@@ -98,7 +102,7 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
-                    <div className="relative h-40 w-full">
+                     <div className="relative h-40 w-full">
                         <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" fill className="object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
                     </div>
@@ -141,16 +145,16 @@ export default function DashboardPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full p-6 pt-2">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Proveedores</CardTitle>
-                            </div>
-                            <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6 mt-auto">
-                            <ProveedoresModule />
-                        </CardFooter>
+                    <CardHeader className="flex-grow p-0">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
+                            <CardTitle className="text-2xl">Proveedores</CardTitle>
+                        </div>
+                        <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-0 pt-6 mt-auto">
+                        <ProveedoresModule />
+                    </CardFooter>
                     </div>
                 </Card>
 
@@ -169,6 +173,37 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardFooter className="p-0 pt-6 mt-auto">
                             <GuiaPasoAPasoModule />
+                        </CardFooter>
+                    </div>
+                </Card>
+
+                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"/>
+                    <div className="relative z-10 flex flex-col h-full p-6">
+                        <CardHeader className="flex-grow p-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Lightbulb className="h-8 w-8 text-primary" /></div>
+                                <CardTitle className="text-2xl">Conceptos de Marketing</CardTitle>
+                            </div>
+                            <CardDescription>Aprende los fundamentos para potenciar tu marca.</CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-0 pt-6 mt-auto">
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button className="w-full font-bold">Ver Conceptos</Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-3xl">
+                                    <DialogHeader>
+                                        <DialogTitle className="font-headline text-2xl">Conceptos Clave de Marketing</DialogTitle>
+                                        <DialogDescription>
+                                            Una guía rápida para entender los pilares del marketing digital.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="py-4 max-h-[70vh] overflow-y-auto">
+                                        <BrandCampaign />
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                         </CardFooter>
                     </div>
                 </Card>
