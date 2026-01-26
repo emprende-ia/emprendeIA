@@ -118,7 +118,7 @@ export default function TermsOfServicePage() {
         </ul>
 
         <h2 className="font-headline text-2xl font-semibold">9. Limitación de responsabilidad</h2>
-        <p className="font-bold">Lee esto con atención:</p>
+        <p><strong>Lee esto con atención:</strong></p>
         <p>Emprende IA se proporciona "tal cual" y "según disponibilidad". En la máxima medida permitida por la ley mexicana:</p>
         <ul className="list-disc list-inside space-y-2">
             <li>No garantizamos que el servicio sea ininterrumpido o libre de errores</li>
