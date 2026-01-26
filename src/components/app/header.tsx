@@ -87,8 +87,9 @@ export function AppHeader() {
       
       // Immediately update local state for preview
       const updatedIdentity = {
-          ...(brandIdentity || { brandName: 'Mi Marca', slogan: 'Mi Eslogan', colorPalette: [], logoPrompt: '' }),
+          ...(brandIdentity || { brandName: 'Mi Marca', slogan: 'Mi Eslogan', colorPalette: [], logoPrompt: '', logoUrl: null, logoSource: null }),
           logoUrl: dataUrl,
+          logoSource: 'user_uploaded' as const
       };
       setBrandIdentity(updatedIdentity as BrandIdentity);
       
