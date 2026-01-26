@@ -106,7 +106,7 @@ function LoginPageContent() {
            setIsGoogleSigningIn(false);
            return;
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
+            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${''}${error.message}`;
         } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
             description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada con tus dominios autorizados (*.cloudworkstations.dev, localhost, etc.).";
         }
@@ -231,11 +231,11 @@ function LoginPageContent() {
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground">
                 Al continuar, aceptas nuestros{' '}
-                <Link href="/terms" className="underline hover:text-primary">
+                <Link href="/terminos" className="underline hover:text-primary">
                     Términos de Servicio
                 </Link>
                 {' '}y{' '}
-                <Link href="/privacy" className="underline hover:text-primary">
+                <Link href="/privacidad" className="underline hover:text-primary">
                     Política de Privacidad
                 </Link>
                 .
