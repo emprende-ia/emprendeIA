@@ -43,6 +43,14 @@
     ],
     "rewrites": [
       {
+        "source": "/privacidad",
+        "destination": "/privacidad/index.html"
+      },
+      {
+        "source": "/terminos",
+        "destination": "/terminos/index.html"
+      },
+      {
         "source": "**",
         "apphosting": {
           "backendId": "studio"
