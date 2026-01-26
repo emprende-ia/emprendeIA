@@ -1,8 +1,7 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { User, LogIn, PlayCircle, Gem } from 'lucide-react';
+import { User, LogIn, PlayCircle, Gem, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useEffect } from 'react';
@@ -75,6 +74,12 @@ export default function LandingPage() {
                   <LogIn className="mr-2 h-5 w-5" />
                   Iniciar Sesión
               </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg" className="w-full text-lg">
+                <Link href="/dashboard">
+                    <UserCircle className="mr-2 h-5 w-5" />
+                    Continuar como invitado
+                </Link>
             </Button>
             <Dialog>
               <DialogTrigger asChild>

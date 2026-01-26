@@ -93,14 +93,12 @@ function LoginPageContent() {
     );
   };
 
-  const handleGoogleSignIn = async () => {
+ const handleGoogleSignIn = async () => {
     if (!auth || !firestore) return;
     setIsGoogleSigningIn(true);
     const provider = new GoogleAuthProvider();
-    let userCredential: UserCredential | null = null;
-
     try {
-        userCredential = await signInWithPopup(auth, provider);
+        const userCredential = await signInWithPopup(auth, provider);
         const user = userCredential.user;
 
         const userDocRef = doc(firestore, 'users', user.uid);
@@ -109,7 +107,7 @@ function LoginPageContent() {
         if (!docSnap.exists()) {
             // This setDoc is the critical part for new users
             await setDoc(userDocRef, {
-                displayName: user.displayName,
+                displayName: user.displayName || user.email?.split('@')[0],
                 email: user.email,
                 photoURL: user.photoURL,
                 fullName: user.displayName || 'Sin nombre',
@@ -119,16 +117,15 @@ function LoginPageContent() {
                 planStatus: 'inactive',
             });
         }
-        // Success: Let the useEffect handle the redirect
+        // Let the useEffect handle the redirect
         
     } catch (error: any) {
-        console.error("Google Sign-In Error:", error);
         let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
-        if (error.code && error.code.startsWith('permission-denied')) {
+        if (error.code === 'auth/popup-closed-by-user') {
+            // User closed the popup, this is not a real error.
+        } else if (error.code && error.code.startsWith('permission-denied')) {
             description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            // User closed the popup, do nothing special.
         } else if (error.code === 'auth/internal-error') {
             description = "Error interno. Revisa la configuración en Google Cloud: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos.";
         }
@@ -140,6 +137,7 @@ function LoginPageContent() {
                 variant: "destructive",
             });
         }
+    } finally {
         setIsGoogleSigningIn(false);
     }
   };
@@ -231,16 +229,22 @@ function LoginPageContent() {
                 Continuar con Google
             </Button>
         </CardContent>
-        <CardFooter className="flex-col gap-6 px-8 pb-8">
-            <div className="text-sm">
+        <CardFooter className="flex-col gap-4 px-8 pb-8">
+            <div className="text-sm text-center">
                 <p className="text-muted-foreground">
                     ¿No tienes una cuenta?{' '}
                     <Link href="/register" className="font-semibold text-primary hover:underline">
                         Regístrate aquí
                     </Link>
                 </p>
+                 <p className="text-muted-foreground mt-2">
+                    O vuelve al{' '}
+                    <Link href="/dashboard" className="font-semibold text-primary hover:underline">
+                        Panel de Invitado
+                    </Link>
+                </p>
             </div>
-            <div className="flex w-full flex-col items-center gap-2 pt-6 border-t">
+            <div className="flex w-full flex-col items-center gap-2 pt-4 border-t">
                 <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
                     <Image src="https://i.postimg.cc/nhbtm52x/Emprende.png" alt="EmprendeIA Logo" width={64} height={64} />
                     <span className="font-headline text-xl font-semibold">EmprendeIA</span>

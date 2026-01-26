@@ -234,11 +234,17 @@ function RegisterPageContent() {
             </Button>
         </CardContent>
         <CardFooter className="flex-col gap-4 px-8 pb-8">
-            <div className="text-sm">
+            <div className="text-sm text-center">
                 <p className="text-muted-foreground">
                     ¿Ya tienes una cuenta?{' '}
                     <Link href="/login" className="font-semibold text-primary hover:underline">
                         Inicia sesión aquí
+                    </Link>
+                </p>
+                <p className="text-muted-foreground mt-2">
+                    O vuelve al{' '}
+                    <Link href="/dashboard" className="font-semibold text-primary hover:underline">
+                        Panel de Invitado
                     </Link>
                 </p>
             </div>
