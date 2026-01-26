@@ -35,14 +35,19 @@
     ]
   },
   "hosting": {
-    "public": "public",
+    "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "apphosting": {
+          "backendId": "studio"
+        }
+      }
     ]
-  },
-  "storage": {
-    "rules": "storage.rules"
   }
 }
