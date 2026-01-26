@@ -23,8 +23,7 @@ const CustomizeSupplierRecommendationsInputSchema = z.object({
   supplyTypes: z
     .string()
     .describe(
-      'Comma separated list of supply types to consider (e.g., 
-'
+      'Comma separated list of supply types to consider (e.g., "materias primas", "empaque").'
     ),
 });
 export type CustomizeSupplierRecommendationsInput = z.infer<
