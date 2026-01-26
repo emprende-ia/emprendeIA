@@ -3,7 +3,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, UserCredential } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,7 +108,7 @@ function RegisterPageContent() {
         if (error.code === 'auth/email-already-in-use') {
             description = "Este correo electrónico ya está en uso. Intenta con otro.";
         } else if (error.code && error.code.startsWith('permission-denied')) {
-            description = "Error de permisos al crear tu perfil. Contacta a soporte.";
+            description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
         }
         toast({
             title: "Error de Registro",
@@ -124,37 +124,40 @@ function RegisterPageContent() {
     if (!auth || !firestore) return;
     setIsGoogleSigningIn(true);
     const provider = new GoogleAuthProvider();
+    let userCredential: UserCredential | null = null;
 
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+      userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
 
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        
-        if (!docSnap.exists()) {
-            await setDoc(userDocRef, {
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                createdAt: serverTimestamp(),
-                plan: 'básico',
-                planStatus: 'inactive',
-            });
-        }
-        
-        router.push('/start');
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const docSnap = await getDoc(userDocRef);
+      
+      if (!docSnap.exists()) {
+          await setDoc(userDocRef, {
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+              fullName: user.displayName || 'Sin nombre',
+              age: 18, // Default age
+              createdAt: serverTimestamp(),
+              plan: 'básico',
+              planStatus: 'inactive',
+          });
+      }
+      
+      router.push('/start');
 
     } catch (error: any) {
         console.error("Google Sign-In Error:", error);
         let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
         if (error.code && error.code.startsWith('permission-denied')) {
-            description = "Error de permisos al crear tu perfil. Contacta a soporte.";
+            description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
         } else if (error.code === 'auth/popup-closed-by-user') {
-            // User closed the popup, do nothing.
+            // User closed the popup, do nothing special.
         } else if (error.code === 'auth/internal-error') {
-            description = "Error interno. Esto puede ocurrir si el proveedor de Google no está configurado correctamente en Firebase, o los dominios no están autorizados. Revisa la consola de Firebase.";
+            description = "Error interno. Revisa la configuración en Google Cloud: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos.";
         }
         
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -255,5 +258,3 @@ export default function RegisterPage() {
       </Suspense>
     );
   }
-
-    
