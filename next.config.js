@@ -3,18 +3,6 @@
 const nextConfig = {
   swcMinify: false,
   /* config options here */
-  async rewrites() {
-    return [
-      {
-        source: '/privacidad',
-        destination: '/privacidad.html',
-      },
-      {
-        source: '/terminos',
-        destination: '/terminos.html',
-      },
-    ]
-  },
   images: {
     remotePatterns: [
       {
