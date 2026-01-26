@@ -39,7 +39,7 @@ async function toWav(pcmData: Buffer): Promise<string> {
         });
 
         const buffers: Buffer[] = [];
-        writer.on('data', (chunk) => buffers.push(chunk));
+        writer.on('data', (chunk: any) => buffers.push(chunk));
         writer.on('end', () => resolve(Buffer.concat(buffers).toString('base64')));
         writer.on('error', reject);
 
