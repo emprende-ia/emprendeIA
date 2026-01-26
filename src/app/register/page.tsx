@@ -1,10 +1,8 @@
-
 'use client';
 
 import React, { useState, Suspense } from 'react';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, UserCredential } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
@@ -16,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { getOrCreateUserProfile } from '@/lib/firestore/users';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -85,15 +84,9 @@ function RegisterPageContent() {
         displayName: values.username,
       });
 
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
-        displayName: values.username,
-        email: values.email,
+      await getOrCreateUserProfile(firestore, user, {
         fullName: values.fullName,
         age: values.age,
-        createdAt: serverTimestamp(),
-        plan: 'básico',
-        planStatus: 'inactive',
       });
       
       toast({
@@ -107,7 +100,7 @@ function RegisterPageContent() {
         let description = "No se pudo completar el registro. Inténtalo de nuevo.";
         if (error.code === 'auth/email-already-in-use') {
             description = "Este correo electrónico ya está en uso. Intenta con otro.";
-        } else if (error.code && error.code.startsWith('permission-denied')) {
+        } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
         }
         toast({
@@ -124,27 +117,10 @@ function RegisterPageContent() {
     if (!auth || !firestore) return;
     setIsGoogleSigningIn(true);
     const provider = new GoogleAuthProvider();
-    let userCredential: UserCredential | null = null;
 
     try {
-      userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
-
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const docSnap = await getDoc(userDocRef);
-      
-      if (!docSnap.exists()) {
-          await setDoc(userDocRef, {
-              displayName: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-              fullName: user.displayName || 'Sin nombre',
-              age: 18, // Default age
-              createdAt: serverTimestamp(),
-              plan: 'básico',
-              planStatus: 'inactive',
-          });
-      }
+      const userCredential = await signInWithPopup(auth, provider);
+      await getOrCreateUserProfile(firestore, userCredential.user);
       
       router.push('/start');
 
@@ -152,21 +128,22 @@ function RegisterPageContent() {
         console.error("Google Sign-In Error:", error);
         let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
-        if (error.code && error.code.startsWith('permission-denied')) {
+        if (error.code === 'auth/popup-closed-by-user') {
+            // User closed the popup, not a real error.
+            setIsGoogleSigningIn(false);
+            return;
+        } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            // User closed the popup, do nothing special.
-        } else if (error.code === 'auth/internal-error') {
-            description = "Error interno. Revisa la configuración en Google Cloud: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos.";
+        } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
+            description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos (*.cloudworkstations.dev, localhost, etc.).";
         }
         
-        if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                title: "Error de inicio de sesión con Google",
-                description: description,
-                variant: "destructive",
-            });
-        }
+        toast({
+            title: "Error de inicio de sesión con Google",
+            description: description,
+            variant: "destructive",
+        });
+    } finally {
         setIsGoogleSigningIn(false);
     }
   };

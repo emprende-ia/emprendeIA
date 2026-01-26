@@ -1,15 +1,13 @@
-
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth, useFirestore, useUser } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider, UserCredential } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +15,9 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
-import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { getOrCreateUserProfile } from '@/lib/firestore/users';
+
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -62,35 +62,29 @@ function LoginPageContent() {
     defaultValues: { email: '', password: '' },
   });
 
-  const handleSignIn = async (values: LoginFormValues) => {
+   const handleSignIn = async (values: LoginFormValues) => {
     if (!auth) return;
     setIsSigningIn(true);
-
-    initiateEmailSignIn(
-      auth,
-      values.email,
-      values.password,
-      () => {
-        // onSuccess: Listener will handle redirect, toast provides feedback
-        toast({
-          title: "Iniciando sesión...",
-          description: "Serás redirigido en un momento.",
-        });
-      },
-      (error) => {
-        // onError: Handle specific auth errors here
-        let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-          description = 'Los datos son incorrectos. Verifica tu correo y contraseña.';
-        }
-        toast({
-          title: "Error de inicio de sesión",
-          description: description,
-          variant: "destructive",
-        });
-        setIsSigningIn(false); // Stop loading only on error
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // The onAuthStateChanged listener in useUser will handle the redirect.
+      toast({
+        title: "Inicio de Sesión Exitoso",
+        description: "Serás redirigido en un momento.",
+      });
+    } catch (error: any) {
+      let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        description = 'Los datos son incorrectos. Verifica tu correo y contraseña.';
       }
-    );
+      toast({
+        title: "Error de inicio de sesión",
+        description: description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
  const handleGoogleSignIn = async () => {
@@ -99,44 +93,30 @@ function LoginPageContent() {
     const provider = new GoogleAuthProvider();
     try {
         const userCredential = await signInWithPopup(auth, provider);
-        const user = userCredential.user;
-
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        
-        if (!docSnap.exists()) {
-            // This setDoc is the critical part for new users
-            await setDoc(userDocRef, {
-                displayName: user.displayName || user.email?.split('@')[0],
-                email: user.email,
-                photoURL: user.photoURL,
-                fullName: user.displayName || 'Sin nombre',
-                age: 18, // Default age
-                createdAt: serverTimestamp(),
-                plan: 'básico',
-                planStatus: 'inactive',
-            });
-        }
-        // Let the useEffect handle the redirect
-        
+        await getOrCreateUserProfile(firestore, userCredential.user);
+        // The onAuthStateChanged listener in useUser will handle the redirect.
+         toast({
+            title: "¡Bienvenido de nuevo!",
+            description: "Has iniciado sesión con Google.",
+        });
     } catch (error: any) {
         let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
         if (error.code === 'auth/popup-closed-by-user') {
-            // User closed the popup, this is not a real error.
-        } else if (error.code && error.code.startsWith('permission-denied')) {
+           // This is not a real error, so we don't show a toast.
+           setIsGoogleSigningIn(false);
+           return;
+        } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Contacta a soporte. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/internal-error') {
-            description = "Error interno. Revisa la configuración en Google Cloud: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos.";
+        } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
+            description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada. 3) Que los 'Dominios autorizados' en Firebase Auth sean correctos (*.cloudworkstations.dev, localhost, etc.).";
         }
         
-        if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                title: "Error de inicio de sesión con Google",
-                description: description,
-                variant: "destructive",
-            });
-        }
+        toast({
+            title: "Error de inicio de sesión con Google",
+            description: description,
+            variant: "destructive",
+        });
     } finally {
         setIsGoogleSigningIn(false);
     }
