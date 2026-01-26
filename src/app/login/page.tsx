@@ -231,7 +231,11 @@ function LoginPageContent() {
                 </Link>
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground">
-                Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.
+                Al continuar, aceptas nuestros Términos de Servicio y{' '}
+                <Link href="/privacy" className="underline hover:text-primary">
+                    Política de Privacidad
+                </Link>
+                .
             </p>
         </CardFooter>
       </Card>

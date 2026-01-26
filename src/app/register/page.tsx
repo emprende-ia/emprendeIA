@@ -226,7 +226,11 @@ function RegisterPageContent() {
                 </p>
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground pt-4 border-t">
-                Al registrarte, aceptas nuestros Términos de Servicio y Política de Privacidad.
+                Al registrarte, aceptas nuestros Términos de Servicio y{' '}
+                <Link href="/privacy" className="underline hover:text-primary">
+                    Política de Privacidad
+                </Link>
+                .
             </p>
         </CardFooter>
       </Card>
