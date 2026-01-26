@@ -102,38 +102,43 @@ function LoginPageContent() {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        // Redirect immediately for better UX. Profile creation will happen in the background.
-        router.push('/start');
-        
-        // Asynchronously check and create user profile without blocking the UI.
         const userDocRef = doc(firestore, 'users', user.uid);
-        getDoc(userDocRef).then(docSnap => {
-            if (!docSnap.exists()) {
-                // Non-blocking write: Create user profile if it doesn't exist.
-                setDoc(userDocRef, {
-                    displayName: user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
-                    createdAt: serverTimestamp(),
-                }).catch(e => {
-                    // Optional: Log background write error to a monitoring service
-                    console.error("Failed to create user profile in background:", e);
-                });
-            }
-        });
+        const docSnap = await getDoc(userDocRef);
+        
+        if (!docSnap.exists()) {
+            await setDoc(userDocRef, {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                createdAt: serverTimestamp(),
+                plan: 'básico',
+                planStatus: 'inactive',
+            });
+        }
+        
+        router.push('/start');
 
     } catch (error: any) {
-        let description = "Ocurrió un error inesperado.";
+        console.error("Google Sign-In Error:", error);
+        let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
+        
+        if (error.code && error.code.startsWith('permission-denied')) {
+            description = "Error de permisos al crear tu perfil. Contacta a soporte.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            // User closed the popup, do nothing.
+        } else if (error.code === 'auth/internal-error') {
+            description = "Error interno. Esto puede ocurrir si el proveedor de Google no está configurado correctamente en Firebase, o los dominios no están autorizados. Revisa la consola de Firebase.";
+        }
+        
         if (error.code !== 'auth/popup-closed-by-user') {
-             toast({
+            toast({
                 title: "Error de inicio de sesión con Google",
-                description: "No se pudo completar el inicio de sesión. Inténtalo de nuevo.",
+                description: description,
                 variant: "destructive",
             });
         }
-        setIsGoogleSigningIn(false); // Stop loading on error
+        setIsGoogleSigningIn(false);
     }
-    // Don't set isGoogleSigningIn to false on success, as redirection will happen.
   };
   
   useEffect(() => {
@@ -254,3 +259,5 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+    

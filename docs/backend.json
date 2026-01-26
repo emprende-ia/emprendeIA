@@ -71,6 +71,14 @@
           "type": "string",
           "description": "URL of the user's profile picture."
         },
+        "fullName": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "age": {
+          "type": "number",
+          "description": "The user's age."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -441,3 +449,5 @@
     ]
   }
 }
+
+    
