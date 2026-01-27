@@ -1,10 +1,10 @@
 
 export const firebaseConfig = {
-  "apiKey": "AIzaSyCWyEU7Fn4JxFYXH0fkm7VX-6MjhTzoRdo",
-  "authDomain": "emprendeia-clone.firebaseapp.com",
-  "projectId": "emprendeia-clone",
-  "storageBucket": "emprendeia-clone.appspot.com",
-  "messagingSenderId": "104770547655",
-  "appId": "1:104770547655:web:d9545564e4f0a8f839b3e2",
-  "measurementId": "G-KECCKZ4FDL"
+  "apiKey": "AIzaSyAGB5dXyc2NW4h0xXSjHq9WfOxkX4f2zDY",
+  "authDomain": "studio-3959207469-af070.firebaseapp.com",
+  "projectId": "studio-3959207469-af070",
+  "storageBucket": "studio-3959207469-af070.appspot.com",
+  "messagingSenderId": "397859853053",
+  "appId": "1:397859853053:web:257670680a21f7d26ae494",
+  "measurementId": "G-M9N9ME5WG1"
 };
