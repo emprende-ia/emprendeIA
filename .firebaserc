@@ -1,12 +1,8 @@
 {
-<<<<<<< HEAD
-  "projects": {},
-=======
   "projects": {
     "default": "studio-3959207469-af070",
     "dev": "emprendeia-dev"
   },
->>>>>>> d80ba6a275db34d406fe650533e98cb7ef73c86e
-  "targets": {},
+
   "etags": {}
 }

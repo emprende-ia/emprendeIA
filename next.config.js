@@ -1,7 +1,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  swcMinify: false,
+  swcMinify: true,
   /* config options here */
   images: {
     remotePatterns: [
