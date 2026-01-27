@@ -122,7 +122,8 @@ service cloud.firestore {
      */
     match /users/{userId}/notes/{noteId} {
       allow create: if isOwner(userId);
-      allow get, list, update, delete: if isExistingOwner(userId);
+      allow get, list: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
     }
 
     /**
