@@ -219,11 +219,11 @@ function RegisterPageContent() {
             </div>
              <p className="px-8 text-center text-xs text-muted-foreground pt-4 border-t">
                 Al registrarte, aceptas nuestros{' '}
-                <Link href="/terminos" className="underline hover:text-primary">
+                <Link href="https://emprendeia.app/terminos" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
                     Términos de Servicio
                 </Link>
                 {' '}y{' '}
-                <Link href="/privacidad" className="underline hover:text-primary">
+                <Link href="https://emprendeia.app/privacidad" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
                     Política de Privacidad
                 </Link>
                 .
