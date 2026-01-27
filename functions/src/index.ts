@@ -26,12 +26,6 @@ const stripePlusPriceId = defineString("STRIPE_PLUS_PRICE_ID");
 const stripePremiumPriceId = defineString("STRIPE_PREMIUM_PRICE_ID");
 
 
-// Define a mapping from Stripe Price ID to your application's Plan ID
-const priceToPlanMap: { [key: string]: string } = {
-  [stripePlusPriceId.value()]: "oro",
-  [stripePremiumPriceId.value()]: "diamante",
-};
-
 /**
  * Cloud Function that triggers when a checkout session document is updated.
  * Specifically, it waits for the Stripe Extension to mark the session as "complete".
@@ -39,6 +33,13 @@ const priceToPlanMap: { [key: string]: string } = {
 export const onCheckoutSessionCompleted = onDocumentWritten(
   "customers/{userId}/checkout_sessions/{sessionId}",
   async (event) => {
+    // Define a mapping from Stripe Price ID to your application's Plan ID
+    // This must be inside the function to access parameter values at runtime.
+    const priceToPlanMap: { [key: string]: string } = {
+      [stripePlusPriceId.value()]: "oro",
+      [stripePremiumPriceId.value()]: "diamante",
+    };
+
     // We only care about updates where the session is marked as 'complete'
     if (!event.data?.after) {
       logger.info("Document deleted or created without data, ignoring.");
