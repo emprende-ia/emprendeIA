@@ -35,7 +35,13 @@ export default function LandingPage() {
   return (
       <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
         
-        <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="absolute top-4 right-4 flex items-center gap-4">
+          <Link href="/terminos" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+            Términos de Servicio
+          </Link>
+          <Link href="/privacidad" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+            Política de Privacidad
+          </Link>
           <SettingsMenu />
           <Button asChild variant="outline" size="sm">
               <Link href="/pricing">
