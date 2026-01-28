@@ -36,12 +36,6 @@ export default function LandingPage() {
       <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
         
         <div className="absolute top-4 right-4 flex items-center gap-4">
-          <Link href="/terminos" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
-            Términos de Servicio
-          </Link>
-          <Link href="/privacidad" className="text-sm text-muted-foreground hover:text-foreground hover:underline">
-            Política de Privacidad
-          </Link>
           <SettingsMenu />
           <Button asChild variant="outline" size="sm">
               <Link href="/pricing">
@@ -87,6 +81,18 @@ export default function LandingPage() {
                     Continuar como invitado
                 </Link>
             </Button>
+             <div className="text-center text-sm text-muted-foreground space-y-1 pt-4">
+                <p>
+                    <Link href="https://emprendeia.app/terminos" target="_blank" rel="noopener noreferrer" className="hover:text-foreground hover:underline">
+                        https://emprendeia.app/terminos
+                    </Link>
+                </p>
+                <p>
+                    <Link href="https://emprendeia.app/privacidad" target="_blank" rel="noopener noreferrer" className="hover:text-foreground hover:underline">
+                        https://emprendeia.app/privacidad
+                    </Link>
+                </p>
+            </div>
             <Dialog>
               <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="w-full text-lg font-bold">
