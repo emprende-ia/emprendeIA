@@ -74,7 +74,9 @@ function LoginPageContent() {
       // The useUser hook's onAuthStateChanged listener will handle the redirect.
     } catch (error: any) {
       let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/operation-not-allowed') {
+        description = 'El inicio de sesión con correo y contraseña no está habilitado. Por favor, actívalo en la consola de Firebase.';
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = 'Los datos son incorrectos. Verifica tu correo y contraseña.';
       }
       toast({
@@ -105,6 +107,8 @@ function LoginPageContent() {
         if (error.code === 'auth/popup-closed-by-user') {
            setIsGoogleSigningIn(false);
            return;
+        } else if (error.code === 'auth/operation-not-allowed') {
+            description = 'El inicio de sesión con Google no está habilitado. Por favor, actívalo en la consola de Firebase.';
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${''}${error.message}`;
         } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
@@ -253,5 +257,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-
-    

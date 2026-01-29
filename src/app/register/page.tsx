@@ -95,7 +95,9 @@ function RegisterPageContent() {
 
     } catch (error: any) {
         let description = "No se pudo completar el registro. Inténtalo de nuevo.";
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.code === 'auth/operation-not-allowed') {
+            description = 'El registro con correo y contraseña no está habilitado. Por favor, actívalo en la consola de Firebase.';
+        } else if (error.code === 'auth/email-already-in-use') {
             description = "Este correo electrónico ya está en uso. Intenta con otro.";
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${''}${error.message}`;
@@ -124,6 +126,8 @@ function RegisterPageContent() {
         if (error.code === 'auth/popup-closed-by-user') {
             setIsGoogleSigningIn(false);
             return;
+        } else if (error.code === 'auth/operation-not-allowed') {
+            description = 'El inicio de sesión con Google no está habilitado. Por favor, actívalo en la consola de Firebase.';
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${''}${error.message}`;
         } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
