@@ -109,8 +109,10 @@ function LoginPageContent() {
            return;
         } else if (error.code === 'auth/operation-not-allowed') {
             description = 'El inicio de sesión con Google no está habilitado. Por favor, actívalo en la consola de Firebase.';
+        } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
+            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${''}${error.message}`;
+            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
             description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada con tus dominios autorizados (*.cloudworkstations.dev, localhost, etc.).";
         }
