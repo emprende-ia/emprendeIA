@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const GoogleIcon = () => (
@@ -103,7 +104,10 @@ function LoginPageContent() {
         let title = "Error de inicio de sesión con Google";
         let description: React.ReactNode = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
-        if (error.code === 'auth/popup-closed-by-user') {
+        if (error instanceof FirestorePermissionError) {
+            title = "Error de Permisos de Firestore";
+            description = `No se pudo crear tu perfil de usuario. Revisa tus reglas de seguridad de Firestore. Detalles: ${error.message}`;
+        } else if (error.code === 'auth/popup-closed-by-user') {
            setIsGoogleSigningIn(false);
            return;
         } else if (error.code === 'auth/account-exists-with-different-credential') {

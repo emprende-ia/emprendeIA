@@ -15,6 +15,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -124,7 +125,10 @@ function RegisterPageContent() {
         let title = "Error de inicio de sesión con Google";
         let description: React.ReactNode = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
-        if (error.code === 'auth/popup-closed-by-user') {
+        if (error instanceof FirestorePermissionError) {
+            title = "Error de Permisos de Firestore";
+            description = `No se pudo crear tu perfil de usuario. Revisa tus reglas de seguridad de Firestore. Detalles: ${error.message}`;
+        } else if (error.code === 'auth/popup-closed-by-user') {
             setIsGoogleSigningIn(false);
             return;
         } else if (error.code === 'auth/account-exists-with-different-credential') {
