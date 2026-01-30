@@ -107,6 +107,8 @@ function LoginPageContent() {
         if (error.code === 'auth/popup-closed-by-user') {
            setIsGoogleSigningIn(false);
            return;
+        } else if (error.code === 'auth/account-exists-with-different-credential') {
+            description = 'Ya existe una cuenta con este correo. Por favor, inicia sesión con el método que usaste originalmente.';
         } else if (error.code === 'auth/operation-not-allowed') {
             description = 'El inicio de sesión con Google no está habilitado. Por favor, actívalo en la consola de Firebase.';
         } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
