@@ -10,7 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { firebaseConfig } from '@/firebase/config';
 
 // Define the input schema for the logo generation flow
 const GenerateLogoInputSchema = z.object({
@@ -48,7 +47,13 @@ const generateLogoFromPromptFlow = ai.defineFlow(
     }
 
     // 2. Define the Image Processing API endpoint and payload
-    const imageProcessingApi = `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/ext-image-processing-api-handler/process`;
+    // Use the GCLOUD_PROJECT environment variable, which is automatically set in App Hosting.
+    const projectId = process.env.GCLOUD_PROJECT;
+    if (!projectId) {
+        // This provides a clear error if the environment variable is missing for some reason.
+        throw new Error("GCLOUD_PROJECT environment variable is not set. Cannot construct the image processing API URL.");
+    }
+    const imageProcessingApi = `https://us-central1-${projectId}.cloudfunctions.net/ext-image-processing-api-handler/process`;
     
     // Define the single standard size
     const standardSize = { width: 512, height: 512 };
