@@ -95,9 +95,7 @@ function RegisterPageContent() {
 
     } catch (error: any) {
         let description = "No se pudo completar el registro. Inténtalo de nuevo.";
-        if (error.code === 'auth/operation-not-allowed') {
-            description = 'El registro con correo y contraseña no está habilitado. Por favor, actívalo en la consola de Firebase.';
-        } else if (error.code === 'auth/email-already-in-use') {
+        if (error.code === 'auth/email-already-in-use') {
             description = "Este correo electrónico ya está en uso. Intenta con otro.";
         } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
@@ -131,21 +129,32 @@ function RegisterPageContent() {
             return;
         } else if (error.code === 'auth/account-exists-with-different-credential') {
             description = 'Ya existe una cuenta con este correo. Por favor, inicia sesión con el método que usaste originalmente.';
-        } else if (error.code === 'auth/operation-not-allowed') {
-            description = 'El inicio de sesión con Google no está habilitado. Por favor, actívalo en la consola de Firebase.';
         } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
+        } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain' || error.code === 'auth/operation-not-allowed') {
             title = "Error de Configuración de Google";
             description = (
                 <div className="flex flex-col gap-2 text-xs">
-                    <p>La autenticación falló por un problema de configuración en tu proyecto de Google Cloud.</p>
+                    <p>La autenticación falló, probablemente por una configuración incorrecta en Google Cloud.</p>
+                    <p className="font-bold">Verifica lo siguiente en tu proyecto:</p>
                     <ul className="list-disc list-inside">
-                        <li>Verifica que la <strong>API &quot;Identity Toolkit&quot;</strong> esté habilitada. <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">Habilitar API</a></li>
-                        <li>Asegúrate de que tu dominio de desarrollo esté en la lista de <strong>Orígenes de JavaScript autorizados</strong>. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">Verificar Dominios</a></li>
+                        <li>
+                            <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                                La API "Identity Toolkit" debe estar HABILITADA.
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                                Tu cliente de OAuth ("Web client (auto created by Google Service)")
+                            </a> debe tener los dominios correctos en "Orígenes de JavaScript autorizados".
+                        </li>
                     </ul>
+                    <p className="font-bold mt-2">Detalles del Error:</p>
+                    <pre className="text-xs bg-muted p-2 rounded-md whitespace-pre-wrap font-mono">
+                        {error.message || JSON.stringify(error)}
+                    </pre>
                 </div>
             );
         }
