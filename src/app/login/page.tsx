@@ -102,7 +102,8 @@ function LoginPageContent() {
         // The useUser hook's onAuthStateChanged listener will handle the redirect.
     } catch (error: any) {
         console.error("Google Sign-In Error:", error);
-        let description = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
+        let title = "Error de inicio de sesión con Google";
+        let description: React.ReactNode = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
         
         if (error.code === 'auth/popup-closed-by-user') {
            setIsGoogleSigningIn(false);
@@ -116,13 +117,23 @@ function LoginPageContent() {
         } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
             description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
-            description = "Error de configuración. Verifica: 1) Que la API 'Identity Toolkit' esté habilitada. 2) Que la 'Pantalla de consentimiento de OAuth' esté configurada con tus dominios autorizados (*.cloudworkstations.dev, localhost, etc.).";
+            title = "Error de Configuración de Google";
+            description = (
+                <div className="flex flex-col gap-2 text-xs">
+                    <p>La autenticación falló por un problema de configuración en tu proyecto de Google Cloud.</p>
+                    <ul className="list-disc list-inside">
+                        <li>Verifica que la <strong>API &quot;Identity Toolkit&quot;</strong> esté habilitada. <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">Habilitar API</a></li>
+                        <li>Asegúrate de que tu dominio de desarrollo esté en la lista de <strong>Orígenes de JavaScript autorizados</strong>. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">Verificar Dominios</a></li>
+                    </ul>
+                </div>
+            );
         }
         
         toast({
-            title: "Error de inicio de sesión con Google",
+            title: title,
             description: description,
             variant: "destructive",
+            duration: 20000,
         });
     } finally {
         setIsGoogleSigningIn(false);
