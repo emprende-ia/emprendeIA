@@ -2,9 +2,8 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating a high-quality, optimized marketing image using a two-step AI process.
- * 1. An LLM optimizes the user's prompt based on the desired creative type (logo or brand image).
- * 2. An image generation model creates an image from the optimized prompt.
+ * @fileOverview This file defines a Genkit flow for generating a high-quality marketing image.
+ * It enhances the user's prompt with relevant keywords and then calls an image generation model.
  * @module ai/flows/generate-optimized-image
  */
 
@@ -22,7 +21,7 @@ export type GenerateOptimizedImageInput = z.infer<typeof GenerateOptimizedImageI
 
 const GenerateOptimizedImageOutputSchema = z.object({
   imageUrl: z.string().url().describe('The data URI of the generated image.'),
-  optimizedPrompt: z.string().describe('The AI-enhanced prompt used for generation.'),
+  optimizedPrompt: z.string().describe('The enhanced prompt used for generation.'),
 });
 export type GenerateOptimizedImageOutput = z.infer<typeof GenerateOptimizedImageOutputSchema>;
 
@@ -38,34 +37,19 @@ const generateOptimizedImageFlow = ai.defineFlow(
   },
   async ({ prompt, creativeType }) => {
     
-    // Step 1: Build the prompt for the text model to optimize the user's prompt.
-    const isLogo = creativeType === 'LOGO';
-    let promptToOptimize = `You are a creative assistant that enhances user prompts for an AI image generator. Rewrite the following user prompt to be more descriptive, artistic, and detailed. Your entire output must be the new prompt and nothing else.\n`;
-    
-    if (isLogo) {
-      promptToOptimize += `Focus on concepts for a logo. Add terms like: 'minimalist vector design', '3D isologo concept', 'neutral or transparent background', 'modern typography', 'clean lines'.\n`;
+    // Step 1: Programmatically enhance the user's prompt.
+    // This removes the AI-to-AI chain, which can cause build issues.
+    let enhancedPrompt = prompt;
+    if (creativeType === 'LOGO') {
+      enhancedPrompt = `${prompt}, minimalist vector design, 3D isologo concept, neutral or transparent background, modern typography, clean lines`;
     } else {
-      promptToOptimize += `Focus on concepts for a brand image or banner. Add terms like: 'photorealistic studio photography', 'dramatic lighting', '4K render', 'cinematic feel', 'ultra-detailed'.\n`;
+      enhancedPrompt = `${prompt}, photorealistic studio photography, dramatic lighting, 4K render, cinematic feel, ultra-detailed`;
     }
     
-    promptToOptimize += `User Prompt: ${prompt}\nOptimized Prompt:`;
-
-    // Step 2: Call the text model to get the optimized prompt.
-    const optimizedPromptResponse = await ai.generate({
-      prompt: promptToOptimize,
-      model: googleAI.model('gemini-2.5-flash'),
-    });
-
-    const optimizedPrompt = optimizedPromptResponse.text;
-
-    if (!optimizedPrompt) {
-        throw new Error("Failed to optimize the prompt. The AI did not return any text.");
-    }
-    
-    // Step 3: Generate the image using the optimized prompt with the image model.
+    // Step 2: Generate the image using the enhanced prompt with the image model.
     const { media } = await ai.generate({
         model: googleAI.model('imagen-4.0-fast-generate-001'),
-        prompt: optimizedPrompt,
+        prompt: enhancedPrompt,
     });
 
     const imageUrl = media?.url;
@@ -74,6 +58,6 @@ const generateOptimizedImageFlow = ai.defineFlow(
         throw new Error("Image generation failed. The AI did not return an image.");
     }
 
-    return { imageUrl, optimizedPrompt };
+    return { imageUrl, optimizedPrompt: enhancedPrompt };
   }
 );
