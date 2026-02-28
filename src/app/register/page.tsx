@@ -119,7 +119,7 @@ function RegisterPageContent() {
       toast({ title: "¡Bienvenido!", description: "Registro completado con Google." });
       router.push('/start');
     } catch (error: any) {
-        console.error("Google Auth Full Error:", error);
+        console.error("Google Auth Error:", error);
         let message = "Hubo un problema al conectar con Google.";
         
         if (error.code === 'auth/internal-error') {

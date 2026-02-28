@@ -18,7 +18,8 @@ import { getStorage } from 'firebase/storage';
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Inicialización con resolución explícita de popups para evitar auth/internal-error
+// Inicialización con resolución explícita de popups y persistencia robusta
+// Esto ayuda a prevenir el error auth/internal-error en entornos de workstations
 const auth = getApps().length > 0 
   ? getAuth(app) 
   : initializeAuth(app, {

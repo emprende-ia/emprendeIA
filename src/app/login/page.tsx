@@ -99,15 +99,13 @@ function LoginPageContent() {
         toast({ title: "¡Éxito!", description: "Conectado con Google." });
         router.push('/start');
     } catch (error: any) {
-        console.error("Google Auth Full Error:", error);
+        console.error("Google Auth Error:", error);
         let message = "No se pudo conectar con Google.";
         
         if (error.code === 'auth/internal-error') {
-            message = "Error interno. Verifica que las cookies de terceros estén permitidas y no uses modo Incógnito.";
+            message = "Error interno. Verifica que no estés en modo Incógnito y que permitas cookies de terceros.";
         } else if (error.code === 'auth/popup-closed-by-user') {
             message = "Cerraste la ventana de Google antes de terminar.";
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            message = "Petición cancelada por el navegador.";
         }
 
         toast({
