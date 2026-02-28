@@ -5,7 +5,7 @@ import { useAuth, useFirestore, useUser } from '@/firebase';
 import { signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -17,9 +17,6 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -42,7 +39,6 @@ const GoogleIcon = () => (
     </svg>
 );
 
-
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor ingresa un correo válido.' }),
   password: z.string().min(1, { message: 'La contraseña no puede estar vacía.' }),
@@ -58,41 +54,45 @@ function LoginPageContent() {
   const { toast } = useToast();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
-  const [showInternalError, setShowInternalError] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  // Handle Redirection Result
+  // Handle Redirect Result
   useEffect(() => {
-    if (auth && firestore) {
-      getRedirectResult(auth)
-        .then(async (result) => {
-          if (result) {
-            setIsGoogleSigningIn(true);
-            try {
-              await getOrCreateUserProfile(firestore, result.user);
-              toast({
-                title: "¡Bienvenido!",
-                description: "Has iniciado sesión con Google correctamente.",
-              });
-              router.push('/start');
-            } catch (e) {
-              console.error("Error creating user profile after redirect:", e);
-            } finally {
-              setIsGoogleSigningIn(false);
-            }
+    if (!auth || !firestore) return;
+
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result) {
+          setIsGoogleSigningIn(true);
+          try {
+            await getOrCreateUserProfile(firestore, result.user);
+            toast({
+              title: "¡Bienvenido!",
+              description: "Has iniciado sesión correctamente.",
+            });
+            router.push('/start');
+          } catch (e) {
+            console.error("Error updating profile after redirect:", e);
+          } finally {
+            setIsGoogleSigningIn(false);
           }
-        })
-        .catch((error) => {
-          console.error("Google Redirect Error:", error);
-          if (error.code === 'auth/internal-error') {
-            setShowInternalError(true);
-          }
-        });
-    }
+        }
+      })
+      .catch((error) => {
+        console.error("Google Redirect Error:", error);
+        setIsGoogleSigningIn(false);
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                title: "Error de autenticación",
+                description: "Hubo un problema al conectar con Google. Verifica tu conexión.",
+                variant: "destructive",
+            });
+        }
+      });
   }, [auth, firestore, router, toast]);
 
   const handleSignIn = async (values: LoginFormValues) => {
@@ -119,28 +119,23 @@ function LoginPageContent() {
     }
   };
 
- const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async () => {
     if (!auth || isGoogleSigningIn) return;
     setIsGoogleSigningIn(true);
-    setShowInternalError(false);
     
     try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        // Switching to Redirect to avoid workstation popup blocks
+        // Use Redirect instead of Popup for Workstation environments
         await signInWithRedirect(auth, provider);
     } catch (error: any) {
         console.error("Google Sign-In Initiation Error:", error);
         setIsGoogleSigningIn(false);
-        if (error.code === 'auth/internal-error') {
-            setShowInternalError(true);
-        } else {
-            toast({
-                title: "Error de autenticación",
-                description: "No se pudo iniciar el proceso con Google.",
-                variant: "destructive",
-            });
-        }
+        toast({
+            title: "Error de inicio",
+            description: "No se pudo iniciar el proceso con Google.",
+            variant: "destructive",
+        });
     }
   };
   
@@ -150,7 +145,7 @@ function LoginPageContent() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading) {
+  if (isUserLoading || isGoogleSigningIn) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -167,17 +162,6 @@ function LoginPageContent() {
         </CardHeader>
         <CardContent className="p-8 pt-6 space-y-6">
           
-          {showInternalError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle className="font-bold">Error del Navegador</AlertTitle>
-                <AlertDescription className="text-xs space-y-2">
-                    <p>Tu entorno de trabajo está bloqueando la conexión segura con Google.</p>
-                    <p><b>Solución:</b> Usa el formulario de Correo y Contraseña abajo, o asegúrate de no estar en modo Incógnito y tener habilitadas las cookies de terceros.</p>
-                </AlertDescription>
-            </Alert>
-          )}
-
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-6">
               <FormField
@@ -251,12 +235,6 @@ function LoginPageContent() {
                         Regístrate aquí
                     </Link>
                 </p>
-                 <p className="text-muted-foreground mt-2">
-                    O vuelve al{' '}
-                    <Link href="/dashboard" className="font-semibold text-primary hover:underline">
-                        Panel de Invitado
-                    </Link>
-                </p>
             </div>
             <div className="flex w-full flex-col items-center gap-2 pt-4 border-t">
                 <Link href="/" className="flex flex-col items-center gap-2 text-foreground/80 transition-colors hover:text-foreground">
@@ -264,17 +242,6 @@ function LoginPageContent() {
                     <span className="font-headline text-xl font-semibold">EmprendeIA</span>
                 </Link>
             </div>
-             <p className="px-8 text-center text-xs text-muted-foreground">
-                Al continuar, aceptas nuestros{' '}
-                <Link href="https://emprendeia.app/terminos" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                    Términos de Servicio
-                </Link>
-                {' '}y{' '}
-                <Link href="https://emprendeia.app/privacidad" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                    Política de Privacidad
-                </Link>
-                .
-            </p>
         </CardFooter>
       </Card>
     </main>

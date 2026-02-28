@@ -5,7 +5,7 @@ import { useAuth, useFirestore, useUser } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Loader2, AlertTriangle } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,8 +15,6 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -61,8 +59,6 @@ function RegisterPageContent() {
   const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
-  const [showInternalError, setShowInternalError] = useState(false);
-
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -76,34 +72,39 @@ function RegisterPageContent() {
     },
   });
 
-  // Handle Redirection Result
+  // Handle Redirect Result
   useEffect(() => {
-    if (auth && firestore) {
-      getRedirectResult(auth)
-        .then(async (result) => {
-          if (result) {
-            setIsGoogleSigningIn(true);
-            try {
-              await getOrCreateUserProfile(firestore, result.user);
-              toast({
-                title: "¡Bienvenido!",
-                description: "Cuenta creada con Google correctamente.",
-              });
-              router.push('/start');
-            } catch (e) {
-              console.error("Error creating user profile after redirect:", e);
-            } finally {
-              setIsGoogleSigningIn(false);
-            }
+    if (!auth || !firestore) return;
+
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result) {
+          setIsGoogleSigningIn(true);
+          try {
+            await getOrCreateUserProfile(firestore, result.user);
+            toast({
+              title: "¡Bienvenido!",
+              description: "Cuenta configurada correctamente.",
+            });
+            router.push('/start');
+          } catch (e) {
+            console.error("Error creating user profile after redirect:", e);
+          } finally {
+            setIsGoogleSigningIn(false);
           }
-        })
-        .catch((error) => {
-          console.error("Google Redirect Error:", error);
-          if (error.code === 'auth/internal-error') {
-            setShowInternalError(true);
-          }
-        });
-    }
+        }
+      })
+      .catch((error) => {
+        console.error("Google Redirect Error:", error);
+        setIsGoogleSigningIn(false);
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                title: "Error de registro",
+                description: "No se pudo completar el registro con Google.",
+                variant: "destructive",
+            });
+        }
+      });
   }, [auth, firestore, router, toast]);
 
   const handleRegister = async (values: RegisterFormValues) => {
@@ -145,25 +146,20 @@ function RegisterPageContent() {
   const handleGoogleSignIn = async () => {
     if (!auth || isGoogleSigningIn) return;
     setIsGoogleSigningIn(true);
-    setShowInternalError(false);
     
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      // Switching to Redirect to avoid workstation popup blocks
+      // Redirect method is more stable in workstations
       await signInWithRedirect(auth, provider);
     } catch (error: any) {
         console.error("Google Sign-In Initiation Error:", error);
         setIsGoogleSigningIn(false);
-        if (error.code === 'auth/internal-error') {
-            setShowInternalError(true);
-        } else {
-            toast({
-                title: "Error de registro",
-                description: "No se pudo iniciar el proceso con Google.",
-                variant: "destructive",
-            });
-        }
+        toast({
+            title: "Error de registro",
+            description: "No se pudo iniciar el proceso con Google.",
+            variant: "destructive",
+        });
     }
   };
 
@@ -173,14 +169,13 @@ function RegisterPageContent() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading) {
+  if (isUserLoading || isGoogleSigningIn) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 py-8">
@@ -190,17 +185,6 @@ function RegisterPageContent() {
           <CardDescription className="pt-2">Completa tus datos para unirte a Emprende IA</CardDescription>
         </CardHeader>
         <CardContent className="p-8 pt-6 space-y-6">
-
-          {showInternalError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle className="font-bold">Error del Navegador</AlertTitle>
-                <AlertDescription className="text-xs space-y-2">
-                    <p>Tu entorno de trabajo está bloqueando la conexión segura con Google.</p>
-                    <p><b>Solución:</b> Usa el registro manual por Correo abajo, o asegúrate de no estar en modo Incógnito y tener habilitadas las cookies de terceros.</p>
-                </AlertDescription>
-            </Alert>
-          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-4">
@@ -263,24 +247,7 @@ function RegisterPageContent() {
                         Inicia sesión aquí
                     </Link>
                 </p>
-                <p className="text-muted-foreground mt-2">
-                    O vuelve al{' '}
-                    <Link href="/dashboard" className="font-semibold text-primary hover:underline">
-                        Panel de Invitado
-                    </Link>
-                </p>
             </div>
-             <p className="px-8 text-center text-xs text-muted-foreground pt-4 border-t">
-                Al registrarte, aceptas nuestros{' '}
-                <Link href="https://emprendeia.app/terminos" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                    Términos de Servicio
-                </Link>
-                {' '}y{' '}
-                <Link href="https://emprendeia.app/privacidad" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                    Política de Privacidad
-                </Link>
-                .
-            </p>
         </CardFooter>
       </Card>
     </main>
