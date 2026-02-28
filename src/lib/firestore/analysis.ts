@@ -1,9 +1,9 @@
 
 'use client';
 
-import { Firestore, doc, setDoc, onSnapshot, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 import type { AnalyzeBusinessIdeaOutput } from '@/ai/flows/analyze-business-idea';
 import type { AnalyzeExistingBusinessOutput } from '@/ai/flows/analyze-existing-business';
 
@@ -23,15 +23,13 @@ export interface SavedAnalysis {
  * @param userId - The ID of the user.
  * @param analysisData - The analysis data to save.
  */
-export async function saveViabilityAnalysis(
+export function saveViabilityAnalysis(
   firestore: Firestore,
   userId: string,
   analysisData: ViabilityAnalysis,
   type: 'new-venture' | 'existing-venture'
-): Promise<void> { 
-  if (!userId) {
-    return Promise.reject("User ID is required to save analysis.");
-  }
+): void { 
+  if (!userId) return;
   
   const analysisDocRef = doc(firestore, `users/${userId}/viabilityAnalysis`, 'latest');
   const dataToSave = {
@@ -40,17 +38,15 @@ export async function saveViabilityAnalysis(
     savedAt: serverTimestamp(),
   };
 
-  try {
-    await setDoc(analysisDocRef, dataToSave);
-  } catch (error) {
+  // Do not await the mutation to allow instant cache updates
+  setDoc(analysisDocRef, dataToSave).catch(async (error) => {
     const permissionError = new FirestorePermissionError({
         path: analysisDocRef.path,
         operation: 'write', 
         requestResourceData: dataToSave,
-    });
+    } satisfies SecurityRuleContext);
     errorEmitter.emit('permission-error', permissionError);
-    throw error;
-  }
+  });
 }
 
 /**
@@ -79,11 +75,11 @@ export function getViabilityAnalysis(
     } else {
       onUpdate(null);
     }
-  }, (error) => {
+  }, async (error) => {
     const permissionError = new FirestorePermissionError({
       path: analysisDocRef.path,
       operation: 'get',
-    });
+    } satisfies SecurityRuleContext);
     errorEmitter.emit('permission-error', permissionError);
     onUpdate(null);
   });

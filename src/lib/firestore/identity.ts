@@ -3,7 +3,7 @@
 
 import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 
 // This interface combines the text identity with the optional logo URL
@@ -20,15 +20,12 @@ export interface BrandIdentity extends GenerateDigitalIdentityOutput {
  * @param userId - The ID of the user.
  * @param identityData - The brand identity data to save.
  */
-export async function saveBrandIdentity(
+export function saveBrandIdentity(
   firestore: Firestore,
   userId: string,
   identityData: Omit<BrandIdentity, 'updatedAt'>
-): Promise<void> { 
-  if (!userId) {
-    console.error("User ID is required to save brand identity.");
-    return Promise.reject("User ID is required.");
-  }
+): void { 
+  if (!userId) return;
   
   const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
   const dataToSave = {
@@ -36,36 +33,27 @@ export async function saveBrandIdentity(
     updatedAt: serverTimestamp(),
   };
 
-  try {
-    // This will either create a new document or merge data into an existing one.
-    // We pass the complete object to ensure all fields are updated.
-    await setDoc(identityDoc, dataToSave, { merge: true });
-  } catch (error) {
+  // Do not await mutation
+  setDoc(identityDoc, dataToSave, { merge: true }).catch(async (error) => {
     const permissionError = new FirestorePermissionError({
         path: identityDoc.path,
         operation: 'write', 
         requestResourceData: dataToSave,
-    });
-    // For LLM-based error fixing, we emit a contextual error.
+    } satisfies SecurityRuleContext);
     errorEmitter.emit('permission-error', permissionError);
-    // We also re-throw the error so the calling function can handle it.
-    throw error;
-  }
+  });
 }
 
 export function deleteBrandIdentity(firestore: Firestore, userId: string): void {
-    if (!userId) {
-        console.error("User ID is required to delete brand identity.");
-        return;
-    }
+    if (!userId) return;
     const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
 
     deleteDoc(identityDoc)
-        .catch((error) => {
+        .catch(async (error) => {
             const permissionError = new FirestorePermissionError({
                 path: identityDoc.path,
                 operation: 'delete',
-            });
+            } satisfies SecurityRuleContext);
             errorEmitter.emit('permission-error', permissionError);
         });
 }
@@ -89,11 +77,11 @@ export function getBrandIdentity(
     } else {
       onUpdate(null);
     }
-  }, (error) => {
+  }, async (error) => {
     const permissionError = new FirestorePermissionError({
       path: identityDoc.path,
       operation: 'get',
-    });
+    } satisfies SecurityRuleContext);
     errorEmitter.emit('permission-error', permissionError);
     onUpdate(null);
   });
