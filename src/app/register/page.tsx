@@ -63,13 +63,17 @@ function RegisterPageContent() {
 
   useEffect(() => {
     if (!recaptchaVerifier && recaptchaContainerRef.current) {
-        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-            size: 'invisible',
-            callback: () => {
-                console.log('reCAPTCHA verificado');
-            }
-        });
-        setRecaptchaVerifier(verifier);
+        try {
+            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+                size: 'invisible',
+                callback: () => {
+                    console.log('reCAPTCHA verificado');
+                }
+            });
+            setRecaptchaVerifier(verifier);
+        } catch (e) {
+            console.error("Error al inicializar reCAPTCHA en Registro:", e);
+        }
     }
   }, [recaptchaVerifier]);
 
@@ -119,7 +123,9 @@ function RegisterPageContent() {
         let message = "Hubo un problema al conectar con Google.";
         
         if (error.code === 'auth/internal-error') {
-            message = "Error interno del servidor. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
+            message = "Error interno. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            message = "Cancelaste el inicio de sesión.";
         }
 
         toast({
@@ -194,7 +200,7 @@ function RegisterPageContent() {
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">O usa</span></div>
             </div>
 
-             <Button variant="outline" className="w-full py-6" onClick={handleGoogleSignIn} disabled={isRegistering || isGoogleSigningIn}>
+             <Button variant="outline" className="w-full py-6" onClick={handleGoogleSignIn} disabled={isGoogleSigningIn || isRegistering}>
                 {isGoogleSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
                 Registrarme con Google
             </Button>

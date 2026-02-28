@@ -13,13 +13,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 /**
- * @fileOverview Inicialización centralizada y robusta de Firebase.
+ * @fileOverview Inicialización centralizada y robusta de Firebase para Next.js 15.
  */
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Inicialización con múltiples capas de persistencia y resolver de popups explícito
-// Esto soluciona la mayoría de los errores auth/internal-error en entornos Next.js
+// Inicialización con resolución explícita de popups para evitar auth/internal-error
 const auth = getApps().length > 0 
   ? getAuth(app) 
   : initializeAuth(app, {

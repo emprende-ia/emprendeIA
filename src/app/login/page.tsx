@@ -50,13 +50,17 @@ function LoginPageContent() {
 
   useEffect(() => {
     if (!recaptchaVerifier && recaptchaContainerRef.current) {
-        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-            size: 'invisible',
-            callback: () => {
-                console.log('reCAPTCHA verificado');
-            }
-        });
-        setRecaptchaVerifier(verifier);
+        try {
+            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+                size: 'invisible',
+                callback: () => {
+                    console.log('reCAPTCHA verificado');
+                }
+            });
+            setRecaptchaVerifier(verifier);
+        } catch (e) {
+            console.error("Error al inicializar reCAPTCHA:", e);
+        }
     }
   }, [recaptchaVerifier]);
 
@@ -99,9 +103,11 @@ function LoginPageContent() {
         let message = "No se pudo conectar con Google.";
         
         if (error.code === 'auth/internal-error') {
-            message = "Error interno del servidor. Verifica que las cookies de terceros estén permitidas y no uses modo Incógnito.";
+            message = "Error interno. Verifica que las cookies de terceros estén permitidas y no uses modo Incógnito.";
         } else if (error.code === 'auth/popup-closed-by-user') {
             message = "Cerraste la ventana de Google antes de terminar.";
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            message = "Petición cancelada por el navegador.";
         }
 
         toast({
@@ -192,7 +198,7 @@ function LoginPageContent() {
                 variant="outline"
                 className="w-full py-6 text-base"
                 onClick={handleGoogleSignIn}
-                disabled={isSigningIn || isGoogleSigningIn}
+                disabled={isGoogleSigningIn || isSigningIn}
             >
                 {isGoogleSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
                 Continuar con Google
