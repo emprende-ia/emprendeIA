@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth, useFirestore, useUser } from '@/firebase';
-import { signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, KeyRound } from 'lucide-react';
@@ -60,43 +60,8 @@ function LoginPageContent() {
     defaultValues: { email: '', password: '' },
   });
 
-  // Handle Redirect Result
-  useEffect(() => {
-    if (!auth || !firestore) return;
-
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result) {
-          setIsGoogleSigningIn(true);
-          try {
-            await getOrCreateUserProfile(firestore, result.user);
-            toast({
-              title: "¡Bienvenido!",
-              description: "Has iniciado sesión correctamente.",
-            });
-            router.push('/start');
-          } catch (e) {
-            console.error("Error updating profile after redirect:", e);
-          } finally {
-            setIsGoogleSigningIn(false);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Google Redirect Error:", error);
-        setIsGoogleSigningIn(false);
-        if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                title: "Error de autenticación",
-                description: "Hubo un problema al conectar con Google. Verifica tu conexión.",
-                variant: "destructive",
-            });
-        }
-      });
-  }, [auth, firestore, router, toast]);
-
   const handleSignIn = async (values: LoginFormValues) => {
-    if (!auth || !firestore) return;
+    if (!auth || !firestore || isSigningIn) return;
     setIsSigningIn(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -120,22 +85,31 @@ function LoginPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth || isGoogleSigningIn) return;
+    if (!auth || !firestore || isGoogleSigningIn) return;
     setIsGoogleSigningIn(true);
     
     try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        // Use Redirect instead of Popup for Workstation environments
-        await signInWithRedirect(auth, provider);
-    } catch (error: any) {
-        console.error("Google Sign-In Initiation Error:", error);
-        setIsGoogleSigningIn(false);
+        const result = await signInWithPopup(auth, provider);
+        await getOrCreateUserProfile(firestore, result.user);
+        
         toast({
-            title: "Error de inicio",
-            description: "No se pudo iniciar el proceso con Google.",
-            variant: "destructive",
+            title: "¡Bienvenido!",
+            description: "Has iniciado sesión correctamente.",
         });
+        router.push('/start');
+    } catch (error: any) {
+        console.error("Google Sign-In Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                title: "Error de autenticación",
+                description: "Hubo un problema al conectar con Google.",
+                variant: "destructive",
+            });
+        }
+    } finally {
+        setIsGoogleSigningIn(false);
     }
   };
   
@@ -145,7 +119,7 @@ function LoginPageContent() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || isGoogleSigningIn) {
+  if (isUserLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -196,7 +170,7 @@ function LoginPageContent() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" size="lg" className="w-full text-base font-bold" disabled={!auth || isSigningIn || isGoogleSigningIn}>
+              <Button type="submit" size="lg" className="w-full text-base font-bold" disabled={isSigningIn || isGoogleSigningIn}>
                 {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                 Iniciar Sesión
               </Button>
@@ -217,7 +191,7 @@ function LoginPageContent() {
                 className="w-full text-base"
                 size="lg"
                 onClick={handleGoogleSignIn}
-                disabled={!auth || isSigningIn || isGoogleSigningIn}
+                disabled={isSigningIn || isGoogleSigningIn}
             >
                 {isGoogleSigningIn ? (
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />

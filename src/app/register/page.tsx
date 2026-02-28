@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth, useFirestore, useUser } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
@@ -72,43 +72,8 @@ function RegisterPageContent() {
     },
   });
 
-  // Handle Redirect Result
-  useEffect(() => {
-    if (!auth || !firestore) return;
-
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result) {
-          setIsGoogleSigningIn(true);
-          try {
-            await getOrCreateUserProfile(firestore, result.user);
-            toast({
-              title: "¡Bienvenido!",
-              description: "Cuenta configurada correctamente.",
-            });
-            router.push('/start');
-          } catch (e) {
-            console.error("Error creating user profile after redirect:", e);
-          } finally {
-            setIsGoogleSigningIn(false);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Google Redirect Error:", error);
-        setIsGoogleSigningIn(false);
-        if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                title: "Error de registro",
-                description: "No se pudo completar el registro con Google.",
-                variant: "destructive",
-            });
-        }
-      });
-  }, [auth, firestore, router, toast]);
-
   const handleRegister = async (values: RegisterFormValues) => {
-    if (!auth || !firestore) return;
+    if (!auth || !firestore || isRegistering) return;
     setIsRegistering(true);
 
     try {
@@ -144,22 +109,31 @@ function RegisterPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth || isGoogleSigningIn) return;
+    if (!auth || !firestore || isGoogleSigningIn) return;
     setIsGoogleSigningIn(true);
     
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      // Redirect method is more stable in workstations
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await getOrCreateUserProfile(firestore, result.user);
+      
+      toast({
+        title: "¡Bienvenido!",
+        description: "Cuenta configurada correctamente.",
+      });
+      router.push('/start');
     } catch (error: any) {
-        console.error("Google Sign-In Initiation Error:", error);
+        console.error("Google Sign-In Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                title: "Error de registro",
+                description: "No se pudo completar el registro con Google.",
+                variant: "destructive",
+            });
+        }
+    } finally {
         setIsGoogleSigningIn(false);
-        toast({
-            title: "Error de registro",
-            description: "No se pudo iniciar el proceso con Google.",
-            variant: "destructive",
-        });
     }
   };
 
@@ -169,7 +143,7 @@ function RegisterPageContent() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || isGoogleSigningIn) {
+  if (isUserLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -207,7 +181,7 @@ function RegisterPageContent() {
                 <FormItem><FormLabel>Confirmar contraseña</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
 
-              <Button type="submit" size="lg" className="w-full text-base font-bold !mt-6" disabled={!auth || isRegistering || isGoogleSigningIn}>
+              <Button type="submit" size="lg" className="w-full text-base font-bold !mt-6" disabled={isRegistering || isGoogleSigningIn}>
                 {isRegistering ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                 Confirmar Registro
               </Button>
@@ -229,7 +203,7 @@ function RegisterPageContent() {
                 className="w-full text-base"
                 size="lg"
                 onClick={handleGoogleSignIn}
-                disabled={!auth || isRegistering || isGoogleSigningIn}
+                disabled={isRegistering || isGoogleSigningIn}
             >
                 {isGoogleSigningIn ? (
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
