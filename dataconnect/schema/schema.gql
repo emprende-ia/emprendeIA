@@ -1,0 +1,50 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  companyName: String
+  businessType: String
+}
+
+type Project @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  status: String!
+  description: String
+  targetMarket: String
+  industry: String
+}
+
+type AIInteraction @table {
+  user: User!
+  project: Project
+  type: String!
+  prompt: String!
+  response: String!
+  createdAt: Timestamp!
+  relatedFeature: String
+}
+
+type Product @table {
+  project: Project!
+  name: String!
+  unitPrice: Float!
+  createdAt: Timestamp!
+  currentStock: Int!
+  description: String
+  SKU: String
+  supplier: String
+  reorderPoint: Int
+}
+
+type Task @table {
+  project: Project!
+  description: String!
+  dueDate: Date!
+  status: String!
+  createdAt: Timestamp!
+  assignedTo: String
+  priority: String
+}

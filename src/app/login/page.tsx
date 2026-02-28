@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth, useFirestore, useUser } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound } from 'lucide-react';
+import { Loader2, Mail, KeyRound, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const GoogleIcon = () => (
@@ -57,13 +58,44 @@ function LoginPageContent() {
   const { toast } = useToast();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [showInternalError, setShowInternalError] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-   const handleSignIn = async (values: LoginFormValues) => {
+  // Handle Redirection Result
+  useEffect(() => {
+    if (auth && firestore) {
+      getRedirectResult(auth)
+        .then(async (result) => {
+          if (result) {
+            setIsGoogleSigningIn(true);
+            try {
+              await getOrCreateUserProfile(firestore, result.user);
+              toast({
+                title: "¡Bienvenido!",
+                description: "Has iniciado sesión con Google correctamente.",
+              });
+              router.push('/start');
+            } catch (e) {
+              console.error("Error creating user profile after redirect:", e);
+            } finally {
+              setIsGoogleSigningIn(false);
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Google Redirect Error:", error);
+          if (error.code === 'auth/internal-error') {
+            setShowInternalError(true);
+          }
+        });
+    }
+  }, [auth, firestore, router, toast]);
+
+  const handleSignIn = async (values: LoginFormValues) => {
     if (!auth || !firestore) return;
     setIsSigningIn(true);
     try {
@@ -72,7 +104,6 @@ function LoginPageContent() {
         title: "Inicio de Sesión Exitoso",
         description: "Serás redirigido en un momento.",
       });
-      // The useUser hook's onAuthStateChanged listener will handle the redirect.
     } catch (error: any) {
       let description = 'No se pudo completar el inicio de sesión. Inténtalo de nuevo.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -89,69 +120,27 @@ function LoginPageContent() {
   };
 
  const handleGoogleSignIn = async () => {
-    if (!auth || !firestore) return;
+    if (!auth || isGoogleSigningIn) return;
     setIsGoogleSigningIn(true);
+    setShowInternalError(false);
+    
     try {
-        const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
-        await getOrCreateUserProfile(firestore, userCredential.user);
-         toast({
-            title: "¡Bienvenido de nuevo!",
-            description: "Has iniciado sesión con Google.",
-        });
-        // The useUser hook's onAuthStateChanged listener will handle the redirect.
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        // Switching to Redirect to avoid workstation popup blocks
+        await signInWithRedirect(auth, provider);
     } catch (error: any) {
-        console.error("Google Sign-In Error:", error);
-        let title = "Error de inicio de sesión con Google";
-        let description: React.ReactNode = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
-        
-        if (error instanceof FirestorePermissionError) {
-            title = "Error de Permisos de Firestore";
-            description = `No se pudo crear tu perfil de usuario. Revisa tus reglas de seguridad de Firestore. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/popup-closed-by-user') {
-           setIsGoogleSigningIn(false);
-           return;
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-            description = 'Ya existe una cuenta con este correo. Por favor, inicia sesión con el método que usaste originalmente.';
-        } else if (error.code === 'auth/operation-not-allowed') {
-            description = 'El inicio de sesión con Google no está habilitado. Por favor, actívalo en la consola de Firebase.';
-        } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
-        } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
-            title = "Error de Configuración de Google";
-            description = (
-                <div className="flex flex-col gap-2 text-xs">
-                    <p>La autenticación falló, probablemente por una configuración incorrecta en Google Cloud.</p>
-                    <p className="font-bold">Verifica lo siguiente en tu proyecto:</p>
-                    <ul className="list-disc list-inside">
-                        <li>
-                            <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                                La API "Identity Toolkit" debe estar HABILITADA.
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                                Tu cliente de OAuth ("Web client (auto created by Google Service)")
-                            </a> debe tener los dominios correctos en "Orígenes de JavaScript autorizados".
-                        </li>
-                    </ul>
-                    <p className="font-bold mt-2">Detalles del Error:</p>
-                    <pre className="text-xs bg-muted p-2 rounded-md whitespace-pre-wrap font-mono">
-                        {error.message || JSON.stringify(error)}
-                    </pre>
-                </div>
-            );
-        }
-        
-        toast({
-            title: title,
-            description: description,
-            variant: "destructive",
-            duration: 20000,
-        });
-    } finally {
+        console.error("Google Sign-In Initiation Error:", error);
         setIsGoogleSigningIn(false);
+        if (error.code === 'auth/internal-error') {
+            setShowInternalError(true);
+        } else {
+            toast({
+                title: "Error de autenticación",
+                description: "No se pudo iniciar el proceso con Google.",
+                variant: "destructive",
+            });
+        }
     }
   };
   
@@ -161,7 +150,7 @@ function LoginPageContent() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || user) {
+  if (isUserLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -176,7 +165,19 @@ function LoginPageContent() {
           <CardTitle className="font-headline text-3xl">Bienvenido de Nuevo</CardTitle>
           <CardDescription className="pt-2">Ingresa tus credenciales para continuar</CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-6">
+        <CardContent className="p-8 pt-6 space-y-6">
+          
+          {showInternalError && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="font-bold">Error del Navegador</AlertTitle>
+                <AlertDescription className="text-xs space-y-2">
+                    <p>Tu entorno de trabajo está bloqueando la conexión segura con Google.</p>
+                    <p><b>Solución:</b> Usa el formulario de Correo y Contraseña abajo, o asegúrate de no estar en modo Incógnito y tener habilitadas las cookies de terceros.</p>
+                </AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-6">
               <FormField

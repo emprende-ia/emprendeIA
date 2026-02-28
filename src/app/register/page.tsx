@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, UserCredential } from 'firebase/auth';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useAuth, useFirestore, useUser } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -56,9 +57,11 @@ function RegisterPageContent() {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [isRegistering, setIsRegistering] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [showInternalError, setShowInternalError] = useState(false);
 
 
   const form = useForm<RegisterFormValues>({
@@ -66,12 +69,42 @@ function RegisterPageContent() {
     defaultValues: {
       fullName: '',
       username: '',
-      age: '' as any, // Use empty string for controlled component
+      age: '' as any,
       email: '',
       password: '',
       confirmPassword: '',
     },
   });
+
+  // Handle Redirection Result
+  useEffect(() => {
+    if (auth && firestore) {
+      getRedirectResult(auth)
+        .then(async (result) => {
+          if (result) {
+            setIsGoogleSigningIn(true);
+            try {
+              await getOrCreateUserProfile(firestore, result.user);
+              toast({
+                title: "¡Bienvenido!",
+                description: "Cuenta creada con Google correctamente.",
+              });
+              router.push('/start');
+            } catch (e) {
+              console.error("Error creating user profile after redirect:", e);
+            } finally {
+              setIsGoogleSigningIn(false);
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Google Redirect Error:", error);
+          if (error.code === 'auth/internal-error') {
+            setShowInternalError(true);
+          }
+        });
+    }
+  }, [auth, firestore, router, toast]);
 
   const handleRegister = async (values: RegisterFormValues) => {
     if (!auth || !firestore) return;
@@ -98,10 +131,6 @@ function RegisterPageContent() {
         let description = "No se pudo completar el registro. Inténtalo de nuevo.";
         if (error.code === 'auth/email-already-in-use') {
             description = "Este correo electrónico ya está en uso. Intenta con otro.";
-        } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
-        } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
         }
         toast({
             title: "Error de Registro",
@@ -114,65 +143,43 @@ function RegisterPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth || !firestore) return;
+    if (!auth || isGoogleSigningIn) return;
     setIsGoogleSigningIn(true);
+    setShowInternalError(false);
+    
     try {
-      const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
-      await getOrCreateUserProfile(firestore, userCredential.user);
-      router.push('/start');
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      // Switching to Redirect to avoid workstation popup blocks
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
-        console.error("Google Sign-In Error:", error);
-        let title = "Error de inicio de sesión con Google";
-        let description: React.ReactNode = "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
-        
-        if (error instanceof FirestorePermissionError) {
-            title = "Error de Permisos de Firestore";
-            description = `No se pudo crear tu perfil de usuario. Revisa tus reglas de seguridad de Firestore. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            setIsGoogleSigningIn(false);
-            return;
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-            description = 'Ya existe una cuenta con este correo. Por favor, inicia sesión con el método que usaste originalmente.';
-        } else if (error.name === 'FirebaseError' && error.message.includes('Firestore Security Rules')) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
-        } else if (error.code && (error.code.includes('permission-denied') || error.code.includes('PERMISSION_DENIED'))) {
-            description = `Error de permisos de Firestore al crear tu perfil. Detalles: ${error.message}`;
-        } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain' || error.code === 'auth/operation-not-allowed') {
-            title = "Error de Configuración de Google";
-            description = (
-                <div className="flex flex-col gap-2 text-xs">
-                    <p>La autenticación falló, probablemente por una configuración incorrecta en Google Cloud.</p>
-                    <p className="font-bold">Verifica lo siguiente en tu proyecto:</p>
-                    <ul className="list-disc list-inside">
-                        <li>
-                            <a href="https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                                La API "Identity Toolkit" debe estar HABILITADA.
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                                Tu cliente de OAuth ("Web client (auto created by Google Service)")
-                            </a> debe tener los dominios correctos en "Orígenes de JavaScript autorizados".
-                        </li>
-                    </ul>
-                    <p className="font-bold mt-2">Detalles del Error:</p>
-                    <pre className="text-xs bg-muted p-2 rounded-md whitespace-pre-wrap font-mono">
-                        {error.message || JSON.stringify(error)}
-                    </pre>
-                </div>
-            );
-        }
-        
-        toast({
-            title: title,
-            description: description,
-            variant: "destructive",
-            duration: 20000,
-        });
-    } finally {
+        console.error("Google Sign-In Initiation Error:", error);
         setIsGoogleSigningIn(false);
+        if (error.code === 'auth/internal-error') {
+            setShowInternalError(true);
+        } else {
+            toast({
+                title: "Error de registro",
+                description: "No se pudo iniciar el proceso con Google.",
+                variant: "destructive",
+            });
+        }
     }
   };
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/start');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary/30">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
 
   return (
@@ -182,7 +189,19 @@ function RegisterPageContent() {
           <CardTitle className="font-headline text-3xl">Crear una Cuenta</CardTitle>
           <CardDescription className="pt-2">Completa tus datos para unirte a Emprende IA</CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-6">
+        <CardContent className="p-8 pt-6 space-y-6">
+
+          {showInternalError && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="font-bold">Error del Navegador</AlertTitle>
+                <AlertDescription className="text-xs space-y-2">
+                    <p>Tu entorno de trabajo está bloqueando la conexión segura con Google.</p>
+                    <p><b>Solución:</b> Usa el registro manual por Correo abajo, o asegúrate de no estar en modo Incógnito y tener habilitadas las cookies de terceros.</p>
+                </AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-4">
               <FormField name="fullName" control={form.control} render={({ field }) => (
@@ -254,11 +273,11 @@ function RegisterPageContent() {
              <p className="px-8 text-center text-xs text-muted-foreground pt-4 border-t">
                 Al registrarte, aceptas nuestros{' '}
                 <Link href="https://emprendeia.app/terminos" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                    https://emprendeia.app/terminos
+                    Términos de Servicio
                 </Link>
                 {' '}y{' '}
                 <Link href="https://emprendeia.app/privacidad" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                    https://emprendeia.app/privacidad
+                    Política de Privacidad
                 </Link>
                 .
             </p>

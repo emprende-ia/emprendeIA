@@ -1,0 +1,13 @@
+specVersion: "v1"
+serviceId: "genkit-app"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "studio-3959207469-af070-database"
+      cloudSql:
+        instanceId: "studio-3959207469-af070-instance"
+        # schemaValidation: "STRICT"     # STRICT mode makes Postgres schema match Data Connect exactly.
+        # schemaValidation: "COMPATIBLE" # COMPATIBLE mode makes Postgres schema compatible with Data Connect.
+connectorDirs: ["./example"]
