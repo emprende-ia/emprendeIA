@@ -1,54 +1,18 @@
-
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { 
-  getAuth, 
-  initializeAuth, 
-  browserLocalPersistence, 
-  browserSessionPersistence,
-  Auth 
-} from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
-let app: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
-let storage: FirebaseStorage;
+// Initialize Firebase as a singleton module to avoid 'auth/argument-error'
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+const storage = getStorage(app);
 
-/**
- * Inicializa los servicios de Firebase de forma robusta.
- * Se utiliza initializeAuth con persistencia explícita para asegurar la compatibilidad
- * con entornos de estaciones de trabajo y evitar errores de sesión.
- */
-export function initializeFirebase() {
-  if (getApps().length > 0) {
-    app = getApp();
-    auth = getAuth(app);
-    firestore = getFirestore(app);
-    storage = getStorage(app);
-  } else {
-    app = initializeApp(firebaseConfig);
-    
-    // Configuramos la persistencia de forma explícita. 
-    // Esto ayuda a prevenir el auth/internal-error en navegadores con restricciones.
-    auth = initializeAuth(app, {
-      persistence: [browserLocalPersistence, browserSessionPersistence],
-    });
-    
-    firestore = getFirestore(app);
-    storage = getStorage(app);
-  }
-  
-  return {
-    firebaseApp: app,
-    auth,
-    firestore,
-    storage,
-  };
-}
+export { app, auth, firestore, storage };
 
 export * from './provider';
 export * from './client-provider';

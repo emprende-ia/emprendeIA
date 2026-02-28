@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useAuth, useFirestore, useUser } from '@/firebase';
+import { auth, firestore, useUser } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,8 +40,6 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 function RegisterPageContent() {
-  const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
@@ -63,7 +60,7 @@ function RegisterPageContent() {
   });
 
   const handleRegister = async (values: RegisterFormValues) => {
-    if (!auth || !firestore || isRegistering || isGoogleSigningIn) return;
+    if (isRegistering || isGoogleSigningIn) return;
     setIsRegistering(true);
 
     try {
@@ -80,7 +77,7 @@ function RegisterPageContent() {
         console.error("Register Error:", error);
         toast({
             title: "Error de Registro",
-            description: "No se pudo crear la cuenta. Verifica tus datos e intenta de nuevo.",
+            description: "No se pudo crear la cuenta. Verifica tus datos.",
             variant: "destructive",
         });
     } finally {
@@ -89,7 +86,7 @@ function RegisterPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth || !firestore || isGoogleSigningIn || isRegistering) return;
+    if (isGoogleSigningIn || isRegistering) return;
     setIsGoogleSigningIn(true);
     
     try {
@@ -104,7 +101,7 @@ function RegisterPageContent() {
         console.error("Google Auth Error:", error);
         let message = "Hubo un problema al conectar con Google.";
         if (error.code === 'auth/internal-error') {
-            message = "Error interno. Verifica cookies de terceros y dominios autorizados.";
+            message = "Error interno. Asegúrate de permitir cookies de terceros.";
         }
         toast({
             title: "Error de registro",

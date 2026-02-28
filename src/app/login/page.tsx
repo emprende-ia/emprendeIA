@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { useAuth, useFirestore, useUser } from '@/firebase';
+import { auth, firestore, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,8 +34,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginPageContent() {
-  const auth = useAuth();
-  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -50,7 +47,7 @@ function LoginPageContent() {
   });
 
   const handleSignIn = async (values: LoginFormValues) => {
-    if (!auth || isSigningIn || isGoogleSigningIn) return;
+    if (isSigningIn || isGoogleSigningIn) return;
     setIsSigningIn(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -68,14 +65,13 @@ function LoginPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth || !firestore || isGoogleSigningIn || isSigningIn) return;
+    if (isGoogleSigningIn || isSigningIn) return;
     setIsGoogleSigningIn(true);
     
     try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         
-        // El método Popup es el preferido por el usuario.
         const result = await signInWithPopup(auth, provider);
         await getOrCreateUserProfile(firestore, result.user);
         
@@ -83,12 +79,11 @@ function LoginPageContent() {
         router.push('/start');
     } catch (error: any) {
         console.error("Google Auth Error:", error);
-        
         let message = "No se pudo conectar con Google.";
         if (error.code === 'auth/internal-error') {
-            message = "Error interno de Firebase. Verifica los dominios autorizados y las cookies de terceros.";
+            message = "Error interno de Firebase. Asegúrate de tener habilitadas las cookies de terceros.";
         } else if (error.code === 'auth/popup-closed-by-user') {
-            message = "Cerraste la ventana de Google antes de terminar.";
+            message = "Cerraste la ventana antes de terminar.";
         }
 
         toast({
