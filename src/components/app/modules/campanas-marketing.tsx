@@ -73,13 +73,10 @@ export function CampanasMarketingModule() {
 
   const handleSaveCampaign = async (campaignIdea: CampaignIdea) => {
     if (!user || !firestore) {
-      toast({ title: 'Error', description: 'Debes iniciar sesión para guardar una campaña.', variant: 'destructive' });
+      toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para guardar y desarrollar una campaña.', variant: 'destructive' });
       return;
     }
-     if (user.plan === 'básico') {
-      toast({ title: 'Función Premium', description: 'Necesitas un plan de pago para guardar y desarrollar campañas.', variant: 'destructive' });
-      return;
-    }
+    
     setIsSaving(campaignIdea.title);
     try {
       await saveCampaign(firestore, user.uid, campaignIdea);
@@ -174,26 +171,13 @@ export function CampanasMarketingModule() {
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="w-full">
-                                        <Button className="w-full" size="sm" onClick={() => handleSaveCampaign(idea)} disabled={!!isSaving || !user || user.plan === 'básico'}>
-                                             {isSaving === idea.title ? (
-                                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando plan...</>
-                                             ) : (
-                                                <><Workflow className="mr-2 h-4 w-4" /> Quiero trabajar en esta campaña</>
-                                             )}
-                                        </Button>
-                                      </div>
-                                    </TooltipTrigger>
-                                    {(!user || user.plan === 'básico') && (
-                                      <TooltipContent>
-                                        <p>Necesitas un plan de pago para guardar campañas.</p>
-                                      </TooltipContent>
-                                    )}
-                                  </Tooltip>
-                                </TooltipProvider>
+                                <Button className="w-full" size="sm" onClick={() => handleSaveCampaign(idea)} disabled={!!isSaving}>
+                                     {isSaving === idea.title ? (
+                                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando plan...</>
+                                     ) : (
+                                        <><Workflow className="mr-2 h-4 w-4" /> Quiero trabajar en esta campaña</>
+                                     )}
+                                </Button>
                             </CardFooter>
                         </Card>
                     ))}

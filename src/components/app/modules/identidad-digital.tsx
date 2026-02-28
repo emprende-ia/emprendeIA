@@ -144,10 +144,6 @@ export function IdentidadDigitalModule() {
           toast({ title: 'Falta el prompt del logo', description: 'Primero genera una identidad de marca para obtener un prompt.', variant: 'destructive'});
           return;
       }
-      if (!user || user.plan === 'básico') {
-        toast({ title: 'Función Premium', description: 'Necesitas un plan de pago para generar logos con IA.', variant: 'destructive'});
-        return;
-      }
       setIsLogoLoading(true);
       try {
         const { logoUrl } = await generateLogoFromPrompt({ logoPrompt: identityResult.logoPrompt });
@@ -168,11 +164,6 @@ export function IdentidadDigitalModule() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    if (!user || user.plan === 'básico') {
-        toast({ title: "Función Premium", description: "Necesitas un plan de pago para subir tu propio logo.", variant: "destructive" });
-        return;
-    }
 
     if (!file.type.startsWith('image/')) {
         toast({ title: "Archivo inválido", description: "Solo puedes subir imágenes.", variant: "destructive" });
@@ -207,8 +198,19 @@ export function IdentidadDigitalModule() {
   };
     
   const handleApplyIdentity = async () => {
-    if (!identityResult || !user || !firestore) {
-      toast({ title: 'Error', description: 'Debes iniciar sesión para guardar tu identidad.', variant: 'destructive' });
+    if (!identityResult) return;
+
+    if (!user || !firestore) {
+      // For guests, we just keep it in state and localStorage
+      localStorage.setItem('brandIdentity', JSON.stringify({
+          ...identityResult,
+          updatedAt: new Date().toISOString()
+      }));
+      toast({
+          title: '¡Identidad Aplicada!',
+          description: 'Tu marca se ha aplicado localmente. Inicia sesión para guardarla permanentemente.',
+      });
+      setIsOpen(false);
       return;
     }
     
@@ -269,6 +271,7 @@ export function IdentidadDigitalModule() {
       if (user && firestore) {
           deleteBrandIdentity(firestore, user.uid);
       }
+      localStorage.removeItem('brandIdentity');
       resetIdentityState();
       toast({
           title: "Identidad eliminada",
@@ -378,19 +381,10 @@ export function IdentidadDigitalModule() {
                                 </div>
                             </CardContent>
                              <CardFooter className="p-2 flex justify-end gap-2">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className='w-full'>
-                                            <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={isUploadingLogo || !user || user.plan === 'básico'}>
-                                                {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="mr-2 h-4 w-4" />}
-                                                Subir Logo
-                                            </Button>
-                                        </div>
-                                    </TooltipTrigger>
-                                     {(!user || user.plan === 'básico') && <TooltipContent><p>Necesitas un plan de pago para subir tu propio logo</p></TooltipContent>}
-                                  </Tooltip>
-                                </TooltipProvider>
+                                <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={isUploadingLogo}>
+                                    {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="mr-2 h-4 w-4" />}
+                                    Subir Logo
+                                </Button>
                                 <Button onClick={handleDownloadLogo} variant="secondary" size="sm">
                                     <Download className="mr-2 h-4 w-4" />
                                     Descargar
@@ -403,7 +397,6 @@ export function IdentidadDigitalModule() {
                                 className="hidden"
                                 accept="image/png, image/jpeg, image/webp"
                                 onChange={handleFileUpload}
-                                disabled={!user || user.plan === 'básico'}
                             />
                         </Card>
                     )}
@@ -462,19 +455,10 @@ export function IdentidadDigitalModule() {
                                         className="text-xs font-mono text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1"
                                         rows={4}
                                     />
-                                     <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className="w-full">
-                                            <Button onClick={handleGenerateLogo} size="sm" className="w-full mt-2" disabled={isLogoLoading || !identityResult.logoPrompt || !user || user.plan === 'básico'}>
-                                                {isLogoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />}
-                                                Generar Logo con IA
-                                            </Button>
-                                          </div>
-                                        </TooltipTrigger>
-                                        {(!user || user.plan === 'básico') && <TooltipContent><p>Necesitas un plan de pago para generar un logo con IA</p></TooltipContent>}
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Button onClick={handleGenerateLogo} size="sm" className="w-full mt-2" disabled={isLogoLoading || !identityResult.logoPrompt}>
+                                        {isLogoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                                        Generar Logo con IA
+                                    </Button>
                                 </div>
                             )}
                         </CardContent>
@@ -486,7 +470,7 @@ export function IdentidadDigitalModule() {
              {identityResult && (
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="lg" disabled={!user}>
+                        <Button variant="destructive" size="lg">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Borrar Identidad
                         </Button>
@@ -505,19 +489,10 @@ export function IdentidadDigitalModule() {
                     </AlertDialogContent>
                 </AlertDialog>
             )}
-             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className='w-full'>
-                        <Button onClick={handleApplyIdentity} size="lg" disabled={!identityResult || !user} className="w-full">
-                            <Heart className="mr-2 h-4 w-4" />
-                            Guardar y Sincronizar Identidad
-                        </Button>
-                    </div>
-                </TooltipTrigger>
-                 {!user && <TooltipContent><p>Inicia sesión para guardar tu identidad</p></TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
+            <Button onClick={handleApplyIdentity} size="lg" disabled={!identityResult} className="w-full">
+                <Heart className="mr-2 h-4 w-4" />
+                {user ? 'Guardar y Sincronizar Identidad' : 'Aplicar Identidad'}
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

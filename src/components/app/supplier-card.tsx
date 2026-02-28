@@ -38,20 +38,13 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
   const handleSave = async () => {
     if (!user || !firestore) {
       toast({
-        title: 'Debes iniciar sesión',
+        title: 'Inicia sesión',
         description: 'Para guardar un proveedor, necesitas tener una cuenta.',
         variant: 'destructive',
       });
       return;
     }
-     if (user.plan === 'básico') {
-      toast({
-        title: 'Función Premium',
-        description: 'Mejora tu plan para guardar proveedores.',
-        variant: 'destructive',
-      });
-      return;
-    }
+    
     setIsSaving(true);
     try {
       const supplierData: SavedSupplierData = {
@@ -101,27 +94,14 @@ export function SupplierCard({ supplier, isVerified = false }: SupplierCardProps
                     <span className="text-xs text-muted-foreground">{rating} ({reviewCount} reseñas)</span>
                 </CardDescription>
             )}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving || !user || user.plan === 'básico'}>
-                        {isSaving ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Bookmark className="mr-2 h-4 w-4" />
-                        )}
-                        Guardar Proveedor
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {(!user || user.plan === 'básico') && (
-                  <TooltipContent>
-                    <p>Necesitas un plan de pago para guardar proveedores.</p>
-                  </TooltipContent>
+            <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Bookmark className="mr-2 h-4 w-4" />
                 )}
-              </Tooltip>
-            </TooltipProvider>
+                Guardar Proveedor
+            </Button>
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">

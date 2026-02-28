@@ -114,13 +114,10 @@ export function GuiaPasoAPasoModule() {
 
   const handleSavePath = () => {
     if (!user || !firestore || !learningPath) {
-      toast({ title: 'Error', description: 'No se pudo guardar la guía. Asegúrate de haber iniciado sesión.', variant: 'destructive' });
+      toast({ title: 'Inicia sesión', description: 'Debes iniciar sesión para guardar tus rutas de aprendizaje.', variant: 'destructive' });
       return;
     }
-     if (user.plan === 'básico') {
-      toast({ title: 'Función Premium', description: 'Necesitas un plan de pago para guardar las rutas de aprendizaje.', variant: 'destructive' });
-      return;
-    }
+    
     saveLearningPath(firestore, user.uid, learningPath);
     toast({ title: '¡Guía guardada!', description: 'Puedes ver tus guías guardadas en "Mis Rutas".' });
     handleClose();
@@ -206,16 +203,7 @@ export function GuiaPasoAPasoModule() {
           {learningPath && (
             <div className="max-h-[65vh] overflow-y-auto p-1 space-y-6 pt-4">
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className='w-full'>
-                            <Button onClick={handleSavePath} disabled={!user || user.plan === 'básico'} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
-                          </div>
-                        </TooltipTrigger>
-                        {(!user || user.plan === 'básico') && <TooltipContent><p>Necesitas un plan de pago para guardar esta guía.</p></TooltipContent>}
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Button onClick={handleSavePath} className="w-full"><PlusCircle className="mr-2 h-4 w-4" /> Quiero empezar a trabajar con esta guía</Button>
                     <Button onClick={resetForm} variant="outline"><RefreshCw className="mr-2 h-4 w-4" /> Generar otra guía</Button>
                 </div>
                 <Alert className="bg-primary/5">
