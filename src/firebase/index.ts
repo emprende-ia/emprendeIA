@@ -20,8 +20,8 @@ let storage: FirebaseStorage;
 
 /**
  * Inicializa los servicios de Firebase de forma robusta.
- * En entornos de desarrollo como Cloud Workstations, usamos initializeAuth
- * con persistencia explícita para evitar errores de origen cruzado.
+ * Se utiliza initializeAuth con persistencia explícita para asegurar la compatibilidad
+ * con entornos de estaciones de trabajo y evitar errores de sesión.
  */
 export function initializeFirebase() {
   if (getApps().length > 0) {
@@ -32,7 +32,8 @@ export function initializeFirebase() {
   } else {
     app = initializeApp(firebaseConfig);
     
-    // Configuramos la persistencia de forma explícita para evitar auth/internal-error
+    // Configuramos la persistencia de forma explícita. 
+    // Esto ayuda a prevenir el auth/internal-error en navegadores con restricciones.
     auth = initializeAuth(app, {
       persistence: [browserLocalPersistence, browserSessionPersistence],
     });

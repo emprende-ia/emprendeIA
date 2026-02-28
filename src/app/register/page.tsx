@@ -80,7 +80,7 @@ function RegisterPageContent() {
         console.error("Register Error:", error);
         toast({
             title: "Error de Registro",
-            description: error.code === 'auth/email-already-in-use' ? "Este correo ya está registrado." : "Inténtalo de nuevo.",
+            description: "No se pudo crear la cuenta. Verifica tus datos e intenta de nuevo.",
             variant: "destructive",
         });
     } finally {
@@ -104,7 +104,7 @@ function RegisterPageContent() {
         console.error("Google Auth Error:", error);
         let message = "Hubo un problema al conectar con Google.";
         if (error.code === 'auth/internal-error') {
-            message = "Error interno. Asegúrate de tener habilitadas las cookies de terceros y no estar en modo incógnito.";
+            message = "Error interno. Verifica cookies de terceros y dominios autorizados.";
         }
         toast({
             title: "Error de registro",

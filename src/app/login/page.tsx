@@ -74,21 +74,21 @@ function LoginPageContent() {
     try {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
+        
+        // El método Popup es el preferido por el usuario.
         const result = await signInWithPopup(auth, provider);
         await getOrCreateUserProfile(firestore, result.user);
         
         toast({ title: "¡Éxito!", description: "Conectado con Google." });
         router.push('/start');
     } catch (error: any) {
-        console.error("Google Auth Full Error:", error);
+        console.error("Google Auth Error:", error);
         
         let message = "No se pudo conectar con Google.";
         if (error.code === 'auth/internal-error') {
-            message = "Error interno de Firebase. Verifica que los dominios estén autorizados y no estés en modo incógnito.";
+            message = "Error interno de Firebase. Verifica los dominios autorizados y las cookies de terceros.";
         } else if (error.code === 'auth/popup-closed-by-user') {
             message = "Cerraste la ventana de Google antes de terminar.";
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            message = "Solicitud de acceso cancelada por otro intento.";
         }
 
         toast({
