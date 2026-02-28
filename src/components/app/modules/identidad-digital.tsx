@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Palette, Bot, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload } from "lucide-react";
+import { Loader2, Sparkles, Palette, Bot, Heart, RefreshCw, AudioWaveform, Trash2, Download, Upload, AlertTriangle } from "lucide-react";
 import { generateDigitalIdentity } from '@/ai/flows/generate-digital-identity';
 import { generateLogoFromPrompt } from '@/ai/flows/generate-logo-from-prompt';
 import { regenerateBrandElements } from '@/ai/flows/regenerate-brand-elements';
@@ -48,6 +48,7 @@ export function IdentidadDigitalModule() {
   
   const [identityResult, setIdentityResult] = useState<Partial<BrandIdentity> | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   
   const [isOpen, setIsOpen] = useState(false);
   
@@ -109,6 +110,7 @@ export function IdentidadDigitalModule() {
 
   const resetIdentityState = () => {
       setIdentityResult(null);
+      setAiError(null);
   }
 
   const onBusinessSubmit: SubmitHandler<IdentityFormValues> = async (data) => {
@@ -121,13 +123,17 @@ export function IdentidadDigitalModule() {
         title: "¡Identidad de Marca Generada!",
         description: "Revisa el nombre, eslogan y el prompt para tu logo.",
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast({
-        title: "Error al crear la identidad",
-        description: "Hubo un problema con la IA. Por favor, inténtalo de nuevo.",
-        variant: "destructive"
-      });
+      if (e.message?.includes('403') || e.toString().includes('403')) {
+          setAiError("API_KEY_BLOCKED");
+      } else {
+          toast({
+            title: "Error al crear la identidad",
+            description: "Hubo un problema con la IA. Por favor, inténtalo de nuevo.",
+            variant: "destructive"
+          });
+      }
     } finally {
       setIsIdentityLoading(false);
     }
@@ -289,6 +295,7 @@ export function IdentidadDigitalModule() {
     if (!open) {
       businessForm.reset();
       setIdentityResult(null);
+      setAiError(null);
       setIsIdentityLoading(false);
       setIsUploadingLogo(false);
     }
@@ -335,6 +342,22 @@ export function IdentidadDigitalModule() {
                     </Button>
                 </form>
             </Form>
+
+            {aiError === "API_KEY_BLOCKED" && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle className="font-bold text-lg">Error de Clave de API (403)</AlertTitle>
+                    <AlertDescription className="space-y-3 pt-2">
+                        <p>La IA no puede responder porque tu clave de API está bloqueada o no tiene habilitada la <b>Generative Language API</b>.</p>
+                        <p className="font-semibold underline">Cómo arreglarlo:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-sm">
+                            <li>Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" className="font-bold underline">Google AI Studio</a>.</li>
+                            <li>Crea una nueva <b>API Key</b> gratuita.</li>
+                            <li>Pega esa clave en tu archivo <code>.env</code> bajo <code>GOOGLE_GENAI_API_KEY</code>.</li>
+                        </ol>
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {identityResult && (
                 <div className="space-y-4 pt-4">
