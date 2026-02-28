@@ -5,7 +5,7 @@ import { auth, firestore, useUser } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
+import { Loader2, Sparkles, ShieldCheck, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -48,6 +49,7 @@ function RegisterPageContent() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  const [showCookieHelp, setShowCookieHelp] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -109,6 +111,7 @@ function RegisterPageContent() {
   const handleGoogleSignIn = async () => {
     if (isGoogleSigningIn || isRegistering) return;
     setIsGoogleSigningIn(true);
+    setShowCookieHelp(false);
     
     try {
       const provider = new GoogleAuthProvider();
@@ -120,17 +123,13 @@ function RegisterPageContent() {
       router.push('/start');
     } catch (error: any) {
         console.error("Google Auth Error:", error);
-        let message = "Hubo un problema al conectar con Google.";
-        
-        if (error.code === 'auth/internal-error') {
-            message = "Error interno. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            message = "Cancelaste el inicio de sesión.";
+        if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
+            setShowCookieHelp(true);
         }
 
         toast({
             title: "Error de registro",
-            description: message,
+            description: "No se pudo completar el registro con Google.",
             variant: "destructive",
         });
     } finally {
@@ -204,6 +203,21 @@ function RegisterPageContent() {
                 {isGoogleSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
                 Registrarme con Google
             </Button>
+
+            {showCookieHelp && (
+                <Alert className="mt-4 bg-primary/5 border-primary/20">
+                    <Info className="h-4 w-4 text-primary" />
+                    <AlertTitle className="font-bold text-sm">¿Problemas con Google?</AlertTitle>
+                    <AlertDescription className="text-xs space-y-2 pt-1">
+                        <p>Para habilitar Google en esta estación de trabajo:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                            <li><b>Chrome:</b> Ajustes &gt; Privacidad &gt; Cookies &gt; Permitir todas.</li>
+                            <li><b>Safari:</b> Ajustes &gt; Safari &gt; Desactivar "Bloquear todas las cookies".</li>
+                            <li>Evita el <b>Modo Incógnito</b>.</li>
+                        </ul>
+                    </AlertDescription>
+                </Alert>
+            )}
         </CardContent>
         <CardFooter className="justify-center border-t pt-6">
             <p className="text-sm text-muted-foreground">

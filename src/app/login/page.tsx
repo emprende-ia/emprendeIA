@@ -5,7 +5,7 @@ import { auth, firestore, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, RecaptchaVerifier } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound, ShieldCheck } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { getOrCreateUserProfile } from '@/lib/firestore/users';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -42,6 +43,7 @@ function LoginPageContent() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  const [showCookieHelp, setShowCookieHelp] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -88,6 +90,7 @@ function LoginPageContent() {
   const handleGoogleSignIn = async () => {
     if (isGoogleSigningIn || isSigningIn) return;
     setIsGoogleSigningIn(true);
+    setShowCookieHelp(false);
     
     try {
         const provider = new GoogleAuthProvider();
@@ -100,17 +103,13 @@ function LoginPageContent() {
         router.push('/start');
     } catch (error: any) {
         console.error("Google Auth Error:", error);
-        let message = "No se pudo conectar con Google.";
-        
-        if (error.code === 'auth/internal-error') {
-            message = "Error interno. Verifica que no estés en modo Incógnito y que permitas cookies de terceros.";
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            message = "Cerraste la ventana de Google antes de terminar.";
+        if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
+            setShowCookieHelp(true);
         }
 
         toast({
             title: "Error de autenticación",
-            description: message,
+            description: "No se pudo conectar con Google. Revisa las instrucciones de cookies abajo.",
             variant: "destructive",
         });
     } finally {
@@ -201,6 +200,21 @@ function LoginPageContent() {
                 {isGoogleSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
                 Continuar con Google
             </Button>
+
+            {showCookieHelp && (
+                <Alert className="mt-4 bg-primary/5 border-primary/20">
+                    <Info className="h-4 w-4 text-primary" />
+                    <AlertTitle className="font-bold text-sm">¿Problemas con Google?</AlertTitle>
+                    <AlertDescription className="text-xs space-y-2 pt-1">
+                        <p>Para usar Google en este entorno, debes habilitar las <b>cookies de terceros</b>:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                            <li><b>Chrome:</b> Configuración &gt; Privacidad &gt; Cookies &gt; Permitir todas.</li>
+                            <li><b>Edge:</b> Configuración &gt; Cookies &gt; Desactiva "Bloquear cookies de terceros".</li>
+                            <li>No uses el <b>Modo Incógnito</b>.</li>
+                        </ul>
+                    </AlertDescription>
+                </Alert>
+            )}
         </CardContent>
         <CardFooter className="flex-col gap-4 border-t pt-6">
             <p className="text-sm text-muted-foreground text-center">
