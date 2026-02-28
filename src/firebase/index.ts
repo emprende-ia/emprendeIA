@@ -2,13 +2,31 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { 
+  getAuth, 
+  initializeAuth, 
+  browserLocalPersistence, 
+  browserPopupRedirectResolver 
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Initialize Firebase as a singleton module to avoid 'auth/argument-error'
+/**
+ * @fileOverview Inicialización centralizada de Firebase.
+ * Se usa initializeAuth con browserPopupRedirectResolver para evitar el error 'auth/internal-error'
+ * común en entornos de desarrollo y bundlers modernos (Next.js/Turbopack).
+ */
+
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
+
+// Inicialización robusta de Auth
+const auth = getApps().length > 0 
+  ? getAuth(app) 
+  : initializeAuth(app, {
+      persistence: browserLocalPersistence,
+      popupRedirectResolver: browserPopupRedirectResolver,
+    });
+
 const firestore = getFirestore(app);
 const storage = getStorage(app);
 

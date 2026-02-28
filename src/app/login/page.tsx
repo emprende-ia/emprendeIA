@@ -80,10 +80,13 @@ function LoginPageContent() {
     } catch (error: any) {
         console.error("Google Auth Error:", error);
         let message = "No se pudo conectar con Google.";
+        
         if (error.code === 'auth/internal-error') {
-            message = "Error interno de Firebase. Asegúrate de tener habilitadas las cookies de terceros.";
+            message = "Error interno del navegador. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
         } else if (error.code === 'auth/popup-closed-by-user') {
-            message = "Cerraste la ventana antes de terminar.";
+            message = "Cerraste la ventana de Google antes de terminar.";
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            message = "Solo puedes abrir una ventana de inicio de sesión a la vez.";
         }
 
         toast({

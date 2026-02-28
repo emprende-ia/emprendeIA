@@ -100,9 +100,15 @@ function RegisterPageContent() {
     } catch (error: any) {
         console.error("Google Auth Error:", error);
         let message = "Hubo un problema al conectar con Google.";
+        
         if (error.code === 'auth/internal-error') {
-            message = "Error interno. Asegúrate de permitir cookies de terceros.";
+            message = "Error interno. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            message = "Cerraste la ventana antes de terminar.";
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            message = "Ya hay una solicitud de inicio de sesión en curso.";
         }
+
         toast({
             title: "Error de registro",
             description: message,
