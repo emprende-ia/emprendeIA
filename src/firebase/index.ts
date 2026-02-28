@@ -6,24 +6,24 @@ import {
   getAuth, 
   initializeAuth, 
   browserLocalPersistence, 
-  browserPopupRedirectResolver 
+  browserPopupRedirectResolver,
+  indexedDBLocalPersistence
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 /**
- * @fileOverview Inicialización centralizada de Firebase.
- * Se usa initializeAuth con browserPopupRedirectResolver para evitar el error 'auth/internal-error'
- * común en entornos de desarrollo y bundlers modernos (Next.js/Turbopack).
+ * @fileOverview Inicialización centralizada y robusta de Firebase.
  */
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Inicialización robusta de Auth
+// Inicialización con múltiples capas de persistencia y resolver de popups explícito
+// Esto soluciona la mayoría de los errores auth/internal-error en entornos Next.js
 const auth = getApps().length > 0 
   ? getAuth(app) 
   : initializeAuth(app, {
-      persistence: browserLocalPersistence,
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
       popupRedirectResolver: browserPopupRedirectResolver,
     });
 

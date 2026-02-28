@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { auth, firestore, useUser } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -43,9 +43,11 @@ function RegisterPageContent() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
   const [isRegistering, setIsRegistering] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -59,11 +61,26 @@ function RegisterPageContent() {
     },
   });
 
+  useEffect(() => {
+    if (!recaptchaVerifier && recaptchaContainerRef.current) {
+        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+            size: 'invisible',
+            callback: () => {
+                console.log('reCAPTCHA verificado');
+            }
+        });
+        setRecaptchaVerifier(verifier);
+    }
+  }, [recaptchaVerifier]);
+
   const handleRegister = async (values: RegisterFormValues) => {
     if (isRegistering || isGoogleSigningIn) return;
     setIsRegistering(true);
 
     try {
+      if (recaptchaVerifier) {
+          await recaptchaVerifier.verify();
+      }
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.username });
       await getOrCreateUserProfile(firestore, userCredential.user, {
@@ -98,15 +115,11 @@ function RegisterPageContent() {
       toast({ title: "¡Bienvenido!", description: "Registro completado con Google." });
       router.push('/start');
     } catch (error: any) {
-        console.error("Google Auth Error:", error);
+        console.error("Google Auth Full Error:", error);
         let message = "Hubo un problema al conectar con Google.";
         
         if (error.code === 'auth/internal-error') {
-            message = "Error interno. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            message = "Cerraste la ventana antes de terminar.";
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            message = "Ya hay una solicitud de inicio de sesión en curso.";
+            message = "Error interno del servidor. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
         }
 
         toast({
@@ -167,8 +180,10 @@ function RegisterPageContent() {
                 )}/>
               </div>
 
+              <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
+
               <Button type="submit" size="lg" className="w-full font-bold !mt-6" disabled={isRegistering || isGoogleSigningIn}>
-                {isRegistering ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
+                {isRegistering ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
                 Registrarme Ahora
               </Button>
             </form>

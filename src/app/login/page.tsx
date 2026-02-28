@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { auth, firestore, useUser } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, RecaptchaVerifier } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,19 +37,36 @@ function LoginPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
+  useEffect(() => {
+    if (!recaptchaVerifier && recaptchaContainerRef.current) {
+        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+            size: 'invisible',
+            callback: () => {
+                console.log('reCAPTCHA verificado');
+            }
+        });
+        setRecaptchaVerifier(verifier);
+    }
+  }, [recaptchaVerifier]);
+
   const handleSignIn = async (values: LoginFormValues) => {
     if (isSigningIn || isGoogleSigningIn) return;
     setIsSigningIn(true);
     try {
+      if (recaptchaVerifier) {
+          await recaptchaVerifier.verify();
+      }
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "¡Bienvenido de nuevo!", description: "Has iniciado sesión correctamente." });
     } catch (error: any) {
@@ -78,15 +95,13 @@ function LoginPageContent() {
         toast({ title: "¡Éxito!", description: "Conectado con Google." });
         router.push('/start');
     } catch (error: any) {
-        console.error("Google Auth Error:", error);
+        console.error("Google Auth Full Error:", error);
         let message = "No se pudo conectar con Google.";
         
         if (error.code === 'auth/internal-error') {
-            message = "Error interno del navegador. Asegúrate de permitir cookies de terceros y no usar modo Incógnito.";
+            message = "Error interno del servidor. Verifica que las cookies de terceros estén permitidas y no uses modo Incógnito.";
         } else if (error.code === 'auth/popup-closed-by-user') {
             message = "Cerraste la ventana de Google antes de terminar.";
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            message = "Solo puedes abrir una ventana de inicio de sesión a la vez.";
         }
 
         toast({
@@ -156,8 +171,9 @@ function LoginPageContent() {
                   </FormItem>
                 )}
               />
+              <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
               <Button type="submit" size="lg" className="w-full font-bold" disabled={isSigningIn || isGoogleSigningIn}>
-                {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
                 Iniciar Sesión
               </Button>
             </form>
