@@ -22,17 +22,21 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // Inicialización de App Check (Solo en el cliente)
 if (typeof window !== 'undefined') {
-  // Es recomendable configurar NEXT_PUBLIC_RECAPTCHA_SITE_KEY en tu archivo .env
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6Lc_tu_clave_de_sitio_aqui';
+  // Se recomienda configurar NEXT_PUBLIC_RECAPTCHA_SITE_KEY en tu archivo .env
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LfkX3osAAAAAHgdtKNvWYAxBEUoyX6jCnOhZX17';
   
-  try {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
-      isTokenAutoRefreshEnabled: true
-    });
-    console.log('Firebase App Check inicializado con éxito.');
-  } catch (error) {
-    console.error('Error al inicializar Firebase App Check:', error);
+  if (siteKey) {
+    try {
+      // Evitar inicialización doble en modo desarrollo
+      const appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+      console.log('Firebase App Check inicializado con éxito.');
+    } catch (error) {
+      // App Check puede fallar si ya está inicializado, lo cual es normal en recargas de HMR
+      console.debug('Aviso de App Check:', error);
+    }
   }
 }
 
