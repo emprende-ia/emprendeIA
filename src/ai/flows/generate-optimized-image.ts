@@ -1,15 +1,13 @@
-
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating a high-quality marketing image.
- * It enhances the user's prompt with relevant keywords and then calls an image generation model.
+ * @fileOverview This file defines a Genkit flow for generating high-quality marketing images.
+ * It uses the Imagen model to create photorealistic or stylized brand imagery.
  * @module ai/flows/generate-optimized-image
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { googleAI } from '@genkit-ai/google-genai';
 
 const CreativeTypeSchema = z.enum(['LOGO', 'BRAND_IMAGE']);
 
@@ -37,25 +35,22 @@ const generateOptimizedImageFlow = ai.defineFlow(
   },
   async ({ prompt, creativeType }) => {
     
-    // Step 1: Programmatically enhance the user's prompt.
-    // This removes the AI-to-AI chain, which can cause build issues.
     let enhancedPrompt = prompt;
     if (creativeType === 'LOGO') {
-      enhancedPrompt = `${prompt}, minimalist vector design, 3D isologo concept, neutral or transparent background, modern typography, clean lines`;
+      enhancedPrompt = `Minimalist vector logo, ${prompt}, high contrast, clean shapes, professional branding, flat design, 4k resolution.`;
     } else {
-      enhancedPrompt = `${prompt}, photorealistic studio photography, dramatic lighting, 4K render, cinematic feel, ultra-detailed`;
+      enhancedPrompt = `Photorealistic studio photography of ${prompt}, dramatic cinematic lighting, ultra-detailed textures, 8k professional render, clean composition.`;
     }
     
-    // Step 2: Generate the image using the enhanced prompt with the image model.
     const { media } = await ai.generate({
-        model: googleAI.model('imagen-4.0-fast-generate-001'),
+        model: 'googleai/imagen-4.0-fast-generate-001',
         prompt: enhancedPrompt,
     });
 
     const imageUrl = media?.url;
 
     if (!imageUrl) {
-        throw new Error("Image generation failed. The AI did not return an image.");
+        throw new Error("Image generation failed. The model did not return image data.");
     }
 
     return { imageUrl, optimizedPrompt: enhancedPrompt };

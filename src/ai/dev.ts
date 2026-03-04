@@ -1,4 +1,3 @@
-
 'use server';
 import { config } from 'dotenv';
 config();
@@ -18,5 +17,4 @@ import '@/ai/flows/analyze-breakeven-point.ts';
 import '@/ai/flows/generate-module-audio.ts';
 import '@/ai/flows/regenerate-brand-elements.ts';
 import '@/ai/flows/generate-campaign-task-audio.ts';
-
-    
+import '@/ai/flows/generate-optimized-image.ts';
