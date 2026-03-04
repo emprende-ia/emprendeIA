@@ -1,3 +1,4 @@
+
 // This is a server-side file.
 'use server';
 
@@ -56,6 +57,7 @@ export async function customizeSupplierRecommendations(
 // Define the prompt at the top level
 const recommendationPrompt = ai.definePrompt({
     name: 'customRecommendationPrompt',
+    model: 'googleai/gemini-2.5-flash',
     input: { schema: CustomizeSupplierRecommendationsInputSchema },
     output: { schema: CustomizeSupplierRecommendationsOutputSchema },
     prompt: `You are a business consultant. Based on the business plan and focusing only on the specified supply types, recommend a list of 3 fictional suppliers. Provide a relevance score (0.0 to 1.0) and a brief justification for each. Output must be in Spanish.

@@ -26,6 +26,7 @@ export async function regenerateBrandElements(input: RegenerateBrandElementsInpu
 
 const regeneratePrompt = ai.definePrompt({
     name: 'regenerateBrandElementsPrompt',
+    model: 'googleai/gemini-2.5-flash',
     input: { schema: RegenerateBrandElementsInputSchema },
     output: { schema: RegenerateBrandElementsOutputSchema },
     prompt: `You are a branding expert. Your entire output must be in Spanish.
