@@ -26,17 +26,34 @@ Copia este bloque en el chat de tu nuevo proyecto para inicializar la IA con el 
 Tu primera tarea es revisar los archivos que te proporcionaré y asegurar que la lógica de autenticación y los flujos de IA estén sincronizados."
 ---
 
-## 2. Configuración de Firebase
+## 2. Mapa del Proyecto (Ubicación de Archivos)
+
+Si necesitas encontrar una página específica, aquí está la ruta en el código:
+
+- **Inicio/Landing:** `src/app/page.tsx`
+- **Login:** `src/app/login/page.tsx`
+- **Registro:** `src/app/register/page.tsx`
+- **Selector de Camino:** `src/app/start/page.tsx`
+- **Formulario Nuevo Negocio:** `src/app/new-venture/page.tsx`
+- **Formulario Negocio Existente:** `src/app/existing-venture/page.tsx`
+- **Análisis de Viabilidad:** `src/app/analysis/page.tsx`
+- **Análisis de Crecimiento:** `src/app/existing-analysis/page.tsx`
+- **Panel de Control (Dashboard):** `src/app/dashboard/page.tsx`
+- **Precios:** `src/app/pricing/page.tsx`
+- **Términos:** `src/app/terminos/page.tsx`
+- **Privacidad:** `src/app/privacidad/page.tsx`
+
+## 3. Configuración de Firebase
 1. Crea un proyecto en la consola de Firebase.
 2. Habilita **Google Auth**.
 3. Habilita **Firestore** en modo producción.
 4. Habilita **App Check** con reCAPTCHA v3.
 5. Copia tus credenciales en `src/firebase/config.ts`.
 
-## 3. Variables de Entorno (.env)
+## 4. Variables de Entorno (.env)
 - `GOOGLE_GENAI_API_KEY`: Tu llave de Google AI Studio.
 - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`: Tu clave pública de reCAPTCHA v3.
 - `NEXT_PUBLIC_APP_URL`: La URL de tu app.
 
-## 4. Instalación
+## 5. Instalación
 `npm install firebase genkit @genkit-ai/google-genai lucide-react framer-motion clsx tailwind-merge zod react-hook-form @hookform/resolvers date-fns wav`
