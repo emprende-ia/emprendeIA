@@ -14,10 +14,10 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Singleton app initialization
+// Inicialización de la App (Singleton)
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Robust Auth initialization to prevent auth/internal-error
+// Inicialización Robusta de Auth para evitar auth/internal-error
 let auth: Auth;
 if (getApps().length > 0) {
   auth = getAuth(app);
@@ -28,7 +28,7 @@ if (getApps().length > 0) {
   });
 }
 
-// App Check initialization (client-side only)
+// Activación de App Check con reCAPTCHA v3
 if (typeof window !== 'undefined') {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   if (siteKey && !(window as any).appCheckInitialized) {
