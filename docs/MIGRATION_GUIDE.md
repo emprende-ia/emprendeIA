@@ -10,16 +10,18 @@ Copia este bloque en el chat de tu nuevo proyecto para inicializar la IA con el 
 
 "Actúa como mi socio desarrollador senior. Vamos a reconstruir 'EmprendeIA', una plataforma de incubación para emprendedores impulsada por IA.
 
+**Estructura del Proyecto (Paso a Paso):**
+1. **Landing (`/`):** Bienvenida con Registro, Login y Tutorial.
+2. **Selección (`/start`):** Bifurcación entre 'Nuevo Emprendimiento' y 'Potenciar Negocio'.
+3. **Captura:** Formularios detallados en `/new-venture` o `/existing-venture`.
+4. **Análisis:** Resultados en `/analysis` con Semáforo de Viabilidad, FODA y Presupuesto.
+5. **Dashboard (`/dashboard`):** Centro de control con 5 módulos de IA (Identidad, Finanzas, Campañas, Proveedores y Guías).
+
 **Stack Tecnológico:**
 - **Framework:** Next.js 15 (App Router) con Turbopack.
-- **Backend:** Firebase (Auth, Firestore, Storage, App Check).
+- **Backend:** Firebase (Auth con popupRedirectResolver, Firestore, Storage, App Check).
 - **IA:** Genkit v1.x (Gemini 2.5 Flash para texto, Imagen 4.0 para logos).
 - **Estilos:** Tailwind CSS con ShadCN UI. Paleta: Cyan (#00ffff), Fondo Cyan Claro (#e0ffff) y Acento Verde Lima (#32cd32).
-
-**Reglas de Oro:**
-1. **Auth:** Usa `initializeAuth` con `browserPopupRedirectResolver` en `src/firebase/index.ts` para evitar el error `auth/internal-error`.
-2. **Privacidad:** Todos los datos bajo `/users/{userId}/`.
-3. **Flujos:** Implementa los flujos de Genkit en `src/ai/flows/` usando siempre `googleai/gemini-2.5-flash`.
 
 Tu primera tarea es revisar los archivos que te proporcionaré y asegurar que la lógica de autenticación y los flujos de IA estén sincronizados."
 ---
