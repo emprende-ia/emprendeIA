@@ -5,7 +5,7 @@ import { auth, firestore, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, RecaptchaVerifier } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound, ShieldCheck, Info } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ShieldCheck, Info, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -68,9 +68,10 @@ function LoginPageContent() {
     return () => {
         if (recaptchaVerifier) {
             recaptchaVerifier.clear();
+            setRecaptchaVerifier(null);
         }
     }
-  }, [recaptchaVerifier]);
+  }, []);
 
   const handleSignIn = async (values: LoginFormValues) => {
     if (isSigningIn || isGoogleSigningIn) return;
@@ -115,7 +116,7 @@ function LoginPageContent() {
 
         toast({
             title: "Error de autenticación",
-            description: "No se pudo conectar con Google. Revisa las instrucciones de cookies abajo.",
+            description: error.code === 'auth/internal-error' ? "Error interno. Revisa las instrucciones de cookies abajo." : "No se pudo conectar con Google.",
             variant: "destructive",
         });
     } finally {
@@ -209,13 +210,14 @@ function LoginPageContent() {
 
             {showCookieHelp && (
                 <Alert className="mt-4 bg-primary/5 border-primary/20">
-                    <Info className="h-4 w-4 text-primary" />
-                    <AlertTitle className="font-bold text-sm">¿Problemas con Google?</AlertTitle>
+                    <AlertTriangle className="h-4 w-4 text-primary" />
+                    <AlertTitle className="font-bold text-sm">¿Error auth/internal-error?</AlertTitle>
                     <AlertDescription className="text-xs space-y-2 pt-1">
-                        <p>Para usar Google en este entorno, debes habilitar las <b>cookies de terceros</b>:</p>
+                        <p>Para usar Google en este entorno de trabajo, habilita las <b>cookies de terceros</b>:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><b>Chrome:</b> Configuración &gt; Privacidad &gt; Cookies &gt; Permitir todas.</li>
-                            <li><b>Edge:</b> Configuración &gt; Cookies &gt; Desactiva "Bloquear cookies de terceros".</li>
+                            <li><b>Chrome:</b> Configuración > Privacidad > Cookies > "Permitir todas".</li>
+                            <li><b>Edge:</b> Configuración > Cookies > Desactiva "Bloquear cookies de terceros".</li>
+                            <li><b>Safari:</b> Desactiva "Bloquear todas las cookies".</li>
                             <li>No uses el <b>Modo Incógnito</b>.</li>
                         </ul>
                     </AlertDescription>

@@ -1,53 +1,58 @@
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   initializeAuth, 
   browserLocalPersistence, 
   browserPopupRedirectResolver,
-  indexedDBLocalPersistence
+  indexedDBLocalPersistence,
+  Auth
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from "firebase/app-check";
 
 /**
  * @fileOverview Inicialización centralizada y robusta de Firebase para Next.js 15.
- * Incluye configuración de App Check para seguridad adicional.
+ * Optimizado para evitar errores auth/internal-error y conflictos de reCAPTCHA.
  */
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// 1. Inicializar App (Singleton)
+const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Inicialización de App Check (Solo en el cliente)
+// 2. Inicializar Auth con configuración robusta para Workstations
+let auth: Auth;
+if (getApps().length > 0) {
+  auth = getAuth(app);
+} else {
+  auth = initializeAuth(app, {
+    persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+    popupRedirectResolver: browserPopupRedirectResolver,
+  });
+}
+
+// 3. Inicializar App Check (Solo en el cliente)
 if (typeof window !== 'undefined') {
-  // Se recomienda configurar NEXT_PUBLIC_RECAPTCHA_SITE_KEY en tu archivo .env
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LfkX3osAAAAAHgdtKNvWYAxBEUoyX6jCnOhZX17';
   
   if (siteKey) {
     try {
-      // Evitar inicialización doble en modo desarrollo
-      const appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(siteKey),
-        isTokenAutoRefreshEnabled: true
-      });
-      console.log('Firebase App Check inicializado con éxito.');
+      // Usamos una propiedad global para evitar re-inicializaciones en HMR
+      if (!(window as any).appCheckInitialized) {
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(siteKey),
+          isTokenAutoRefreshEnabled: true
+        });
+        (window as any).appCheckInitialized = true;
+        console.log('Firebase App Check inicializado.');
+      }
     } catch (error) {
-      // App Check puede fallar si ya está inicializado, lo cual es normal en recargas de HMR
       console.debug('Aviso de App Check:', error);
     }
   }
 }
-
-// Inicialización con resolución explícita de popups y persistencia robusta
-// Esto ayuda a prevenir el error auth/internal-error en entornos de workstations
-const auth = getApps().length > 0 
-  ? getAuth(app) 
-  : initializeAuth(app, {
-      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
-      popupRedirectResolver: browserPopupRedirectResolver,
-    });
 
 const firestore = getFirestore(app);
 const storage = getStorage(app);

@@ -1,10 +1,8 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating a logo from a text prompt.
- * It uses the high-performance Imagen model to create visual brand assets.
- *
- * @module ai/flows/generate-logo-from-prompt
+ * @fileOverview Generación de logos con Imagen 4.0.
+ * Corregido para usar el ID del proyecto desde la configuración si la variable de entorno falta.
  */
 
 import { ai } from '@/ai/genkit';
@@ -42,10 +40,13 @@ const generateLogoFromPromptFlow = ai.defineFlow(
         throw new Error('Failed to generate the base logo image.');
     }
 
+    // Usar el ID del proyecto de la config de Firebase si GCLOUD_PROJECT no está disponible
     const projectId = process.env.GCLOUD_PROJECT || firebaseConfig.projectId;
+    
     if (!projectId) {
         throw new Error("Project ID is missing. Cannot construct the image processing API URL.");
     }
+    
     const imageProcessingApi = `https://us-central1-${projectId}.cloudfunctions.net/ext-image-processing-api-handler/process`;
     
     const standardSize = { width: 512, height: 512 };
