@@ -1,11 +1,10 @@
-
+// REEMPLAZAR ESTOS VALORES CON LOS DE TU NUEVA CONSOLA DE FIREBASE
 export const firebaseConfig = {
-  "apiKey": "AIzaSyAgSPMXUVdKfGLb91DZNnwlt2tvfKGD7M8",
-  "authDomain": "studio-3959207469-af070.firebaseapp.com",
-  "projectId": "studio-3959207469-af070",
-  "storageBucket": "studio-3959207469-af070.appspot.com",
-  "messagingSenderId": "397859853053",
-  "appId": "1:397859853053:web:73ad74ce7739c91d6ae494",
-  "measurementId": "G-NTTZ917FEH"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO_ID",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID",
+  measurementId: "TU_MEASUREMENT_ID"
 };
-

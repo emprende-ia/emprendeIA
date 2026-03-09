@@ -1,25 +1,12 @@
 'use server';
-
-/**
- * @fileOverview Generación de logos con Imagen 4.0.
- * Corregido para usar el ID del proyecto desde la configuración si la variable de entorno falta.
- */
-
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { firebaseConfig } from '@/firebase/config';
 
 const GenerateLogoInputSchema = z.object({
-  logoPrompt: z.string().min(10, { message: 'El prompt del logo debe tener al menos 10 caracteres.' }),
+  logoPrompt: z.string(),
 });
-export type GenerateLogoInput = z.infer<typeof GenerateLogoInputSchema>;
 
-const GenerateLogoOutputSchema = z.object({
-  logoUrl: z.string().url().describe("The data URI of the generated standard logo image (512x512)."),
-});
-export type GenerateLogoOutput = z.infer<typeof GenerateLogoOutputSchema>;
-
-export async function generateLogoFromPrompt(input: GenerateLogoInput): Promise<GenerateLogoOutput> {
+export async function generateLogoFromPrompt(input: z.infer<typeof GenerateLogoInputSchema>) {
   return generateLogoFromPromptFlow(input);
 }
 
@@ -27,54 +14,16 @@ const generateLogoFromPromptFlow = ai.defineFlow(
   {
     name: 'generateLogoFromPromptFlow',
     inputSchema: GenerateLogoInputSchema,
-    outputSchema: GenerateLogoOutputSchema,
+    outputSchema: z.object({ logoUrl: z.string() }),
   },
   async ({ logoPrompt }) => {
     const { media } = await ai.generate({
         model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: `Create a professional, minimalist, high-quality vector logo. Design concept: ${logoPrompt}. Solid background, clean lines, centered composition, modern branding style, no realistic photography elements.`,
+        prompt: `Professional, minimalist vector logo. Clean lines, solid background. Concept: ${logoPrompt}`,
     });
     
-    const baseLogoDataUrl = media?.url;
-    if (!baseLogoDataUrl) {
-        throw new Error('Failed to generate the base logo image.');
-    }
-
-    // Usar el ID del proyecto de la config de Firebase si GCLOUD_PROJECT no está disponible
-    const projectId = process.env.GCLOUD_PROJECT || firebaseConfig.projectId;
+    if (!media?.url) throw new Error('Error al generar imagen');
     
-    if (!projectId) {
-        throw new Error("Project ID is missing. Cannot construct the image processing API URL.");
-    }
-    
-    const imageProcessingApi = `https://us-central1-${projectId}.cloudfunctions.net/ext-image-processing-api-handler/process`;
-    
-    const standardSize = { width: 512, height: 512 };
-
-    let standardLogoUrl = baseLogoDataUrl; 
-    try {
-      const response = await fetch(imageProcessingApi, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              input: { data: baseLogoDataUrl },
-              operations: [
-                  { name: 'resize', params: { width: standardSize.width, height: standardSize.height, fit: 'cover' } },
-              ],
-              output: { format: 'webp', data: true }
-          }),
-      });
-
-      if (response.ok) {
-          const result = await response.json();
-          standardLogoUrl = result.data;
-      }
-    } catch (error) {
-        console.error(`Error processing image, falling back to original:`, error);
-    }
-    
-    return {
-        logoUrl: standardLogoUrl,
-    };
+    return { logoUrl: media.url };
   }
 );
