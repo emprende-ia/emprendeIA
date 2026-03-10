@@ -1,453 +1,103 @@
-
 {
   "entities": {
     "CheckoutSession": {
-        "title": "Checkout Session",
-        "description": "Represents a Stripe checkout session for a user.",
-        "type": "object",
-        "properties": {
-          "price": {
-            "type": "string",
-            "description": "The Stripe Price ID for the item."
-          },
-          "success_url": {
-            "type": "string",
-            "format": "uri"
-          },
-          "cancel_url": {
-            "type": "string",
-            "format": "uri"
-          },
-          "mode": {
-            "type": "string",
-            "enum": ["subscription", "payment"]
-          },
-          "status": {
-              "type": "string"
-          },
-          "url": {
-              "type": "string",
-              "format": "uri"
-          }
-        },
-        "required": ["price", "success_url", "cancel_url", "mode"]
-      },
-    "ViabilityAnalysis": {
-      "title": "Viability Analysis",
-      "description": "Represents a saved viability analysis for a user's business idea or existing business.",
+      "title": "Checkout Session",
+      "description": "Represents a Stripe checkout session for a user.",
       "type": "object",
       "properties": {
-        "analysis": {
-          "type": "object",
-          "description": "The full JSON object of the AI-generated analysis."
-        },
-        "type": {
-          "type": "string",
-          "enum": ["new-venture", "existing-venture"],
-          "description": "The type of analysis performed."
-        },
-        "savedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the analysis was saved."
-        }
+        "price": { "type": "string" },
+        "success_url": { "type": "string", "format": "uri" },
+        "cancel_url": { "type": "string", "format": "uri" },
+        "mode": { "type": "string", "enum": ["subscription", "payment"] },
+        "status": { "type": "string" },
+        "url": { "type": "string", "format": "uri" }
+      },
+      "required": ["price", "success_url", "cancel_url", "mode"]
+    },
+    "ViabilityAnalysis": {
+      "title": "Viability Analysis",
+      "description": "User's business viability results.",
+      "type": "object",
+      "properties": {
+        "analysis": { "type": "object" },
+        "type": { "type": "string", "enum": ["new-venture", "existing-venture"] },
+        "savedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["analysis", "type", "savedAt"]
     },
     "UserProfile": {
       "title": "User Profile",
-      "description": "Represents a user's profile information.",
       "type": "object",
       "properties": {
-        "displayName": {
-          "type": "string",
-          "description": "The user's display name."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address."
-        },
-        "photoURL": {
-          "type": "string",
-          "description": "URL of the user's profile picture."
-        },
-        "fullName": {
-          "type": "string",
-          "description": "The user's full name."
-        },
-        "age": {
-          "type": "number",
-          "description": "The user's age."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp of when the user was created."
-        },
-        "plan": {
-            "type": "string",
-            "enum": ["básico", "oro", "diamante"],
-            "description": "The user's subscription plan."
-        },
-        "planStatus": {
-            "type": "string",
-            "enum": ["active", "inactive"],
-            "description": "The status of the user's subscription."
-        }
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "fullName": { "type": "string" },
+        "age": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "plan": { "type": "string", "enum": ["básico", "oro", "diamante"] },
+        "planStatus": { "type": "string", "enum": ["active", "inactive"] }
       },
       "required": ["displayName", "email", "createdAt"]
     },
-    "Note": {
-      "title": "Note",
-      "description": "A user-created note or reminder.",
-      "type": "object",
-      "properties": {
-        "content": {
-          "type": "string",
-          "description": "The text content of the note."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the note was created."
-        }
-      },
-      "required": ["content", "createdAt"]
-    },
-    "SearchHistory": {
-      "title": "Search History",
-      "description": "A record of a user's search query.",
-      "type": "object",
-      "properties": {
-        "term": {
-          "type": "string",
-          "description": "The search term used by the user."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the search was performed."
-        },
-        "resultingKeywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Keywords generated by the AI from the search term."
-        }
-      },
-      "required": ["term", "timestamp"]
-    },
-    "Supplier": {
-      "title": "Supplier",
-      "description": "Represents a supplier in the marketplace.",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The supplier's company name."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the supplier's products and services."
-        },
-        "location": {
-          "type": "string",
-          "description": "The geographic location of the supplier."
-        },
-        "rating": {
-          "type": "number",
-          "description": "The supplier's average user rating."
-        },
-        "category": {
-          "type": "string",
-          "description": "AI-generated category for the supplier (e.g., 'alimentacion', 'empaque')."
-        },
-        "keywords": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "AI-generated keywords for semantic search."
-        },
-        "baseSummaryIA": {
-          "type": "string",
-          "description": "A generic, AI-generated summary of the supplier."
-        }
-      },
-      "required": ["name", "description", "location"]
-    },
     "Transaction": {
       "title": "Transaction",
-      "description": "Represents a single financial transaction (income or expense).",
       "type": "object",
       "properties": {
-        "description": {
-          "type": "string",
-          "description": "A brief description of the transaction."
-        },
-        "amount": {
-          "type": "number",
-          "description": "The monetary value of the transaction."
-        },
-        "type": {
-          "type": "string",
-          "enum": ["income", "expense"],
-          "description": "The type of transaction."
-        },
-        "category": {
-          "type": "string",
-          "description": "The financial category of the transaction (e.g., 'Ventas', 'Renta', 'Marketing')."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the transaction occurred."
-        }
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["description", "amount", "type", "timestamp"]
     },
     "LearningPath": {
       "title": "Learning Path",
-      "description": "A personalized micro-learning path generated for a user.",
       "type": "object",
       "properties": {
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the learning path was saved."
-        },
-        "pathData": {
-          "type": "object",
-          "description": "The full JSON data of the generated learning path."
-        },
-        "completedTasks": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "An array of task titles that have been marked as completed."
-        },
-        "taskAudios": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "taskKey": { "type": "string" },
-              "audioUrl": { "type": "string" }
-            }
-          },
-          "description": "An array of objects mapping task keys to their generated audio URLs."
-        }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "pathData": { "type": "object" },
+        "completedTasks": { "type": "array", "items": { "type": "string" } },
+        "taskAudios": { "type": "array", "items": { "type": "object" } }
       },
       "required": ["createdAt", "pathData"]
     },
     "MarketingCampaign": {
       "title": "Marketing Campaign",
-      "description": "An AI-generated marketing campaign plan saved by a user.",
       "type": "object",
       "properties": {
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the campaign was saved."
-        },
-        "campaignIdea": {
-          "type": "object",
-           "description": "The initial campaign idea object."
-        },
-        "campaignPlan": {
-          "type": "object",
-          "description": "The full JSON data of the generated campaign action plan."
-        },
-        "completedTasks": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "An array of task titles that have been marked as completed."
-        },
-        "taskAudios": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "taskKey": { "type": "string" },
-              "audioUrl": { "type": "string" }
-            }
-          },
-          "description": "An array of objects mapping task keys to their generated audio URLs."
-        }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "campaignIdea": { "type": "object" },
+        "campaignPlan": { "type": "object" },
+        "completedTasks": { "type": "array", "items": { "type": "string" } },
+        "taskAudios": { "type": "array", "items": { "type": "object" } }
       },
       "required": ["createdAt", "campaignIdea", "campaignPlan"]
     },
     "BrandIdentity": {
       "title": "Brand Identity",
-      "description": "A user's saved brand identity, including name, slogan, colors, and logo.",
       "type": "object",
       "properties": {
-        "brandName": {
-          "type": "string"
-        },
-        "slogan": {
-          "type": "string"
-        },
-        "colorPalette": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "hex": {"type": "string"},
-              "name": {"type": "string"}
-            }
-          }
-        },
-        "logoPrompt": {
-          "type": "string"
-        },
-        "logoUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "A data URI of the generated logo image."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "brandName": { "type": "string" },
+        "slogan": { "type": "string" },
+        "colorPalette": { "type": "array", "items": { "type": "object" } },
+        "logoPrompt": { "type": "string" },
+        "logoUrl": { "type": "string", "format": "uri" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["brandName", "slogan", "updatedAt"]
-    },
-    "SavedSupplier": {
-      "title": "Saved Supplier",
-      "description": "A supplier profile saved by a user.",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "contactInfo": {
-          "type": "string"
-        },
-        "location": {
-          "type": "string"
-        },
-        "specialOffers": {
-          "type": "string"
-        },
-        "summaryIA": {
-          "type": "string"
-        },
-        "savedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": ["name", "description", "contactInfo", "location", "summaryIA", "savedAt"]
     }
-  },
-  "auth": {
-    "providers": [
-      "google.com",
-      "facebook.com"
-    ]
   },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}/viabilityAnalysis/latest",
-        "definition": {
-          "entityName": "ViabilityAnalysis",
-          "schema": { "$ref": "#/entities/ViabilityAnalysis" },
-          "description": "Stores the user's latest viability analysis result."
-        }
-      },
-      {
-        "path": "/suppliers/{supplierId}",
-        "definition": {
-          "entityName": "Supplier",
-          "schema": { "$ref": "#/entities/Supplier" },
-          "description": "Stores all supplier documents."
-        }
-      },
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": { "$ref": "#/entities/UserProfile" },
-          "description": "Stores public user profile information."
-        }
-      },
-      {
-        "path": "/users/{userId}/searchHistory/{searchId}",
-        "definition": {
-          "entityName": "SearchHistory",
-          "schema": { "$ref": "#/entities/SearchHistory" },
-          "description": "Stores a user's search history for personalization."
-        }
-      },
-       {
-        "path": "/users/{userId}/transactions/{transactionId}",
-        "definition": {
-          "entityName": "Transaction",
-          "schema": { "$ref": "#/entities/Transaction" },
-          "description": "Stores a user's financial transactions."
-        }
-      },
-      {
-        "path": "/users/{userId}/notes/{noteId}",
-        "definition": {
-          "entityName": "Note",
-          "schema": { "$ref": "#/entities/Note" },
-          "description": "Stores a user's notes."
-        }
-      },
-      {
-        "path": "/users/{userId}/learningPaths/{pathId}",
-        "definition": {
-          "entityName": "LearningPath",
-          "schema": { "$ref": "#/entities/LearningPath" },
-          "description": "Stores a user's saved learning paths."
-        }
-      },
-       {
-        "path": "/users/{userId}/marketingCampaigns/{campaignId}",
-        "definition": {
-          "entityName": "MarketingCampaign",
-          "schema": { "$ref": "#/entities/MarketingCampaign" },
-          "description": "Stores a user's saved marketing campaigns."
-        }
-      },
-      {
-        "path": "/users/{userId}/brandIdentity/main",
-        "definition": {
-          "entityName": "BrandIdentity",
-          "schema": { "$ref": "#/entities/BrandIdentity" },
-          "description": "Stores the user's primary brand identity."
-        }
-      },
-      {
-        "path": "/users/{userId}/savedSuppliers/{supplierId}",
-        "definition": {
-          "entityName": "SavedSupplier",
-          "schema": { "$ref": "#/entities/SavedSupplier" },
-          "description": "Stores a user's saved supplier profiles."
-        }
-      },
-      {
-        "path": "/customers/{userId}/checkout_sessions/{sessionId}",
-        "definition": {
-          "entityName": "CheckoutSession",
-          "schema": {
-            "$ref": "#/entities/CheckoutSession"
-          },
-          "description": "Stores Stripe checkout sessions for a user."
-        }
-      }
+      { "path": "/users/{userId}", "definition": { "entityName": "UserProfile" } },
+      { "path": "/users/{userId}/viabilityAnalysis/latest", "definition": { "entityName": "ViabilityAnalysis" } },
+      { "path": "/users/{userId}/transactions/{transactionId}", "definition": { "entityName": "Transaction" } },
+      { "path": "/users/{userId}/learningPaths/{pathId}", "definition": { "entityName": "LearningPath" } },
+      { "path": "/users/{userId}/marketingCampaigns/{campaignId}", "definition": { "entityName": "MarketingCampaign" } },
+      { "path": "/users/{userId}/brandIdentity/main", "definition": { "entityName": "BrandIdentity" } },
+      { "path": "/customers/{userId}/checkout_sessions/{sessionId}", "definition": { "entityName": "CheckoutSession" } }
     ]
   }
 }
-
-    

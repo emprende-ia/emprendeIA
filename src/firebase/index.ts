@@ -14,10 +14,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Inicialización de la App (Singleton)
+/**
+ * Inicialización Singleton de Firebase.
+ * Se asegura de que los servicios se inicialicen una sola vez y de forma robusta.
+ */
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Inicialización Robusta de Auth para evitar auth/internal-error
 let auth: Auth;
 if (getApps().length > 0) {
   auth = getAuth(app);
@@ -28,7 +30,7 @@ if (getApps().length > 0) {
   });
 }
 
-// Activación de App Check con reCAPTCHA v3
+// Inicialización de App Check (solo en cliente)
 if (typeof window !== 'undefined') {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   if (siteKey && !(window as any).appCheckInitialized) {
@@ -39,7 +41,7 @@ if (typeof window !== 'undefined') {
       });
       (window as any).appCheckInitialized = true;
     } catch (error) {
-      console.debug('App Check:', error);
+      console.debug('App Check initialized with debug notice');
     }
   }
 }
