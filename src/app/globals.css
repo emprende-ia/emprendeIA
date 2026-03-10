@@ -4,20 +4,19 @@
 
 @layer base {
   :root {
-    /* Main PRD Colors: Cyan, Light Cyan Background, Lime Accent */
-    --background: 180 100% 94%; /* #e0ffff */
+    --background: 180 100% 94%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 180 100% 50%; /* #00ffff */
+    --primary: 180 100% 50%;
     --primary-foreground: 180 100% 5%;
     --secondary: 180 20% 90%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 180 20% 90%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 120 61% 50%; /* #32cd32 Lime */
+    --accent: 120 61% 50%;
     --accent-foreground: 120 100% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
