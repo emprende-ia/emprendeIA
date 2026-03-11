@@ -53,7 +53,7 @@ function LoginPageContent() {
   useEffect(() => {
     if (!recaptchaVerifier && recaptchaContainerRef.current) {
         try {
-            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+            const verifier = new RecaptchaVerifier(auth!, recaptchaContainerRef.current, {
                 size: 'invisible',
                 callback: () => {
                     console.log('reCAPTCHA verificado');
@@ -71,10 +71,10 @@ function LoginPageContent() {
             setRecaptchaVerifier(null);
         }
     }
-  }, []);
+  }, [recaptchaVerifier]);
 
   const handleSignIn = async (values: LoginFormValues) => {
-    if (isSigningIn || isGoogleSigningIn) return;
+    if (isSigningIn || isGoogleSigningIn || !auth) return;
     setIsSigningIn(true);
     try {
       if (recaptchaVerifier) {
@@ -84,9 +84,13 @@ function LoginPageContent() {
       toast({ title: "¡Bienvenido de nuevo!", description: "Has iniciado sesión correctamente." });
     } catch (error: any) {
       console.error("Login Error:", error);
+      let message = "Correo o contraseña incorrectos.";
+      if (error.code === 'auth/user-disabled') {
+          message = "Esta cuenta ha sido deshabilitada. Contacta al soporte.";
+      }
       toast({
         title: "Error de acceso",
-        description: "Correo o contraseña incorrectos.",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -95,7 +99,7 @@ function LoginPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isGoogleSigningIn || isSigningIn) return;
+    if (isGoogleSigningIn || isSigningIn || !auth || !firestore) return;
     setIsGoogleSigningIn(true);
     setShowCookieHelp(false);
     
@@ -114,9 +118,14 @@ function LoginPageContent() {
             setShowCookieHelp(true);
         }
 
+        let message = "No se pudo conectar con Google.";
+        if (error.code === 'auth/user-disabled') {
+            message = "Tu cuenta de Google ha sido bloqueada en esta plataforma.";
+        }
+
         toast({
             title: "Error de autenticación",
-            description: error.code === 'auth/internal-error' ? "Error interno. Revisa las instrucciones de cookies abajo." : "No se pudo conectar con Google.",
+            description: message,
             variant: "destructive",
         });
     } finally {
