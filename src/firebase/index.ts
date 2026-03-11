@@ -10,49 +10,50 @@ import {
   indexedDBLocalPersistence,
   Auth
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Inicializar Firebase solo si la configuración es válida
-const app: FirebaseApp = isFirebaseConfigured 
-  ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig))
-  : (null as any);
+// Inicializar Firebase solo si la configuración es válida para evitar errores de API Key
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let firestore: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
-let auth: Auth;
+if (isFirebaseConfigured) {
+  try {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    
+    if (app) {
+      auth = getAuth(app);
+      firestore = getFirestore(app);
+      storage = getStorage(app);
 
-if (app) {
-  if (getApps().length > 0) {
-    auth = getAuth(app);
-  } else {
-    // Inicialización manual para asegurar persistencia y resolver de popups
-    auth = initializeAuth(app, {
-      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
-      popupRedirectResolver: browserPopupRedirectResolver,
-    });
-  }
-
-  // Configuración de App Check (solo en el cliente)
-  if (typeof window !== 'undefined') {
-    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    if (siteKey && !(window as any).appCheckInitialized) {
-      try {
-        initializeAppCheck(app, {
-          provider: new ReCaptchaV3Provider(siteKey),
-          isTokenAutoRefreshEnabled: true
-        });
-        (window as any).appCheckInitialized = true;
-      } catch (error) {
-        console.debug('App Check ya estaba inicializado o falló silenciosamente.');
+      // Configuración de App Check (solo en el cliente)
+      if (typeof window !== 'undefined') {
+        const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+        if (siteKey && !(window as any).appCheckInitialized) {
+          try {
+            initializeAppCheck(app, {
+              provider: new ReCaptchaV3Provider(siteKey),
+              isTokenAutoRefreshEnabled: true
+            });
+            (window as any).appCheckInitialized = true;
+          } catch (error) {
+            console.debug('App Check ya estaba inicializado o falló silenciosamente.');
+          }
+        }
       }
     }
+  } catch (error) {
+    console.error("Error al inicializar Firebase:", error);
+    // En caso de error crítico de inicialización, nos aseguramos de que los servicios sean null
+    app = null;
+    auth = null;
+    firestore = null;
+    storage = null;
   }
-} else {
-  auth = null as any;
 }
-
-const firestore = app ? getFirestore(app) : (null as any);
-const storage = app ? getStorage(app) : (null as any);
 
 export { app, auth, firestore, storage };
 export * from './provider';
