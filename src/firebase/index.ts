@@ -12,7 +12,7 @@ import {
 } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 // Variables de servicio
 let app: FirebaseApp | null = null;
@@ -26,9 +26,8 @@ if (isFirebaseConfigured) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      // Configuración de Auth con persistencia robusta y protección contra reinicialización
+      // Configuración de Auth con persistencia robusta
       if (typeof window !== 'undefined') {
-        // Usamos una propiedad global para evitar errores de duplicidad en desarrollo
         if (!(window as any)._firebaseAuthInstance) {
           auth = initializeAuth(app, {
             persistence: [indexedDBLocalPersistence, browserLocalPersistence],
@@ -45,18 +44,18 @@ if (isFirebaseConfigured) {
       firestore = getFirestore(app);
       storage = getStorage(app);
 
-      // Configuración de App Check
+      // Configuración de App Check con reCAPTCHA Enterprise
       if (typeof window !== 'undefined') {
         const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
         if (siteKey && !(window as any).appCheckInitialized) {
           try {
             initializeAppCheck(app, {
-              provider: new ReCaptchaV3Provider(siteKey),
+              provider: new ReCaptchaEnterpriseProvider(siteKey),
               isTokenAutoRefreshEnabled: true
             });
             (window as any).appCheckInitialized = true;
           } catch (error) {
-            console.debug('App Check en espera de configuración final.');
+            console.debug('App Check: Error o en espera de configuración.', error);
           }
         }
       }

@@ -64,7 +64,7 @@ function RegisterPageContent() {
   });
 
   useEffect(() => {
-    if (!recaptchaVerifier && recaptchaContainerRef.current) {
+    if (!recaptchaVerifier && recaptchaContainerRef.current && auth) {
         try {
             const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 size: 'invisible',
@@ -80,16 +80,32 @@ function RegisterPageContent() {
   }, [recaptchaVerifier]);
 
   const handleRegister = async (values: RegisterFormValues) => {
-    if (isRegistering || isGoogleSigningIn) return;
+    if (isRegistering || isGoogleSigningIn || !auth) return;
     setIsRegistering(true);
 
     try {
+      // Verificación de reCAPTCHA Enterprise
+      if (window.grecaptcha && window.grecaptcha.enterprise) {
+        await new Promise<void>((resolve) => {
+          window.grecaptcha.enterprise.ready(async () => {
+            try {
+              await window.grecaptcha.enterprise.execute('6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj', {action: 'REGISTER'});
+              resolve();
+            } catch (err) {
+              console.error('reCAPTCHA execution error:', err);
+              resolve();
+            }
+          });
+        });
+      }
+
       if (recaptchaVerifier) {
           await recaptchaVerifier.verify();
       }
+      
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.username });
-      await getOrCreateUserProfile(firestore, userCredential.user, {
+      await getOrCreateUserProfile(firestore!, userCredential.user, {
         fullName: values.fullName,
         age: values.age,
       });
@@ -98,9 +114,16 @@ function RegisterPageContent() {
       router.push('/login');
     } catch (error: any) {
         console.error("Register Error:", error);
+        let message = "No se pudo crear la cuenta. Verifica tus datos.";
+        if (error.code === 'auth/email-already-in-use') {
+            message = "Este correo ya está registrado.";
+        } else if (error.code === 'auth/firebase-app-check-token-is-invalid') {
+            message = "Error de seguridad (App Check). Por favor, refresca la página.";
+        }
+        
         toast({
             title: "Error de Registro",
-            description: "No se pudo crear la cuenta. Verifica tus datos.",
+            description: message,
             variant: "destructive",
         });
     } finally {
@@ -109,7 +132,7 @@ function RegisterPageContent() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isGoogleSigningIn || isRegistering) return;
+    if (isGoogleSigningIn || isRegistering || !auth || !firestore) return;
     setIsGoogleSigningIn(true);
     setShowCookieHelp(false);
     
@@ -200,7 +223,7 @@ function RegisterPageContent() {
             </div>
 
              <Button variant="outline" className="w-full py-6" onClick={handleGoogleSignIn} disabled={isGoogleSigningIn || isRegistering}>
-                {isGoogleSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
+                {isGoogleSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
                 Registrarme con Google
             </Button>
 
