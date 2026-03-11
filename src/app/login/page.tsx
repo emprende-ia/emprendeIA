@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, Suspense, useRef } from 'react';
@@ -6,7 +5,7 @@ import { auth, firestore, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, RecaptchaVerifier } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound, ShieldCheck, Info, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -58,13 +57,11 @@ function LoginPageContent() {
   });
 
   useEffect(() => {
-    if (!recaptchaVerifier && recaptchaContainerRef.current) {
+    if (!recaptchaVerifier && recaptchaContainerRef.current && auth) {
         try {
-            const verifier = new RecaptchaVerifier(auth!, recaptchaContainerRef.current, {
+            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 size: 'invisible',
-                callback: () => {
-                    console.log('reCAPTCHA verificado');
-                }
+                callback: () => { console.log('reCAPTCHA verificado'); }
             });
             setRecaptchaVerifier(verifier);
         } catch (e) {
@@ -85,17 +82,16 @@ function LoginPageContent() {
     setIsSigningIn(true);
     
     try {
-      // reCAPTCHA Enterprise Verification
+      // Verificación de reCAPTCHA Enterprise si está disponible
       if (window.grecaptcha && window.grecaptcha.enterprise) {
         await new Promise<void>((resolve) => {
           window.grecaptcha.enterprise.ready(async () => {
             try {
-              const token = await window.grecaptcha.enterprise.execute('6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj', {action: 'LOGIN'});
-              console.log('reCAPTCHA Enterprise Token generated');
+              await window.grecaptcha.enterprise.execute('6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj', {action: 'LOGIN'});
               resolve();
             } catch (err) {
               console.error('reCAPTCHA execution error:', err);
-              resolve(); // Proceed anyway, let Firebase handle fallback
+              resolve();
             }
           });
         });
@@ -139,11 +135,13 @@ function LoginPageContent() {
         router.push('/start');
     } catch (error: any) {
         console.error("Google Auth Error:", error);
+        
+        // El error auth/internal-error a menudo es causado por cookies de terceros bloqueadas
         if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
             setShowCookieHelp(true);
         }
 
-        let message = "No se pudo conectar con Google.";
+        let message = "No se pudo conectar con Google. Verifica tus cookies.";
         if (error.code === 'auth/user-disabled') {
             message = "Tu cuenta de Google ha sido bloqueada en esta plataforma.";
         }
@@ -238,20 +236,20 @@ function LoginPageContent() {
                 onClick={handleGoogleSignIn}
                 disabled={isGoogleSigningIn || isSigningIn}
             >
-                {isGoogleSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon />}
+                {isGoogleSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
                 Continuar con Google
             </Button>
 
             {showCookieHelp && (
                 <Alert className="mt-4 bg-primary/5 border-primary/20">
                     <AlertTriangle className="h-4 w-4 text-primary" />
-                    <AlertTitle className="font-bold text-sm">¿Error auth/internal-error?</AlertTitle>
+                    <AlertTitle className="font-bold text-sm">¿Error de autenticación?</AlertTitle>
                     <AlertDescription className="text-xs space-y-2 pt-1">
-                        <p>Para usar Google en este entorno de trabajo, habilita las <b>cookies de terceros</b>:</p>
+                        <p>Para usar Google en este entorno, debes habilitar las <b>cookies de terceros</b>:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><b>Chrome:</b> Configuración &gt; Privacidad &gt; Cookies &gt; "Permitir todas".</li>
-                            <li><b>Edge:</b> Configuración &gt; Cookies &gt; Desactiva "Bloquear cookies de terceros".</li>
-                            <li><b>Safari:</b> Desactiva "Bloquear todas las cookies".</li>
+                            <li><b>Chrome:</b> Ajustes &gt; Privacidad &gt; Cookies &gt; "Permitir todas".</li>
+                            <li><b>Edge:</b> Ajustes &gt; Cookies &gt; Desactivar "Bloquear cookies de terceros".</li>
+                            <li><b>Safari:</b> Desactivar "Bloquear todas las cookies".</li>
                             <li>No uses el <b>Modo Incógnito</b>.</li>
                         </ul>
                     </AlertDescription>

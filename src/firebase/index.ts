@@ -14,7 +14,7 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Inicializar variables de servicio como null por defecto
+// Variables de servicio
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let firestore: Firestore | null = null;
@@ -22,16 +22,22 @@ let storage: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured) {
   try {
-    // Inicialización del App de Firebase
+    // Inicialización del App de Firebase (Singleton)
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      // Configuración robusta de Auth para evitar 'auth/internal-error' en estaciones de trabajo
+      // Configuración de Auth con persistencia robusta y protección contra reinicialización
       if (typeof window !== 'undefined') {
-        auth = initializeAuth(app, {
-          persistence: [indexedDBLocalPersistence, browserLocalPersistence],
-          popupRedirectResolver: browserPopupRedirectResolver,
-        });
+        // Usamos una propiedad global para evitar errores de duplicidad en desarrollo
+        if (!(window as any)._firebaseAuthInstance) {
+          auth = initializeAuth(app, {
+            persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+            popupRedirectResolver: browserPopupRedirectResolver,
+          });
+          (window as any)._firebaseAuthInstance = auth;
+        } else {
+          auth = (window as any)._firebaseAuthInstance;
+        }
       } else {
         auth = getAuth(app);
       }
@@ -39,7 +45,7 @@ if (isFirebaseConfigured) {
       firestore = getFirestore(app);
       storage = getStorage(app);
 
-      // Configuración de App Check para protección de recursos
+      // Configuración de App Check
       if (typeof window !== 'undefined') {
         const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
         if (siteKey && !(window as any).appCheckInitialized) {
@@ -50,14 +56,13 @@ if (isFirebaseConfigured) {
             });
             (window as any).appCheckInitialized = true;
           } catch (error) {
-            console.debug('App Check ya estaba inicializado o no es requerido en este entorno.');
+            console.debug('App Check en espera de configuración final.');
           }
         }
       }
     }
   } catch (error) {
-    console.error("Error crítico al inicializar Firebase:", error);
-    // Aseguramos que los servicios sean null para que el Provider muestre la pantalla de error
+    console.error("Error al inicializar Firebase:", error);
     app = null;
     auth = null;
     firestore = null;
