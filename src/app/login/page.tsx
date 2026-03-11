@@ -215,8 +215,8 @@ function LoginPageContent() {
                     <AlertDescription className="text-xs space-y-2 pt-1">
                         <p>Para usar Google en este entorno de trabajo, habilita las <b>cookies de terceros</b>:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><b>Chrome:</b> Configuración > Privacidad > Cookies > "Permitir todas".</li>
-                            <li><b>Edge:</b> Configuración > Cookies > Desactiva "Bloquear cookies de terceros".</li>
+                            <li><b>Chrome:</b> Configuración &gt; Privacidad &gt; Cookies &gt; "Permitir todas".</li>
+                            <li><b>Edge:</b> Configuración &gt; Cookies &gt; Desactiva "Bloquear cookies de terceros".</li>
                             <li><b>Safari:</b> Desactiva "Bloquear todas las cookies".</li>
                             <li>No uses el <b>Modo Incógnito</b>.</li>
                         </ul>
