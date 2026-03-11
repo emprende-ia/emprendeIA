@@ -14,6 +14,11 @@ export const firebaseConfig = {
 };
 
 /**
+ * Clave de sitio para reCAPTCHA Enterprise / App Check.
+ */
+export const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj';
+
+/**
  * Valida si la configuración básica de Firebase está presente y es válida.
  */
 export const isFirebaseConfigured = !!(

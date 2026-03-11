@@ -34,12 +34,6 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-declare global {
-  interface Window {
-    grecaptcha: any;
-  }
-}
-
 function LoginPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
@@ -61,11 +55,11 @@ function LoginPageContent() {
         try {
             const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 size: 'invisible',
-                callback: () => { console.log('reCAPTCHA verificado'); }
+                callback: () => { console.log('Auth Verifier: reCAPTCHA verificado'); }
             });
             setRecaptchaVerifier(verifier);
         } catch (e) {
-            console.error("Error al inicializar reCAPTCHA:", e);
+            console.error("Error al inicializar reCAPTCHA de Auth:", e);
         }
     }
     
@@ -82,21 +76,9 @@ function LoginPageContent() {
     setIsSigningIn(true);
     
     try {
-      // Verificación de reCAPTCHA Enterprise si está disponible
-      if (window.grecaptcha && window.grecaptcha.enterprise) {
-        await new Promise<void>((resolve) => {
-          window.grecaptcha.enterprise.ready(async () => {
-            try {
-              await window.grecaptcha.enterprise.execute('6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj', {action: 'LOGIN'});
-              resolve();
-            } catch (err) {
-              console.error('reCAPTCHA execution error:', err);
-              resolve();
-            }
-          });
-        });
-      }
-
+      // Nota: App Check gestiona automáticamente el token de reCAPTCHA Enterprise
+      // si está inicializado en Firebase SDK. No es necesario el execute manual aquí.
+      
       if (recaptchaVerifier) {
           await recaptchaVerifier.verify();
       }
@@ -108,6 +90,8 @@ function LoginPageContent() {
       let message = "Correo o contraseña incorrectos.";
       if (error.code === 'auth/user-disabled') {
           message = "Esta cuenta ha sido deshabilitada. Contacta al soporte.";
+      } else if (error.code === 'auth/firebase-app-check-token-is-invalid') {
+          message = "Error de seguridad (App Check). Por favor, intenta de nuevo.";
       }
       toast({
         title: "Error de acceso",
@@ -136,7 +120,6 @@ function LoginPageContent() {
     } catch (error: any) {
         console.error("Google Auth Error:", error);
         
-        // El error auth/internal-error a menudo es causado por cookies de terceros bloqueadas
         if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
             setShowCookieHelp(true);
         }

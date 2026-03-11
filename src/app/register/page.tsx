@@ -64,17 +64,18 @@ function RegisterPageContent() {
   });
 
   useEffect(() => {
+    // Inicialización del verificador de reCAPTCHA para autenticación telefónica o verificación de seguridad de Auth
     if (!recaptchaVerifier && recaptchaContainerRef.current && auth) {
         try {
             const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 size: 'invisible',
                 callback: () => {
-                    console.log('reCAPTCHA verificado');
+                    console.log('Auth Verifier: reCAPTCHA verificado');
                 }
             });
             setRecaptchaVerifier(verifier);
         } catch (e) {
-            console.error("Error al inicializar reCAPTCHA en Registro:", e);
+            console.error("Error al inicializar reCAPTCHA de Auth:", e);
         }
     }
   }, [recaptchaVerifier]);
@@ -84,21 +85,7 @@ function RegisterPageContent() {
     setIsRegistering(true);
 
     try {
-      // Verificación de reCAPTCHA Enterprise
-      if (window.grecaptcha && window.grecaptcha.enterprise) {
-        await new Promise<void>((resolve) => {
-          window.grecaptcha.enterprise.ready(async () => {
-            try {
-              await window.grecaptcha.enterprise.execute('6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj', {action: 'REGISTER'});
-              resolve();
-            } catch (err) {
-              console.error('reCAPTCHA execution error:', err);
-              resolve();
-            }
-          });
-        });
-      }
-
+      // Verificación de seguridad de Firebase Auth
       if (recaptchaVerifier) {
           await recaptchaVerifier.verify();
       }
@@ -115,10 +102,13 @@ function RegisterPageContent() {
     } catch (error: any) {
         console.error("Register Error:", error);
         let message = "No se pudo crear la cuenta. Verifica tus datos.";
+        
         if (error.code === 'auth/email-already-in-use') {
             message = "Este correo ya está registrado.";
         } else if (error.code === 'auth/firebase-app-check-token-is-invalid') {
-            message = "Error de seguridad (App Check). Por favor, refresca la página.";
+            message = "Error de seguridad (App Check). Por favor, intenta de nuevo o verifica tu conexión.";
+        } else if (error.code === 'auth/internal-error') {
+            message = "Error interno de Firebase. Verifica tu configuración.";
         }
         
         toast({

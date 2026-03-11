@@ -1,6 +1,6 @@
 'use client';
 
-import { firebaseConfig, isFirebaseConfigured } from '@/firebase/config';
+import { firebaseConfig, isFirebaseConfigured, RECAPTCHA_SITE_KEY } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   initializeAuth, 
@@ -45,17 +45,18 @@ if (isFirebaseConfigured) {
       storage = getStorage(app);
 
       // Configuración de App Check con reCAPTCHA Enterprise
-      if (typeof window !== 'undefined') {
-        const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-        if (siteKey && !(window as any).appCheckInitialized) {
+      // Importante: Esto debe ocurrir antes de usar cualquier otro servicio si está habilitada la validación forzada
+      if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY) {
+        if (!(window as any).appCheckInitialized) {
           try {
             initializeAppCheck(app, {
-              provider: new ReCaptchaEnterpriseProvider(siteKey),
+              provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
               isTokenAutoRefreshEnabled: true
             });
             (window as any).appCheckInitialized = true;
+            console.log('Firebase App Check: Inicializado con reCAPTCHA Enterprise.');
           } catch (error) {
-            console.debug('App Check: Error o en espera de configuración.', error);
+            console.error('Firebase App Check Error:', error);
           }
         }
       }
