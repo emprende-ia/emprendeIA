@@ -14,14 +14,13 @@ export const firebaseConfig = {
 };
 
 /**
- * Valida si la configuración de Firebase es válida y completa.
- * Verifica que las llaves esenciales existan y no sean valores por defecto o 'undefined'.
+ * Valida si la configuración básica de Firebase está presente.
+ * Next.js devuelve "undefined" como string si la variable no existe en el entorno.
  */
 export const isFirebaseConfigured = !!(
   firebaseConfig.apiKey && 
-  firebaseConfig.apiKey.length > 10 && // Una API Key real suele tener más de 10 caracteres
-  firebaseConfig.projectId &&
-  firebaseConfig.projectId !== 'undefined' &&
-  firebaseConfig.appId &&
-  firebaseConfig.appId !== 'undefined'
+  firebaseConfig.apiKey !== 'undefined' &&
+  firebaseConfig.apiKey !== '' &&
+  firebaseConfig.projectId && 
+  firebaseConfig.projectId !== 'undefined'
 );

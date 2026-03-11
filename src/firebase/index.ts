@@ -14,7 +14,7 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Inicializar Firebase solo si la configuración es válida para evitar errores de API Key
+// Inicializar variables de servicio como null por defecto
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let firestore: Firestore | null = null;
@@ -22,11 +22,11 @@ let storage: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured) {
   try {
+    // Inicialización del App de Firebase
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      // Usamos initializeAuth con configuración explícita para evitar 'auth/internal-error'
-      // en entornos de desarrollo y asegurar persistencia robusta.
+      // Configuración robusta de Auth para evitar 'auth/internal-error' en estaciones de trabajo
       if (typeof window !== 'undefined') {
         auth = initializeAuth(app, {
           persistence: [indexedDBLocalPersistence, browserLocalPersistence],
@@ -39,7 +39,7 @@ if (isFirebaseConfigured) {
       firestore = getFirestore(app);
       storage = getStorage(app);
 
-      // Configuración de App Check (solo en el cliente)
+      // Configuración de App Check para protección de recursos
       if (typeof window !== 'undefined') {
         const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
         if (siteKey && !(window as any).appCheckInitialized) {
@@ -50,13 +50,14 @@ if (isFirebaseConfigured) {
             });
             (window as any).appCheckInitialized = true;
           } catch (error) {
-            console.debug('App Check ya estaba inicializado o falló silenciosamente.');
+            console.debug('App Check ya estaba inicializado o no es requerido en este entorno.');
           }
         }
       }
     }
   } catch (error) {
-    console.error("Error al inicializar Firebase:", error);
+    console.error("Error crítico al inicializar Firebase:", error);
+    // Aseguramos que los servicios sean null para que el Provider muestre la pantalla de error
     app = null;
     auth = null;
     firestore = null;
