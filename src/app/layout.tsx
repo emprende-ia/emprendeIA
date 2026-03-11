@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import React from 'react';
+import Script from 'next/script';
 
 export default function RootLayout({
   children,
@@ -33,6 +34,12 @@ export default function RootLayout({
               }
             })();
           `}} />
+        
+        {/* Google reCAPTCHA Enterprise */}
+        <Script 
+          src="https://www.google.com/recaptcha/enterprise.js?render=6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj" 
+          strategy="afterInteractive"
+        />
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>

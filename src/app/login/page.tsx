@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, Suspense, useRef } from 'react';
@@ -33,6 +34,12 @@ const loginSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
+
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
 
 function LoginPageContent() {
   const { user, isUserLoading } = useUser();
@@ -76,10 +83,28 @@ function LoginPageContent() {
   const handleSignIn = async (values: LoginFormValues) => {
     if (isSigningIn || isGoogleSigningIn || !auth) return;
     setIsSigningIn(true);
+    
     try {
+      // reCAPTCHA Enterprise Verification
+      if (window.grecaptcha && window.grecaptcha.enterprise) {
+        await new Promise<void>((resolve) => {
+          window.grecaptcha.enterprise.ready(async () => {
+            try {
+              const token = await window.grecaptcha.enterprise.execute('6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj', {action: 'LOGIN'});
+              console.log('reCAPTCHA Enterprise Token generated');
+              resolve();
+            } catch (err) {
+              console.error('reCAPTCHA execution error:', err);
+              resolve(); // Proceed anyway, let Firebase handle fallback
+            }
+          });
+        });
+      }
+
       if (recaptchaVerifier) {
           await recaptchaVerifier.verify();
       }
+      
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "¡Bienvenido de nuevo!", description: "Has iniciado sesión correctamente." });
     } catch (error: any) {
