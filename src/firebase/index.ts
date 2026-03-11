@@ -3,12 +3,12 @@
 import { firebaseConfig, isFirebaseConfigured } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
-  getAuth, 
   initializeAuth, 
   browserLocalPersistence, 
   browserPopupRedirectResolver,
   indexedDBLocalPersistence,
-  Auth
+  Auth,
+  getAuth
 } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
@@ -25,7 +25,17 @@ if (isFirebaseConfigured) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      auth = getAuth(app);
+      // Usamos initializeAuth con configuración explícita para evitar 'auth/internal-error'
+      // en entornos de desarrollo y asegurar persistencia robusta.
+      if (typeof window !== 'undefined') {
+        auth = initializeAuth(app, {
+          persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+          popupRedirectResolver: browserPopupRedirectResolver,
+        });
+      } else {
+        auth = getAuth(app);
+      }
+      
       firestore = getFirestore(app);
       storage = getStorage(app);
 
@@ -47,7 +57,6 @@ if (isFirebaseConfigured) {
     }
   } catch (error) {
     console.error("Error al inicializar Firebase:", error);
-    // En caso de error crítico de inicialización, nos aseguramos de que los servicios sean null
     app = null;
     auth = null;
     firestore = null;
