@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
@@ -33,7 +32,7 @@ export function saveBrandIdentity(
     updatedAt: serverTimestamp(),
   };
 
-  // Do not await mutation
+  // Do not await mutation to allow instant cache updates
   setDoc(identityDoc, dataToSave, { merge: true }).catch(async (error) => {
     const permissionError = new FirestorePermissionError({
         path: identityDoc.path,
@@ -44,6 +43,9 @@ export function saveBrandIdentity(
   });
 }
 
+/**
+ * Deletes the brand identity for a user.
+ */
 export function deleteBrandIdentity(firestore: Firestore, userId: string): void {
     if (!userId) return;
     const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
@@ -58,6 +60,9 @@ export function deleteBrandIdentity(firestore: Firestore, userId: string): void 
         });
 }
 
+/**
+ * Retrieves the brand identity for a user in real-time.
+ */
 export function getBrandIdentity(
   firestore: Firestore,
   userId: string,
