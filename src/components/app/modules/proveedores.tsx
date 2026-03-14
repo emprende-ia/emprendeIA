@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Lightbulb, Search, AlertTriangle } from 'lucide-react';
+import { Loader2, Sparkles, Lightbulb, Search, AlertTriangle, Info } from 'lucide-react';
 import { SupplierCard } from '../supplier-card';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useUser, useFirestore } from '@/firebase';
@@ -121,7 +121,7 @@ export function ProveedoresModule() {
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">Buscador de Proveedores con IA</DialogTitle>
           <DialogDescription>
-            Describe tu negocio y la IA encontrará los proveedores más relevantes para ti, priorizando la ubicación y calidad.
+            La IA analizará tus necesidades, ubicación y calidad deseada para darte recomendaciones personalizadas.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
@@ -132,7 +132,7 @@ export function ProveedoresModule() {
                     <AlertTriangle className="h-5 w-5" />
                     <AlertTitle className="font-bold">IA Bloqueada (403)</AlertTitle>
                     <AlertDescription className="text-sm pt-1">
-                        La API de Google rechazó la solicitud. Verifica que tu <b>API Key</b> en el archivo <code>.env</code> sea válida y tenga la <b>Generative Language API</b> habilitada.
+                        La API de Google rechazó la solicitud. Verifica que tu <b>API Key</b> sea válida y tenga la <b>Generative Language API</b> habilitada.
                     </AlertDescription>
                 </Alert>
             )}
@@ -144,10 +144,10 @@ export function ProveedoresModule() {
                   name="businessPlan"
                   render={({ field }) => (
                     <FormItem>
-                       <FormLabel className="font-semibold">1. Describe tu negocio o idea</FormLabel>
+                       <FormLabel className="font-semibold">1. ¿Qué estás buscando exactamente?</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Ej: 'Quiero abrir una cafetería de especialidad con ambiente rústico y postres artesanales.'"
+                          placeholder="Ej: 'Necesito granos de café de alta calidad para una cafetería orgánica, preferiblemente con entrega rápida y precios competitivos.'"
                           className="min-h-[120px] resize-y"
                           {...field}
                         />
@@ -161,26 +161,33 @@ export function ProveedoresModule() {
                   name="businessLocation"
                   render={({ field }) => (
                     <FormItem>
-                       <FormLabel className="font-semibold">2. ¿Dónde se ubica tu negocio?</FormLabel>
+                       <FormLabel className="font-semibold">2. Ubicación para el envío</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ej: 'Ciudad de México'" {...field} />
+                        <Input placeholder="Ej: 'Colonia Roma, CDMX'" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <div className='flex gap-2 pt-2'>
-                <Button type="submit" className="w-full font-bold" disabled={isLoading}>
+                <Button type="submit" className="w-full font-bold py-6" disabled={isLoading}>
                   {isLoading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Buscando...</>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analizando Mercado...</>
                   ) : (
-                    <><Sparkles className="mr-2 h-4 w-4" /> Buscar Proveedores</>
+                    <><Search className="mr-2 h-4 w-4" /> Buscar con IA</>
                   )}
                 </Button>
                 <SavedSuppliersModule />
                 </div>
               </form>
             </Form>
+            
+            <Alert variant="default" className="bg-primary/5 border-primary/20">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-xs text-muted-foreground">
+                    La IA busca proveedores reales y genera una justificación basada en tus requisitos de calidad y costo.
+                </AlertDescription>
+            </Alert>
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-2">
@@ -189,8 +196,8 @@ export function ProveedoresModule() {
                     {recommendations.combinedRecommendation && (
                         <Alert className="border-accent bg-accent/10">
                         <Lightbulb className="h-4 w-4 text-accent" />
-                        <AlertTitle className="font-headline text-accent">Recomendación Estratégica</AlertTitle>
-                        <AlertDescription className="text-muted-foreground">
+                        <AlertTitle className="font-headline text-accent">Estrategia de Suministro</AlertTitle>
+                        <AlertDescription className="text-muted-foreground text-sm">
                             {recommendations.combinedRecommendation}
                         </AlertDescription>
                         </Alert>
@@ -204,8 +211,8 @@ export function ProveedoresModule() {
              ) : (
                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 rounded-lg border-2 border-dashed">
                   <Search className="h-12 w-12 mb-4 text-muted-foreground/50"/>
-                  <p className="font-semibold">Los resultados de la IA aparecerán aquí.</p>
-                  <p className="text-sm">Completa el formulario y presiona "Buscar".</p>
+                  <p className="font-semibold">Esperando tus datos...</p>
+                  <p className="text-sm">Describe tus necesidades para que la IA pueda rastrear los mejores proveedores para ti.</p>
                </div>
              )}
           </div>
