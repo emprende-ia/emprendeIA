@@ -1,12 +1,15 @@
+
 'use client';
 
 import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
-import type { GenerateDigitalIdentityOutput } from '@/ai/flows/generate-digital-identity';
 
-// This interface combines the text identity with the optional logo URL
-export interface BrandIdentity extends GenerateDigitalIdentityOutput {
+export interface BrandIdentity {
+  brandName: string;
+  slogan: string;
+  colorPalette: Array<{ hex: string; name: string }>;
+  logoPrompt: string;
   logoUrl: string | null;
   logoSource: 'ai_generated' | 'user_uploaded' | null;
   updatedAt?: Date;

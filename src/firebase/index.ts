@@ -1,6 +1,7 @@
+
 'use client';
 
-import { firebaseConfig, isFirebaseConfigured } from '@/firebase/config';
+import { firebaseConfig, isFirebaseConfigured, RECAPTCHA_SITE_KEY } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   initializeAuth, 
@@ -12,12 +13,14 @@ import {
 } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, AppCheck } from 'firebase/app-check';
 
 // Variables de servicio persistentes
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let firestore: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
+let appCheck: AppCheck | null = null;
 
 if (isFirebaseConfigured) {
   try {
@@ -25,6 +28,18 @@ if (isFirebaseConfigured) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
+      // Inicializar App Check con reCAPTCHA Enterprise
+      if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY) {
+        try {
+          appCheck = initializeAppCheck(app, {
+            provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
+            isTokenAutoRefreshEnabled: true,
+          });
+        } catch (acError) {
+          console.warn("App Check failed to initialize, continuing without it.", acError);
+        }
+      }
+
       if (typeof window !== 'undefined') {
         // En el cliente, usamos initializeAuth con persistencia robusta para evitar internal-error
         if (!(window as any)._firebaseAuthInstance) {
@@ -49,7 +64,7 @@ if (isFirebaseConfigured) {
   }
 }
 
-export { app, auth, firestore, storage };
+export { app, auth, firestore, storage, appCheck };
 export * from './provider';
 export * from './client-provider';
 export * from './auth/use-user';
