@@ -1,4 +1,3 @@
-
 'use client';
 
 import { firebaseConfig, isFirebaseConfigured, RECAPTCHA_SITE_KEY } from '@/firebase/config';
@@ -15,7 +14,7 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, AppCheck } from 'firebase/app-check';
 
-// Variables de servicio persistentes
+// Variables de servicio persistentes (Singleton pattern)
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let firestore: Firestore | null = null;
@@ -24,43 +23,41 @@ let appCheck: AppCheck | null = null;
 
 if (isFirebaseConfigured) {
   try {
-    // Patrón Singleton para evitar reinicializaciones en Hot Reload
+    // 1. Inicializar Firebase App
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      // Inicializar App Check con reCAPTCHA Enterprise
-      if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY) {
+      // 2. Inicializar Auth (Evitar doble inicialización que causa internal-error)
+      if (!auth) {
+        if (typeof window !== 'undefined') {
+          auth = initializeAuth(app, {
+            persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+            popupRedirectResolver: browserPopupRedirectResolver,
+          });
+        } else {
+          auth = getAuth(app);
+        }
+      }
+
+      // 3. Inicializar Firestore y Storage
+      if (!firestore) firestore = getFirestore(app);
+      if (!storage) storage = getStorage(app);
+
+      // 4. Inicializar App Check (Solo cliente)
+      if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY && !appCheck) {
         try {
           appCheck = initializeAppCheck(app, {
             provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
             isTokenAutoRefreshEnabled: true,
           });
         } catch (acError) {
-          console.warn("App Check failed to initialize, continuing without it.", acError);
+          // Fallback silencioso si ya está inicializado o falla
+          console.debug("App Check initialization skipped.");
         }
       }
-
-      if (typeof window !== 'undefined') {
-        // En el cliente, usamos initializeAuth con persistencia robusta para evitar internal-error
-        if (!(window as any)._firebaseAuthInstance) {
-          auth = initializeAuth(app, {
-            persistence: [indexedDBLocalPersistence, browserLocalPersistence],
-            popupRedirectResolver: browserPopupRedirectResolver,
-          });
-          (window as any)._firebaseAuthInstance = auth;
-        } else {
-          auth = (window as any)._firebaseAuthInstance;
-        }
-      } else {
-        // En el servidor, basta con getAuth
-        auth = getAuth(app);
-      }
-      
-      firestore = getFirestore(app);
-      storage = getStorage(app);
     }
   } catch (error) {
-    console.error("Error al inicializar Firebase:", error);
+    console.error("Error crítico al inicializar Firebase:", error);
   }
 }
 
