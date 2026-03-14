@@ -27,23 +27,27 @@ if (isFirebaseConfigured) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      // 2. Inicializar Auth (Evitar doble inicialización que causa internal-error)
-      if (!auth) {
-        if (typeof window !== 'undefined') {
+      // 2. Inicializar Auth de forma segura (Idempotente)
+      if (typeof window !== 'undefined') {
+        try {
+          // Intentamos inicializar con persistencia avanzada
           auth = initializeAuth(app, {
             persistence: [indexedDBLocalPersistence, browserLocalPersistence],
             popupRedirectResolver: browserPopupRedirectResolver,
           });
-        } else {
+        } catch (authInitError: any) {
+          // Si ya estaba inicializado (error común en HMR), recuperamos la instancia existente
           auth = getAuth(app);
         }
+      } else {
+        auth = getAuth(app);
       }
 
-      // 3. Inicializar Firestore y Storage
-      if (!firestore) firestore = getFirestore(app);
-      if (!storage) storage = getStorage(app);
+      // 3. Inicializar Firestore y Storage (Getters son seguros por defecto)
+      firestore = getFirestore(app);
+      storage = getStorage(app);
 
-      // 4. Inicializar App Check (Solo cliente)
+      // 4. Inicializar App Check (Solo cliente y solo si hay llave)
       if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY && !appCheck) {
         try {
           appCheck = initializeAppCheck(app, {
@@ -51,13 +55,12 @@ if (isFirebaseConfigured) {
             isTokenAutoRefreshEnabled: true,
           });
         } catch (acError) {
-          // Fallback silencioso si ya está inicializado o falla
-          console.debug("App Check initialization skipped.");
+          console.debug("App Check initialization skipped or already active.");
         }
       }
     }
   } catch (error) {
-    console.error("Error crítico al inicializar Firebase:", error);
+    console.error("Error crítico al inicializar los servicios de Firebase:", error);
   }
 }
 

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useRef } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { auth, firestore, useUser } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, ShieldCheck, Info } from 'lucide-react';
+import { Loader2, Sparkles, ShieldCheck, Info, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -44,12 +44,10 @@ function RegisterPageContent() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
   const [isRegistering, setIsRegistering] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
-  const [showCookieHelp, setShowCookieHelp] = useState(false);
+  const [showInternalErrorHelp, setShowInternalErrorHelp] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -63,33 +61,12 @@ function RegisterPageContent() {
     },
   });
 
-  useEffect(() => {
-    // Inicialización del verificador de reCAPTCHA para autenticación telefónica o verificación de seguridad de Auth
-    if (!recaptchaVerifier && recaptchaContainerRef.current && auth) {
-        try {
-            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-                size: 'invisible',
-                callback: () => {
-                    console.log('Auth Verifier: reCAPTCHA verificado');
-                }
-            });
-            setRecaptchaVerifier(verifier);
-        } catch (e) {
-            console.error("Error al inicializar reCAPTCHA de Auth:", e);
-        }
-    }
-  }, [recaptchaVerifier]);
-
   const handleRegister = async (values: RegisterFormValues) => {
     if (isRegistering || isGoogleSigningIn || !auth) return;
     setIsRegistering(true);
+    setShowInternalErrorHelp(false);
 
     try {
-      // Verificación de seguridad de Firebase Auth
-      if (recaptchaVerifier) {
-          await recaptchaVerifier.verify();
-      }
-      
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.username });
       await getOrCreateUserProfile(firestore!, userCredential.user, {
@@ -103,12 +80,11 @@ function RegisterPageContent() {
         console.error("Register Error:", error);
         let message = "No se pudo crear la cuenta. Verifica tus datos.";
         
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.code === 'auth/internal-error') {
+            setShowInternalErrorHelp(true);
+            message = "Error interno de Firebase. Revisa tu configuración de cookies.";
+        } else if (error.code === 'auth/email-already-in-use') {
             message = "Este correo ya está registrado.";
-        } else if (error.code === 'auth/firebase-app-check-token-is-invalid') {
-            message = "Error de seguridad (App Check). Por favor, intenta de nuevo o verifica tu conexión.";
-        } else if (error.code === 'auth/internal-error') {
-            message = "Error interno de Firebase. Verifica tu configuración.";
         }
         
         toast({
@@ -124,7 +100,7 @@ function RegisterPageContent() {
   const handleGoogleSignIn = async () => {
     if (isGoogleSigningIn || isRegistering || !auth || !firestore) return;
     setIsGoogleSigningIn(true);
-    setShowCookieHelp(false);
+    setShowInternalErrorHelp(false);
     
     try {
       const provider = new GoogleAuthProvider();
@@ -137,7 +113,7 @@ function RegisterPageContent() {
     } catch (error: any) {
         console.error("Google Auth Error:", error);
         if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
-            setShowCookieHelp(true);
+            setShowInternalErrorHelp(true);
         }
 
         toast({
@@ -198,8 +174,6 @@ function RegisterPageContent() {
                 )}/>
               </div>
 
-              <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
-
               <Button type="submit" size="lg" className="w-full font-bold !mt-6" disabled={isRegistering || isGoogleSigningIn}>
                 {isRegistering ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
                 Registrarme Ahora
@@ -217,16 +191,16 @@ function RegisterPageContent() {
                 Registrarme con Google
             </Button>
 
-            {showCookieHelp && (
+            {showInternalErrorHelp && (
                 <Alert className="mt-4 bg-primary/5 border-primary/20">
-                    <Info className="h-4 w-4 text-primary" />
-                    <AlertTitle className="font-bold text-sm">¿Problemas con Google?</AlertTitle>
+                    <AlertTriangle className="h-4 w-4 text-primary" />
+                    <AlertTitle className="font-bold text-sm">¿Problemas Técnicos?</AlertTitle>
                     <AlertDescription className="text-xs space-y-2 pt-1">
-                        <p>Para habilitar Google en esta estación de trabajo:</p>
+                        <p>Detectamos un fallo interno de Firebase. Intenta lo siguiente:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><b>Chrome:</b> Ajustes &gt; Privacidad &gt; Cookies &gt; Permitir todas.</li>
-                            <li><b>Safari:</b> Ajustes &gt; Safari &gt; Desactivar "Bloquear todas las cookies".</li>
+                            <li>Habilita las <b>cookies de terceros</b>.</li>
                             <li>Evita el <b>Modo Incógnito</b>.</li>
+                            <li>Recarga la página.</li>
                         </ul>
                     </AlertDescription>
                 </Alert>

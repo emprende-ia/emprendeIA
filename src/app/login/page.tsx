@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { auth, firestore, useUser } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, RecaptchaVerifier } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -38,61 +38,35 @@ function LoginPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
-  const [showCookieHelp, setShowCookieHelp] = useState(false);
+  const [showInternalErrorHelp, setShowInternalErrorHelp] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  useEffect(() => {
-    if (!recaptchaVerifier && recaptchaContainerRef.current && auth) {
-        try {
-            const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-                size: 'invisible',
-                callback: () => { console.log('Auth Verifier: reCAPTCHA verificado'); }
-            });
-            setRecaptchaVerifier(verifier);
-        } catch (e) {
-            console.error("Error al inicializar reCAPTCHA de Auth:", e);
-        }
-    }
-    
-    return () => {
-        if (recaptchaVerifier) {
-            recaptchaVerifier.clear();
-            setRecaptchaVerifier(null);
-        }
-    }
-  }, [recaptchaVerifier]);
-
   const handleSignIn = async (values: LoginFormValues) => {
     if (isSigningIn || isGoogleSigningIn || !auth) return;
     setIsSigningIn(true);
+    setShowInternalErrorHelp(false);
     
     try {
-      // Nota: App Check gestiona automáticamente el token de reCAPTCHA Enterprise
-      // si está inicializado en Firebase SDK. No es necesario el execute manual aquí.
-      
-      if (recaptchaVerifier) {
-          await recaptchaVerifier.verify();
-      }
-      
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "¡Bienvenido de nuevo!", description: "Has iniciado sesión correctamente." });
     } catch (error: any) {
       console.error("Login Error:", error);
       let message = "Correo o contraseña incorrectos.";
-      if (error.code === 'auth/user-disabled') {
+      
+      if (error.code === 'auth/internal-error') {
+          setShowInternalErrorHelp(true);
+          message = "Error interno de autenticación. Revisa tu configuración de cookies.";
+      } else if (error.code === 'auth/user-disabled') {
           message = "Esta cuenta ha sido deshabilitada. Contacta al soporte.";
-      } else if (error.code === 'auth/firebase-app-check-token-is-invalid') {
-          message = "Error de seguridad (App Check). Por favor, intenta de nuevo.";
       }
+      
       toast({
         title: "Error de acceso",
         description: message,
@@ -106,7 +80,7 @@ function LoginPageContent() {
   const handleGoogleSignIn = async () => {
     if (isGoogleSigningIn || isSigningIn || !auth || !firestore) return;
     setIsGoogleSigningIn(true);
-    setShowCookieHelp(false);
+    setShowInternalErrorHelp(false);
     
     try {
         const provider = new GoogleAuthProvider();
@@ -121,17 +95,12 @@ function LoginPageContent() {
         console.error("Google Auth Error:", error);
         
         if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
-            setShowCookieHelp(true);
-        }
-
-        let message = "No se pudo conectar con Google. Verifica tus cookies.";
-        if (error.code === 'auth/user-disabled') {
-            message = "Tu cuenta de Google ha sido bloqueada en esta plataforma.";
+            setShowInternalErrorHelp(true);
         }
 
         toast({
             title: "Error de autenticación",
-            description: message,
+            description: "No se pudo conectar con Google. Verifica tus cookies de terceros.",
             variant: "destructive",
         });
     } finally {
@@ -196,7 +165,6 @@ function LoginPageContent() {
                   </FormItem>
                 )}
               />
-              <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
               <Button type="submit" size="lg" className="w-full font-bold" disabled={isSigningIn || isGoogleSigningIn}>
                 {isSigningIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
                 Iniciar Sesión
@@ -223,17 +191,16 @@ function LoginPageContent() {
                 Continuar con Google
             </Button>
 
-            {showCookieHelp && (
+            {showInternalErrorHelp && (
                 <Alert className="mt-4 bg-primary/5 border-primary/20">
                     <AlertTriangle className="h-4 w-4 text-primary" />
-                    <AlertTitle className="font-bold text-sm">¿Error de autenticación?</AlertTitle>
+                    <AlertTitle className="font-bold text-sm">¿Error de Autenticación?</AlertTitle>
                     <AlertDescription className="text-xs space-y-2 pt-1">
-                        <p>Para usar Google en este entorno, debes habilitar las <b>cookies de terceros</b>:</p>
+                        <p>Firebase detectó un problema con tu navegador. Sigue estos pasos:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><b>Chrome:</b> Ajustes &gt; Privacidad &gt; Cookies &gt; "Permitir todas".</li>
-                            <li><b>Edge:</b> Ajustes &gt; Cookies &gt; Desactivar "Bloquear cookies de terceros".</li>
-                            <li><b>Safari:</b> Desactivar "Bloquear todas las cookies".</li>
+                            <li>Habilita las <b>cookies de terceros</b> en tu navegador.</li>
                             <li>No uses el <b>Modo Incógnito</b>.</li>
+                            <li>Asegúrate de que tu conexión sea estable.</li>
                         </ul>
                     </AlertDescription>
                 </Alert>
