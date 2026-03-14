@@ -11,6 +11,8 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SettingsMenu } from '@/components/app/settings-menu';
 
+const TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/R9CZPZ_KC_k";
+
 export default function LandingPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
@@ -108,10 +110,9 @@ export default function LandingPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="aspect-video w-full rounded-lg overflow-hidden border">
-                  {/* Placeholder video - replace with your actual video URL */}
                   <iframe
                     className="w-full h-full"
-                    src="https://www.youtube.com/embed/R9CZPZ_KC_k"
+                    src={TUTORIAL_VIDEO_URL}
                     title="YouTube video player"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
