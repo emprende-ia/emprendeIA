@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Lightbulb, Search } from 'lucide-react';
+import { Loader2, Sparkles, Lightbulb, Search, AlertTriangle } from 'lucide-react';
 import { SupplierCard } from '../supplier-card';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { useUser, useFirestore } from '@/firebase';
@@ -36,6 +35,7 @@ export function ProveedoresModule() {
   const [recommendations, setRecommendations] = useState<SuggestRelevantSuppliersOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -67,6 +67,7 @@ export function ProveedoresModule() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
     setRecommendations(null);
+    setAiError(null);
 
     try {
       const result = await suggestRelevantSuppliers(data);
@@ -84,13 +85,18 @@ export function ProveedoresModule() {
          }
          setRecommendations(result);
       }
-    } catch (e) {
-      toast({
-          title: "Error Inesperado",
-          description: "Hubo un error al generar las recomendaciones. Por favor, inténtalo de nuevo más tarde.",
-          variant: "destructive"
-        });
+    } catch (e: any) {
       console.error(e);
+      const errorMsg = e.message || e.toString();
+      if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+          setAiError("API_KEY_ERROR");
+      } else {
+          toast({
+              title: "Error Inesperado",
+              description: "Hubo un error al generar las recomendaciones. Por favor, inténtalo de nuevo más tarde.",
+              variant: "destructive"
+            });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +107,7 @@ export function ProveedoresModule() {
     if (!open) {
       form.reset();
       setRecommendations(null);
+      setAiError(null);
       setIsLoading(false);
     }
   }
@@ -119,6 +126,17 @@ export function ProveedoresModule() {
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
           <div className="space-y-4">
+            
+            {aiError === "API_KEY_ERROR" && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive mb-4">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle className="font-bold">IA Bloqueada (403)</AlertTitle>
+                    <AlertDescription className="text-sm pt-1">
+                        La API de Google rechazó la solicitud. Verifica que tu <b>API Key</b> en el archivo <code>.env</code> sea válida y tenga la <b>Generative Language API</b> habilitada.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                  <FormField

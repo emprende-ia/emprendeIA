@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, BookOpen, GraduationCap, Calendar, Target, Clock, Bot, Info, Video, FileText, BarChart2, PlusCircle, RefreshCw } from "lucide-react";
+import { Loader2, Sparkles, BookOpen, GraduationCap, Calendar, Target, Clock, Bot, Info, Video, FileText, BarChart2, PlusCircle, RefreshCw, AlertTriangle } from "lucide-react";
 import { generateActionPlan, type GenerateActionPlanOutput } from '@/ai/flows/generate-action-plan';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -66,6 +65,7 @@ export function GuiaPasoAPasoModule() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [learningPath, setLearningPath] = useState<GenerateActionPlanOutput | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -93,6 +93,7 @@ export function GuiaPasoAPasoModule() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
     setLearningPath(null);
+    setAiError(null);
     try {
       const result = await generateActionPlan(data);
       setLearningPath(result);
@@ -100,13 +101,18 @@ export function GuiaPasoAPasoModule() {
           title: "¡Ruta de aprendizaje generada!",
           description: "Tu plan personalizado está listo.",
       });
-    } catch (e) {
-      toast({
-          title: "Error al generar la guía",
-          description: "Hubo un problema con la IA. Por favor, inténtalo de nuevo.",
-          variant: "destructive"
-        });
+    } catch (e: any) {
       console.error(e);
+      const errorMsg = e.message || e.toString();
+      if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+          setAiError("API_KEY_ERROR");
+      } else {
+          toast({
+              title: "Error al generar la guía",
+              description: "Hubo un problema con la IA. Por favor, inténtalo de nuevo.",
+              variant: "destructive"
+            });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -132,6 +138,7 @@ export function GuiaPasoAPasoModule() {
     if (!open) {
       form.reset();
       setLearningPath(null);
+      setAiError(null);
       setIsLoading(false);
     }
   }
@@ -139,6 +146,7 @@ export function GuiaPasoAPasoModule() {
   const resetForm = () => {
     form.reset();
     setLearningPath(null);
+    setAiError(null);
      const savedProfile = localStorage.getItem('businessProfile');
       if (savedProfile) {
         try {
@@ -163,7 +171,20 @@ export function GuiaPasoAPasoModule() {
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
-          {!learningPath && (
+          
+          {aiError === "API_KEY_ERROR" && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-md">
+                <AlertTriangle className="h-5 w-5" />
+                <AlertTitle className="font-bold">Error de IA (403)</AlertTitle>
+                <AlertDescription className="space-y-2 pt-2 text-sm">
+                    <p>No se pudo generar la guía porque el acceso a la IA está bloqueado. Asegúrate de tener habilitada la <b>Generative Language API</b> en tu API Key de Google.</p>
+                    <p>Revisa tu archivo <code>.env</code> y asegúrate de usar una clave válida de <a href="https://aistudio.google.com/" target="_blank" className="font-bold underline">AI Studio</a>.</p>
+                    <Button onClick={resetForm} variant="outline" size="sm" className="w-full mt-2">Reintentar</Button>
+                </AlertDescription>
+            </Alert>
+          )}
+
+          {!learningPath && !aiError && (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField name="giro" control={form.control} render={({ field }) => (

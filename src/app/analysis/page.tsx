@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { Suspense, useState, useMemo } from 'react';
@@ -46,6 +45,7 @@ function AnalysisPageContent() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeBusinessIdeaOutput | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   
   const formData = useMemo(() => {
     const data: Record<string, string> = {};
@@ -58,6 +58,7 @@ function AnalysisPageContent() {
   const handleEvaluate = async () => {
     setIsLoading(true);
     setAnalysisResult(null);
+    setAiError(null);
     try {
       const result = await analyzeBusinessIdea(formData);
       setAnalysisResult(result);
@@ -74,13 +75,18 @@ function AnalysisPageContent() {
           description: "Inicia sesión para guardar este análisis en tu cuenta.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during analysis:", error);
-      toast({
-        title: 'Error en el Análisis',
-        description: 'La IA no pudo completar el análisis. Por favor, intenta de nuevo.',
-        variant: 'destructive',
-      });
+      const errorMsg = error.message || error.toString();
+      if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+          setAiError("API_KEY_ERROR");
+      } else {
+          toast({
+            title: 'Error en el Análisis',
+            description: 'La IA no pudo completar el análisis. Por favor, intenta de nuevo.',
+            variant: 'destructive',
+          });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +148,29 @@ function AnalysisPageContent() {
           </CardContent>
         </Card>
         
+        {aiError === "API_KEY_ERROR" && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-lg animate-in fade-in zoom-in duration-300">
+                <AlertTriangle className="h-6 w-6" />
+                <AlertTitle className="font-bold text-xl">Error de Acceso a la IA (403)</AlertTitle>
+                <AlertDescription className="space-y-4 pt-3 text-base">
+                    <p>Las solicitudes a la IA están siendo bloqueadas. Esto ocurre por dos razones comunes:</p>
+                    <ol className="list-decimal list-inside space-y-2">
+                        <li>La <b>Generative Language API</b> no está habilitada en tu proyecto.</li>
+                        <li>Tu <b>API Key</b> de Google AI Studio es inválida o ha expirado.</li>
+                    </ol>
+                    <div className="bg-background/50 p-4 rounded-md border border-destructive/20 mt-4">
+                        <p className="font-bold mb-2">Solución Rápida:</p>
+                        <p>1. Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" className="underline font-bold">Google AI Studio</a>.</p>
+                        <p>2. Crea una nueva <b>API Key</b> gratuita.</p>
+                        <p>3. Pégala en tu archivo <code>.env</code> en la variable <code>GOOGLE_GENAI_API_KEY</code>.</p>
+                    </div>
+                    <Button onClick={handleEvaluate} variant="outline" className="w-full mt-4 font-bold border-destructive text-destructive hover:bg-destructive hover:text-white">
+                        <RefreshCw className="mr-2 h-4 w-4" /> Reintentar después de actualizar clave
+                    </Button>
+                </AlertDescription>
+            </Alert>
+        )}
+
         {!analysisResult && (
             <div className="text-center">
                 <Button onClick={handleEvaluate} disabled={isLoading} size="lg" className="font-bold text-lg">

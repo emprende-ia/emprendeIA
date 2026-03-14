@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -125,7 +124,8 @@ export function IdentidadDigitalModule() {
       });
     } catch (e: any) {
       console.error(e);
-      if (e.message?.includes('403') || e.toString().includes('403')) {
+      const errorMsg = e.message || e.toString();
+      if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
           setAiError("API_KEY_BLOCKED");
       } else {
           toast({
@@ -153,9 +153,14 @@ export function IdentidadDigitalModule() {
             logoSource: 'ai_generated'
         }));
         toast({ title: '¡Logo generado!', description: 'Tu nuevo logo está listo.'});
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        toast({ title: 'Error al generar el logo', description: 'No se pudo crear la imagen. Intenta de nuevo.', variant: 'destructive'});
+        const errorMsg = error.message || error.toString();
+        if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+            setAiError("API_KEY_BLOCKED");
+        } else {
+            toast({ title: 'Error al generar el logo', description: 'No se pudo crear la imagen. Intenta de nuevo.', variant: 'destructive'});
+        }
       } finally {
         setIsLogoLoading(false);
       }
@@ -259,9 +264,14 @@ export function IdentidadDigitalModule() {
             slogan,
         }));
         toast({ title: '¡Nuevas sugerencias!', description: 'Se ha generado un nuevo nombre y eslogan.'});
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        toast({ title: 'Error', description: 'No se pudieron generar nuevas sugerencias.', variant: 'destructive'});
+        const errorMsg = error.message || error.toString();
+        if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+            setAiError("API_KEY_BLOCKED");
+        } else {
+            toast({ title: 'Error', description: 'No se pudieron generar nuevas sugerencias.', variant: 'destructive'});
+        }
     } finally {
         setIsRegenerating(false);
     }
@@ -347,17 +357,21 @@ export function IdentidadDigitalModule() {
             </Form>
 
             {aiError === "API_KEY_BLOCKED" && (
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
-                    <AlertTriangle className="h-4 w-4" />
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-md animate-in slide-in-from-top-2">
+                    <AlertTriangle className="h-5 w-5" />
                     <AlertTitle className="font-bold text-lg">Error de Clave de API (403)</AlertTitle>
                     <AlertDescription className="space-y-3 pt-2">
-                        <p>La IA no puede responder porque tu clave de API está bloqueada o no tiene habilitada la <b>Generative Language API</b>.</p>
-                        <p className="font-semibold underline">Cómo arreglarlo:</p>
-                        <ol className="list-decimal list-inside space-y-1 text-sm">
-                            <li>Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" className="font-bold underline">Google AI Studio</a>.</li>
-                            <li>Crea una nueva <b>API Key</b> gratuita.</li>
-                            <li>Pega esa clave en tu archivo <code>.env</code> bajo <code>GOOGLE_GENAI_API_KEY</code>.</li>
-                        </ol>
+                        <p>La IA no puede responder porque tu solicitud fue rechazada. Esto suele pasar si:</p>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                            <li>La <b>Generative Language API</b> no está habilitada en tu consola.</li>
+                            <li>Tu <b>API Key</b> es incorrecta o está bloqueada.</li>
+                        </ul>
+                        <div className="bg-background/50 p-3 rounded border border-destructive/20 text-xs">
+                            <p className="font-bold underline mb-1">Cómo arreglarlo:</p>
+                            <p>1. Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" className="font-bold underline">Google AI Studio</a>.</p>
+                            <p>2. Genera una <b>API Key</b> nueva y gratuita.</p>
+                            <p>3. Pégala en tu archivo <code>.env</code> bajo <code>GOOGLE_GENAI_API_KEY</code>.</p>
+                        </div>
                     </AlertDescription>
                 </Alert>
             )}

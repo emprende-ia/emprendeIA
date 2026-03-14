@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
-import { Megaphone, Sparkles, Loader2, Workflow } from "lucide-react";
+import { Megaphone, Sparkles, Loader2, Workflow, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +29,7 @@ export function CampanasMarketingModule() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [campaignIdeas, setCampaignIdeas] = useState<GenerateMarketingCampaignOutput>([]);
+  const [aiError, setAiError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -56,16 +56,22 @@ export function CampanasMarketingModule() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
     setCampaignIdeas([]);
+    setAiError(null);
     try {
       const result = await generateMarketingCampaign(data);
       setCampaignIdeas(result);
-    } catch (e) {
-      toast({
-        title: "Error al generar ideas",
-        description: "Hubo un problema con la IA. Inténtalo de nuevo.",
-        variant: "destructive"
-      });
+    } catch (e: any) {
       console.error(e);
+      const errorMsg = e.message || e.toString();
+      if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+          setAiError("API_KEY_ERROR");
+      } else {
+          toast({
+            title: "Error al generar ideas",
+            description: "Hubo un problema con la IA. Inténtalo de nuevo.",
+            variant: "destructive"
+          });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -84,9 +90,14 @@ export function CampanasMarketingModule() {
       setCampaignIdeas(prev => prev.filter(c => c.title !== campaignIdea.title));
       if(campaignIdeas.length === 1) handleClose();
 
-    } catch(e) {
-       toast({ title: 'Error', description: 'No se pudo guardar la campaña.', variant: 'destructive' });
+    } catch(e: any) {
        console.error(e);
+       const errorMsg = e.message || e.toString();
+       if (errorMsg.includes('403') || errorMsg.toLowerCase().includes('forbidden') || errorMsg.includes('blocked')) {
+           setAiError("API_KEY_ERROR");
+       } else {
+           toast({ title: 'Error', description: 'No se pudo guardar la campaña.', variant: 'destructive' });
+       }
     } finally {
         setIsSaving(null);
     }
@@ -102,6 +113,7 @@ export function CampanasMarketingModule() {
     if (!open) {
       form.reset();
       setCampaignIdeas([]);
+      setAiError(null);
       setIsLoading(false);
       setIsSaving(null);
     }
@@ -121,6 +133,18 @@ export function CampanasMarketingModule() {
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
+            
+            {aiError === "API_KEY_ERROR" && (
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertTitle className="font-bold">Error de IA (403)</AlertTitle>
+                    <AlertDescription className="space-y-2 pt-2 text-sm">
+                        <p>No se pudieron generar las campañas porque la solicitud a Gemini fue rechazada. Esto sucede si tu API Key está mal configurada o no tiene habilitada la API de lenguaje.</p>
+                        <p>Por favor, revisa tu archivo <code>.env</code> y genera una nueva clave en <a href="https://aistudio.google.com/" target="_blank" className="font-bold underline">AI Studio</a>.</p>
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
