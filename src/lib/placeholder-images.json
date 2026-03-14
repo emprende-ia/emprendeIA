@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "logo-principal",
+      "description": "Logo oficial de EmprendeIA generado por IA",
+      "imageUrl": "https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png",
+      "imageHint": "robot entrepreneur logo"
+    },
+    {
+      "id": "modulo-identidad",
+      "description": "Imagen para el módulo de Identidad Digital",
+      "imageUrl": "https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg",
+      "imageHint": "branding identity design"
+    },
+    {
+      "id": "modulo-finanzas",
+      "description": "Imagen para el módulo de Asistente Financiero",
+      "imageUrl": "https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg",
+      "imageHint": "finance savings calculator"
+    },
+    {
+      "id": "modulo-marketing",
+      "description": "Imagen para el módulo de Generador de Campañas",
+      "imageUrl": "https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg",
+      "imageHint": "marketing campaign strategy"
+    },
+    {
+      "id": "modulo-proveedores",
+      "description": "Imagen para el módulo de Buscador de Proveedores",
+      "imageUrl": "https://i.postimg.cc/LXtDpg2w/proveedores.jpg",
+      "imageHint": "supply chain logistics"
+    },
+    {
+      "id": "modulo-guias",
+      "description": "Imagen para el módulo de Guía Paso a Paso",
+      "imageUrl": "https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg",
+      "imageHint": "learning path education"
+    },
+    {
+      "id": "path-nuevo",
+      "description": "Imagen para el camino de emprendimiento nuevo",
+      "imageUrl": "https://picsum.photos/seed/startup/200/200",
+      "imageHint": "startup rocket"
+    },
+    {
+      "id": "path-escalar",
+      "description": "Imagen para el camino de potenciar negocio",
+      "imageUrl": "https://picsum.photos/seed/scale/200/200",
+      "imageHint": "business growth chart"
+    }
+  ]
 }
