@@ -3,12 +3,13 @@
 import { firebaseConfig, isFirebaseConfigured, RECAPTCHA_SITE_KEY } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
-  initializeAuth, 
-  browserLocalPersistence, 
-  browserPopupRedirectResolver,
-  indexedDBLocalPersistence,
+  getAuth,
   Auth,
-  getAuth
+  browserLocalPersistence,
+  setPersistence,
+  browserPopupRedirectResolver,
+  initializeAuth,
+  indexedDBLocalPersistence
 } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
@@ -23,39 +24,41 @@ let appCheck: AppCheck | null = null;
 
 if (isFirebaseConfigured) {
   try {
-    // 1. Inicializar Firebase App
+    // 1. Inicializar Firebase App de forma única
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     
     if (app) {
-      // 2. Inicializar Auth de forma segura (Idempotente)
+      // 2. Inicializar Auth con patrón de seguridad para evitar auth/internal-error
       if (typeof window !== 'undefined') {
-        try {
-          // Intentamos inicializar con persistencia avanzada
+        // Intentar recuperar instancia existente primero
+        const existingAuth = getAuth(app);
+        if (existingAuth) {
+          auth = existingAuth;
+        } else {
+          // Si no existe, inicializar con configuraciones específicas
           auth = initializeAuth(app, {
             persistence: [indexedDBLocalPersistence, browserLocalPersistence],
             popupRedirectResolver: browserPopupRedirectResolver,
           });
-        } catch (authInitError: any) {
-          // Si ya estaba inicializado (error común en HMR), recuperamos la instancia existente
-          auth = getAuth(app);
         }
       } else {
         auth = getAuth(app);
       }
 
-      // 3. Inicializar Firestore y Storage (Getters son seguros por defecto)
+      // 3. Inicializar Firestore y Storage (Getters son idempotentes y seguros)
       firestore = getFirestore(app);
       storage = getStorage(app);
 
-      // 4. Inicializar App Check (Solo cliente y solo si hay llave)
-      if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY && !appCheck) {
+      // 4. Inicializar App Check (Solo cliente)
+      if (typeof window !== 'undefined' && RECAPTCHA_SITE_KEY) {
         try {
           appCheck = initializeAppCheck(app, {
             provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
             isTokenAutoRefreshEnabled: true,
           });
         } catch (acError) {
-          console.debug("App Check initialization skipped or already active.");
+          // Fallo silencioso de App Check para no bloquear el inicio de la app
+          console.debug("App Check skipped initialization.");
         }
       }
     }

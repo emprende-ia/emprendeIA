@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useRef } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { auth, firestore, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -62,7 +62,7 @@ function LoginPageContent() {
       
       if (error.code === 'auth/internal-error') {
           setShowInternalErrorHelp(true);
-          message = "Error interno de autenticación. Revisa tu configuración de cookies.";
+          message = "Error interno de autenticación. Verifica que tu navegador permita cookies.";
       } else if (error.code === 'auth/user-disabled') {
           message = "Esta cuenta ha sido deshabilitada. Contacta al soporte.";
       }
@@ -100,7 +100,7 @@ function LoginPageContent() {
 
         toast({
             title: "Error de autenticación",
-            description: "No se pudo conectar con Google. Verifica tus cookies de terceros.",
+            description: "No se pudo conectar con Google. Verifica tu conexión.",
             variant: "destructive",
         });
     } finally {
@@ -192,15 +192,15 @@ function LoginPageContent() {
             </Button>
 
             {showInternalErrorHelp && (
-                <Alert className="mt-4 bg-primary/5 border-primary/20">
+                <Alert className="mt-4 bg-primary/5 border-primary/20 animate-in fade-in slide-in-from-bottom-2">
                     <AlertTriangle className="h-4 w-4 text-primary" />
-                    <AlertTitle className="font-bold text-sm">¿Error de Autenticación?</AlertTitle>
+                    <AlertTitle className="font-bold text-sm">¿Problema de Acceso?</AlertTitle>
                     <AlertDescription className="text-xs space-y-2 pt-1">
-                        <p>Firebase detectó un problema con tu navegador. Sigue estos pasos:</p>
+                        <p>Firebase detectó un problema con tu navegador. Para solucionarlo:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li>Habilita las <b>cookies de terceros</b> en tu navegador.</li>
-                            <li>No uses el <b>Modo Incógnito</b>.</li>
-                            <li>Asegúrate de que tu conexión sea estable.</li>
+                            <li>Asegúrate de <b>no estar en Modo Incógnito</b>.</li>
+                            <li>Habilita las <b>cookies de terceros</b> en la configuración.</li>
+                            <li>Limpia el caché del navegador y recarga la página.</li>
                         </ul>
                     </AlertDescription>
                 </Alert>
