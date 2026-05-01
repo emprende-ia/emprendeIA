@@ -95,8 +95,10 @@ function ExistingAnalysisPageContent() {
   const growthViabilityData = analysisResult?.analysis.growthViability;
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
-      <div className="w-full max-w-4xl space-y-8">
+    <main className="relative flex min-h-screen w-full flex-col items-center overflow-hidden p-4 py-10 sm:p-8">
+      <div className="aurora-orb aurora-orb-primary -left-40 -top-40 h-[420px] w-[420px] animate-aurora-shift" />
+      <div className="aurora-orb aurora-orb-accent -bottom-40 -right-40 h-[400px] w-[400px] animate-aurora-shift" style={{ animationDelay: '8s' }} />
+      <div className="relative z-10 w-full max-w-4xl space-y-8">
         <Card className="shadow-2xl">
           <CardHeader>
             <CardTitle className="font-headline text-3xl">Confirmación de Perfil de Negocio</CardTitle>

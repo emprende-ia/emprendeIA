@@ -84,9 +84,11 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
-        'aurora-sm': '0 1px 3px 0 hsl(var(--primary) / 0.1), 0 1px 2px -1px hsl(var(--primary) / 0.1)',
-        'aurora':    '0 4px 12px -2px hsl(var(--primary) / 0.2), 0 2px 6px -2px hsl(var(--accent) / 0.15)',
-        'aurora-lg': '0 12px 32px -8px hsl(var(--primary) / 0.35), 0 4px 16px -4px hsl(var(--accent) / 0.25)',
+        'aurora-sm': '0 1px 2px 0 hsl(var(--primary) / 0.08), 0 1px 3px -1px hsl(var(--primary) / 0.08)',
+        'aurora':    '0 8px 24px -8px hsl(var(--primary) / 0.20), 0 2px 6px -2px hsl(var(--accent) / 0.10)',
+        'aurora-lg': '0 18px 40px -12px hsl(var(--primary) / 0.30), 0 6px 18px -6px hsl(var(--accent) / 0.18)',
+        'soft':      '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.08)',
+        'soft-lg':   '0 4px 8px -2px rgb(0 0 0 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.12)',
       },
       keyframes: {
         'accordion-down': {

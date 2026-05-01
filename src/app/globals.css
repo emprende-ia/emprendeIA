@@ -5,73 +5,69 @@
 @layer base {
   /* Aurora Dark — tema por defecto */
   :root {
-    --background: 224 41% 7%;
+    --background: 224 41% 6%;
     --foreground: 210 40% 98%;
-    --card: 224 35% 10%;
+    --card: 224 32% 9%;
     --card-foreground: 210 40% 98%;
-    --popover: 224 38% 9%;
+    --popover: 224 35% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 258 90% 76%;
+    --primary: 244 78% 67%;
+    --primary-foreground: 210 40% 99%;
+    --secondary: 273 80% 72%;
     --secondary-foreground: 224 41% 7%;
-    --muted: 224 28% 14%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 188 86% 53%;
+    --muted: 224 24% 13%;
+    --muted-foreground: 215 18% 70%;
+    --accent: 192 86% 55%;
     --accent-foreground: 224 41% 7%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 76% 60%;
     --destructive-foreground: 210 40% 98%;
-    --success: 152 76% 53%;
+    --success: 152 70% 50%;
     --success-foreground: 224 41% 7%;
-    --warning: 38 92% 60%;
+    --warning: 36 96% 60%;
     --warning-foreground: 224 41% 7%;
-    --border: 224 24% 18%;
-    --input: 224 24% 18%;
-    --ring: 239 84% 67%;
-    --radius: 0.75rem;
-    --chart-1: 239 84% 67%;
-    --chart-2: 188 86% 53%;
-    --chart-3: 330 86% 70%;
-    --chart-4: 258 90% 76%;
-    --chart-5: 38 92% 60%;
-    --background-gradient-start: #0B0F1A;
-    --background-gradient-end: #1E1B4B;
+    --border: 224 22% 16%;
+    --input: 224 22% 16%;
+    --ring: 244 78% 67%;
+    --radius: 0.875rem;
+    --chart-1: 244 78% 67%;
+    --chart-2: 192 86% 55%;
+    --chart-3: 330 84% 70%;
+    --chart-4: 273 80% 72%;
+    --chart-5: 36 96% 60%;
     --aurora-glow: 99 102 241;
   }
 
   /* Aurora Light — opt-in con clase .light en el <html> */
   .light {
-    --background: 220 40% 99%;
-    --foreground: 224 47% 12%;
+    --background: 220 36% 99%;
+    --foreground: 224 47% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 224 47% 12%;
+    --card-foreground: 224 47% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 47% 12%;
-    --primary: 239 78% 60%;
+    --popover-foreground: 224 47% 10%;
+    --primary: 244 75% 58%;
     --primary-foreground: 210 40% 99%;
-    --secondary: 258 80% 68%;
+    --secondary: 273 72% 60%;
     --secondary-foreground: 210 40% 99%;
     --muted: 220 22% 96%;
-    --muted-foreground: 224 14% 42%;
-    --accent: 188 82% 44%;
+    --muted-foreground: 224 12% 42%;
+    --accent: 192 84% 42%;
     --accent-foreground: 210 40% 99%;
-    --destructive: 0 75% 53%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 210 40% 99%;
-    --success: 152 65% 38%;
+    --success: 152 65% 36%;
     --success-foreground: 210 40% 99%;
-    --warning: 32 96% 50%;
+    --warning: 32 96% 48%;
     --warning-foreground: 224 47% 12%;
-    --border: 220 18% 90%;
-    --input: 220 18% 92%;
-    --ring: 239 78% 60%;
-    --chart-1: 239 78% 60%;
-    --chart-2: 188 82% 44%;
-    --chart-3: 330 78% 58%;
-    --chart-4: 258 80% 68%;
-    --chart-5: 32 96% 50%;
-    --background-gradient-start: #F8FAFF;
-    --background-gradient-end: #EEF1FF;
-    --aurora-glow: 99 102 241;
+    --border: 220 16% 91%;
+    --input: 220 16% 93%;
+    --ring: 244 75% 58%;
+    --chart-1: 244 75% 58%;
+    --chart-2: 192 84% 42%;
+    --chart-3: 330 75% 55%;
+    --chart-4: 273 72% 60%;
+    --chart-5: 32 96% 48%;
+    --aurora-glow: 79 70 229;
   }
 }
 
@@ -88,21 +84,21 @@
     @apply bg-background text-foreground font-body;
     background-attachment: fixed;
     background-image:
-      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.10) 0px, transparent 55%),
-      radial-gradient(at 100% 0%, hsl(var(--secondary) / 0.08) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsl(var(--accent) / 0.08) 0px, transparent 55%);
+      radial-gradient(at 12% -10%, hsl(var(--primary) / 0.10) 0px, transparent 45%),
+      radial-gradient(at 92% 8%, hsl(var(--secondary) / 0.07) 0px, transparent 50%),
+      radial-gradient(at 50% 110%, hsl(var(--accent) / 0.06) 0px, transparent 55%);
   }
   .light body {
     background-image:
-      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.12) 0px, transparent 55%),
-      radial-gradient(at 100% 0%, hsl(var(--secondary) / 0.10) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsl(var(--accent) / 0.10) 0px, transparent 55%);
+      radial-gradient(at 10% -8%, hsl(var(--primary) / 0.08) 0px, transparent 50%),
+      radial-gradient(at 92% 6%, hsl(var(--secondary) / 0.06) 0px, transparent 55%),
+      radial-gradient(at 50% 110%, hsl(var(--accent) / 0.05) 0px, transparent 60%);
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;
   }
   ::selection {
-    background: hsl(var(--primary) / 0.3);
+    background: hsl(var(--primary) / 0.28);
     color: hsl(var(--foreground));
   }
 }
@@ -114,7 +110,7 @@
     background: linear-gradient(
       120deg,
       hsl(var(--primary)) 0%,
-      hsl(var(--secondary)) 50%,
+      hsl(var(--secondary)) 55%,
       hsl(var(--accent)) 100%
     );
     -webkit-background-clip: text;
@@ -127,53 +123,66 @@
   .bg-aurora {
     background: linear-gradient(
       135deg,
-      hsl(var(--primary) / 0.15) 0%,
-      hsl(var(--secondary) / 0.1) 50%,
-      hsl(var(--accent) / 0.15) 100%
+      hsl(var(--primary) / 0.12) 0%,
+      hsl(var(--secondary) / 0.08) 50%,
+      hsl(var(--accent) / 0.12) 100%
     );
   }
 
-  /* Borde con glow índigo */
+  /* Borde con glow índigo (más sutil) */
   .glow-primary {
     box-shadow:
-      0 0 0 1px hsl(var(--primary) / 0.3),
-      0 0 24px -4px hsl(var(--primary) / 0.4);
+      0 0 0 1px hsl(var(--primary) / 0.25),
+      0 8px 28px -10px hsl(var(--primary) / 0.35);
   }
 
   .glow-accent {
     box-shadow:
-      0 0 0 1px hsl(var(--accent) / 0.3),
-      0 0 24px -4px hsl(var(--accent) / 0.4);
+      0 0 0 1px hsl(var(--accent) / 0.25),
+      0 8px 28px -10px hsl(var(--accent) / 0.35);
   }
 
-  /* Glass effect (cards translucidas) */
+  /* Glass suave (poco usado ahora — preferir cards sólidas) */
   .glass {
-    background: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background: hsl(var(--card) / 0.72);
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
     border: 1px solid hsl(var(--border) / 0.6);
   }
 
-  /* Aurora ambient glow (decoración hero) */
+  /* Aurora ambient orb — mucho más sutil que antes */
   .aurora-orb {
     position: absolute;
     border-radius: 9999px;
-    filter: blur(80px);
-    opacity: 0.5;
+    filter: blur(96px);
+    opacity: 0.28;
     pointer-events: none;
   }
+  .light .aurora-orb { opacity: 0.22; }
   .aurora-orb-primary  { background: hsl(var(--primary)); }
   .aurora-orb-accent   { background: hsl(var(--accent)); }
   .aurora-orb-secondary{ background: hsl(var(--secondary)); }
 
+  /* Stripe gradient — barra superior decorativa para cards */
+  .accent-stripe {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 3px;
+    background-image: linear-gradient(90deg, var(--stripe-from, hsl(var(--primary))), var(--stripe-to, hsl(var(--secondary))));
+    opacity: 0.75;
+    transition: opacity 250ms ease;
+  }
+  .group:hover > .accent-stripe { opacity: 1; }
+
   /* Animaciones */
   @keyframes aurora-shift {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.95); }
+    33% { transform: translate(24px, -32px) scale(1.06); }
+    66% { transform: translate(-18px, 14px) scale(0.97); }
   }
   .animate-aurora-shift {
-    animation: aurora-shift 20s ease-in-out infinite;
+    animation: aurora-shift 28s ease-in-out infinite;
   }
 
   @keyframes shimmer {
@@ -193,10 +202,19 @@
 
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    50% { transform: translateY(-6px); }
   }
   .animate-float {
-    animation: float 4s ease-in-out infinite;
+    animation: float 5s ease-in-out infinite;
+  }
+
+  /* Grid sutil de fondo (página) */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%);
   }
 
   /* Scrollbar Aurora */
@@ -211,8 +229,8 @@
   .scrollbar-aurora::-webkit-scrollbar-thumb {
     background: linear-gradient(
       180deg,
-      hsl(var(--primary) / 0.6),
-      hsl(var(--accent) / 0.6)
+      hsl(var(--primary) / 0.55),
+      hsl(var(--accent) / 0.55)
     );
     border-radius: 8px;
   }

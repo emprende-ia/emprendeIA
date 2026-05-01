@@ -1,36 +1,107 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { BookOpen, Palette, Megaphone, DollarSign, Search } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { BookOpen, Palette, Megaphone, DollarSign, Search, Sparkles, Loader2 } from "lucide-react";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
 import { CampanasMarketingModule } from "@/components/app/modules/campanas-marketing";
 import { AdministracionRecursosModule } from "@/components/app/modules/administracion-recursos";
 import { useUser, useFirestore } from "@/firebase";
-import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
 import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
+
+type ModuleAccent = 'violet' | 'emerald' | 'rose' | 'amber' | 'sky';
+
+const accentClasses: Record<ModuleAccent, {
+  tile: string;
+  hoverBorder: string;
+  stripe: string;
+  label: string;
+}> = {
+  violet: {
+    tile: 'bg-violet-100 text-violet-700 ring-violet-200/70 dark:bg-violet-950/60 dark:text-violet-300 dark:ring-violet-800/40',
+    hoverBorder: 'hover:border-violet-300/70 dark:hover:border-violet-700/50',
+    stripe: 'from-violet-500 to-fuchsia-500',
+    label: 'text-violet-700 bg-violet-100/80 dark:text-violet-300 dark:bg-violet-950/60',
+  },
+  emerald: {
+    tile: 'bg-emerald-100 text-emerald-700 ring-emerald-200/70 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-800/40',
+    hoverBorder: 'hover:border-emerald-300/70 dark:hover:border-emerald-700/50',
+    stripe: 'from-emerald-500 to-teal-500',
+    label: 'text-emerald-700 bg-emerald-100/80 dark:text-emerald-300 dark:bg-emerald-950/60',
+  },
+  rose: {
+    tile: 'bg-rose-100 text-rose-700 ring-rose-200/70 dark:bg-rose-950/60 dark:text-rose-300 dark:ring-rose-800/40',
+    hoverBorder: 'hover:border-rose-300/70 dark:hover:border-rose-700/50',
+    stripe: 'from-rose-500 to-pink-500',
+    label: 'text-rose-700 bg-rose-100/80 dark:text-rose-300 dark:bg-rose-950/60',
+  },
+  amber: {
+    tile: 'bg-amber-100 text-amber-700 ring-amber-200/70 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800/40',
+    hoverBorder: 'hover:border-amber-300/70 dark:hover:border-amber-700/50',
+    stripe: 'from-amber-500 to-orange-500',
+    label: 'text-amber-700 bg-amber-100/80 dark:text-amber-300 dark:bg-amber-950/60',
+  },
+  sky: {
+    tile: 'bg-sky-100 text-sky-700 ring-sky-200/70 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-800/40',
+    hoverBorder: 'hover:border-sky-300/70 dark:hover:border-sky-700/50',
+    stripe: 'from-sky-500 to-cyan-500',
+    label: 'text-sky-700 bg-sky-100/80 dark:text-sky-300 dark:bg-sky-950/60',
+  },
+};
+
+interface ModuleCardProps {
+  accent: ModuleAccent;
+  icon: React.ReactNode;
+  category: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}
+
+function ModuleCard({ accent, icon, category, title, description, children }: ModuleCardProps) {
+  const a = accentClasses[accent];
+  return (
+    <Card className={`group relative overflow-hidden border bg-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-aurora ${a.hoverBorder}`}>
+      <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${a.stripe} opacity-70 transition-opacity duration-300 group-hover:opacity-100`} />
+      <CardHeader className="space-y-4 pt-7">
+        <div className="flex items-start justify-between gap-3">
+          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ring-1 ${a.tile}`}>
+            {icon}
+          </div>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${a.label}`}>
+            {category}
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          <CardTitle className="text-xl font-semibold tracking-tight">{title}</CardTitle>
+          <CardDescription className="text-sm leading-relaxed">
+            {description}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardFooter className="pt-2">
+        {children}
+      </CardFooter>
+    </Card>
+  );
+}
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  
+
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null);
   const [isIdentityLoading, setIsIdentityLoading] = useState(true);
 
   const brandName = brandIdentity?.brandName || "EmprendeIA";
 
   useEffect(() => {
-    // El tema lo gestiona el theme-loader del root layout y SettingsMenu.
-
     if (user && firestore) {
       setIsIdentityLoading(true);
       const unsubscribe = getBrandIdentity(firestore, user.uid, (identity) => {
@@ -51,7 +122,6 @@ export default function DashboardPage() {
     }
   }, [user, firestore]);
 
-
   if (isUserLoading || isIdentityLoading) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
@@ -61,118 +131,95 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="space-y-8">
-        
-        <AppHeader />
-        <Separator className="my-8" />
-        
-        <div className="text-center">
-          <h1 className="font-headline text-4xl font-bold">
-            Panel de <span className="text-aurora">{brandName}</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-lg">Tus herramientas de IA para lanzar y crecer tu negocio.</p>
-        </div>
+    <div className="relative min-h-screen w-full">
+      {/* Ambient orb único, muy sutil */}
+      <div className="aurora-orb aurora-orb-primary pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[480px] -translate-x-1/2 animate-aurora-shift" />
 
-        <div className="pt-6">
-            <h2 className="text-2xl font-bold mb-6 text-center">Todas las Herramientas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
-                    <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Palette className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Identidad Digital</CardTitle>
-                            </div>
-                            <CardDescription>Crea un nombre, eslogan y paleta de colores para tu marca.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6 mt-auto">
-                            <IdentidadDigitalModule />
-                        </CardFooter>
-                    </div>
-                </Card>
+      <div className="container relative z-10 mx-auto max-w-7xl px-4 py-10 sm:py-12">
+        <div className="space-y-10">
 
-                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
-                     <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><DollarSign className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Asistente Financiero</CardTitle>
-                            </div>
-                            <CardDescription>Obtén un presupuesto y analiza el punto de equilibrio.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6 mt-auto">
-                            <AdministracionRecursosModule />
-                        </CardFooter>
-                    </div>
-                </Card>
+          <AppHeader />
 
-                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
-                     <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Megaphone className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Generador de Campañas</CardTitle>
-                            </div>
-                            <CardDescription>Genera ideas de campañas de marketing y planes de acción.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6 mt-auto">
-                            <CampanasMarketingModule />
-                        </CardFooter>
-                    </div>
-                </Card>
+          {/* Hero de bienvenida */}
+          <section className="space-y-3 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Tu copiloto para emprender
+            </div>
+            <h1 className="font-headline text-4xl font-bold tracking-tight sm:text-5xl">
+              Panel de <span className="text-aurora">{brandName}</span>
+            </h1>
+            <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
+              Herramientas de IA para validar, lanzar y crecer tu negocio. Elige el módulo que necesitas.
+            </p>
+          </section>
 
-                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
-                    <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" alt="Proveedores" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
-                    <CardHeader className="flex-grow p-0">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><Search className="h-8 w-8 text-primary" /></div>
-                            <CardTitle className="text-2xl">Proveedores</CardTitle>
-                        </div>
-                        <CardDescription>Encuentra los mejores proveedores para tu negocio con IA.</CardDescription>
-                    </CardHeader>
-                    <CardFooter className="p-0 pt-6 mt-auto">
-                        <ProveedoresModule />
-                    </CardFooter>
-                    </div>
-                </Card>
+          <Separator className="opacity-50" />
 
-                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
-                    <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" alt="Guía Paso a Paso" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
-                    </div>
-                    <div className="relative z-10 flex flex-col h-full p-6 pt-2">
-                        <CardHeader className="flex-grow p-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="bg-primary/10 p-2 rounded-lg border border-primary/20"><BookOpen className="h-8 w-8 text-primary" /></div>
-                                <CardTitle className="text-2xl">Guía Paso a Paso</CardTitle>
-                            </div>
-                            <CardDescription>Genera un plan de acción detallado para tu idea de negocio.</CardDescription>
-                        </CardHeader>
-                        <CardFooter className="p-0 pt-6 mt-auto">
-                            <GuiaPasoAPasoModule />
-                        </CardFooter>
-                    </div>
-                </Card>
+          {/* Grid de módulos */}
+          <section className="space-y-6">
+            <div className="flex items-end justify-between">
+              <div>
+                <h2 className="font-headline text-2xl font-semibold tracking-tight">Todas las herramientas</h2>
+                <p className="text-sm text-muted-foreground">Cinco módulos diseñados para cada etapa de tu emprendimiento.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+              <ModuleCard
+                accent="violet"
+                icon={<Palette className="h-5 w-5" />}
+                category="Marca"
+                title="Identidad Digital"
+                description="Crea un nombre, eslogan, paleta de colores y un logo profesional para tu marca."
+              >
+                <IdentidadDigitalModule />
+              </ModuleCard>
+
+              <ModuleCard
+                accent="emerald"
+                icon={<DollarSign className="h-5 w-5" />}
+                category="Finanzas"
+                title="Asistente Financiero"
+                description="Obtén un presupuesto, registra ingresos y gastos, y analiza tu punto de equilibrio."
+              >
+                <AdministracionRecursosModule />
+              </ModuleCard>
+
+              <ModuleCard
+                accent="rose"
+                icon={<Megaphone className="h-5 w-5" />}
+                category="Marketing"
+                title="Generador de Campañas"
+                description="Genera ideas de campañas y planes de acción concretos para conseguir clientes."
+              >
+                <CampanasMarketingModule />
+              </ModuleCard>
+
+              <ModuleCard
+                accent="amber"
+                icon={<Search className="h-5 w-5" />}
+                category="Operaciones"
+                title="Proveedores"
+                description="Encuentra los mejores proveedores para tu negocio con búsqueda asistida por IA."
+              >
+                <ProveedoresModule />
+              </ModuleCard>
+
+              <ModuleCard
+                accent="sky"
+                icon={<BookOpen className="h-5 w-5" />}
+                category="Estrategia"
+                title="Guía Paso a Paso"
+                description="Genera un plan de acción detallado y tareas claras para hacer realidad tu idea."
+              >
+                <GuiaPasoAPasoModule />
+              </ModuleCard>
 
             </div>
+          </section>
+
         </div>
       </div>
     </div>
