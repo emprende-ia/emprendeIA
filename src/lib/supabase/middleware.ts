@@ -18,9 +18,18 @@ const AUTH_ROUTES = ['/login', '/register'];
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Si faltan envs (entorno mal configurado), seguimos sin auth para no
+  // tirar el middleware con MIDDLEWARE_INVOCATION_FAILED. La app cargará
+  // en modo invitado; el login mostrará un error claro al intentarlo.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return response;
+  }
+
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
