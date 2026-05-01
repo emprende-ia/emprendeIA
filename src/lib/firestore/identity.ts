@@ -1,14 +1,12 @@
-
 'use client';
 
-import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { createClient } from '@/lib/supabase/client';
+import type { ColorSwatch } from '@/lib/supabase/database.types';
 
 export interface BrandIdentity {
   brandName: string;
   slogan: string;
-  colorPalette: Array<{ hex: string; name: string }>;
+  colorPalette: ColorSwatch[];
   logoPrompt: string;
   logoUrl: string | null;
   logoSource: 'ai_generated' | 'user_uploaded' | null;
@@ -16,83 +14,104 @@ export interface BrandIdentity {
 }
 
 /**
- * Saves or updates a user's brand identity in Firestore.
- * It uses a single document with a fixed ID 'main' for each user.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param identityData - The brand identity data to save.
+ * Guarda/actualiza la identidad de marca del usuario (1 fila por usuario,
+ * PK = user_id). Usa upsert para crear si no existe, actualizar si sí.
  */
 export function saveBrandIdentity(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   identityData: Omit<BrandIdentity, 'updatedAt'>
-): void { 
+): void {
   if (!userId) return;
-  
-  const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
-  const dataToSave = {
-    ...identityData,
-    updatedAt: serverTimestamp(),
-  };
 
-  // Do not await mutation to allow instant cache updates
-  setDoc(identityDoc, dataToSave, { merge: true }).catch(async (error) => {
-    const permissionError = new FirestorePermissionError({
-        path: identityDoc.path,
-        operation: 'write', 
-        requestResourceData: dataToSave,
-    } satisfies SecurityRuleContext);
-    errorEmitter.emit('permission-error', permissionError);
-  });
+  const supabase = createClient();
+  void (async () => {
+    const { error } = await supabase.from('brand_identities').upsert(
+      {
+        user_id: userId,
+        brand_name: identityData.brandName,
+        slogan: identityData.slogan,
+        color_palette: identityData.colorPalette,
+        logo_prompt: identityData.logoPrompt,
+        logo_url: identityData.logoUrl,
+        logo_source: identityData.logoSource,
+      },
+      { onConflict: 'user_id' }
+    );
+    if (error) console.error('saveBrandIdentity:', error.message);
+  })();
 }
 
-/**
- * Deletes the brand identity for a user.
- */
-export function deleteBrandIdentity(firestore: Firestore, userId: string): void {
-    if (!userId) return;
-    const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
-
-    deleteDoc(identityDoc)
-        .catch(async (error) => {
-            const permissionError = new FirestorePermissionError({
-                path: identityDoc.path,
-                operation: 'delete',
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-        });
+export function deleteBrandIdentity(_firestore: unknown, userId: string): void {
+  if (!userId) return;
+  const supabase = createClient();
+  void supabase
+    .from('brand_identities')
+    .delete()
+    .eq('user_id', userId)
+    .then(({ error }) => {
+      if (error) console.error('deleteBrandIdentity:', error.message);
+    });
 }
 
-/**
- * Retrieves the brand identity for a user in real-time.
- */
 export function getBrandIdentity(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   onUpdate: (identity: BrandIdentity | null) => void
 ): () => void {
   if (!userId) {
-      onUpdate(null);
-      return () => {};
-  }
-  const identityDoc = doc(firestore, `users/${userId}/brandIdentity`, 'main');
-
-  const unsubscribe = onSnapshot(identityDoc, (docSnapshot) => {
-    if (docSnapshot.exists()) {
-      const data = docSnapshot.data();
-      const updatedAt = data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date();
-      onUpdate({ ...data, updatedAt } as BrandIdentity);
-    } else {
-      onUpdate(null);
-    }
-  }, async (error) => {
-    const permissionError = new FirestorePermissionError({
-      path: identityDoc.path,
-      operation: 'get',
-    } satisfies SecurityRuleContext);
-    errorEmitter.emit('permission-error', permissionError);
     onUpdate(null);
-  });
+    return () => {};
+  }
 
-  return unsubscribe;
+  const supabase = createClient();
+
+  const fetchOne = async () => {
+    const { data, error } = await supabase
+      .from('brand_identities')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('getBrandIdentity:', error.message);
+      onUpdate(null);
+      return;
+    }
+    if (!data) {
+      onUpdate(null);
+      return;
+    }
+    onUpdate({
+      brandName: data.brand_name,
+      slogan: data.slogan ?? '',
+      colorPalette: data.color_palette,
+      logoPrompt: data.logo_prompt ?? '',
+      logoUrl: data.logo_url,
+      logoSource: data.logo_source,
+      updatedAt: new Date(data.updated_at),
+    });
+  };
+
+  fetchOne();
+
+  const channel = supabase
+    .channel(`brand_identities:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'brand_identities',
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        fetchOne();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

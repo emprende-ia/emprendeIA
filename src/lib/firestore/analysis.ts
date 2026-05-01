@@ -1,88 +1,107 @@
-
 'use client';
 
-import { Firestore, doc, setDoc, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { createClient } from '@/lib/supabase/client';
 import type { AnalyzeBusinessIdeaOutput } from '@/ai/flows/analyze-business-idea';
 import type { AnalyzeExistingBusinessOutput } from '@/ai/flows/analyze-existing-business';
 
-// A union type for any possible analysis result
 export type ViabilityAnalysis = AnalyzeBusinessIdeaOutput | AnalyzeExistingBusinessOutput;
 
 export interface SavedAnalysis {
-  id: 'latest'; // Using a singleton document
+  id: 'latest';
   analysis: ViabilityAnalysis;
   type: 'new-venture' | 'existing-venture';
   savedAt: Date;
 }
 
 /**
- * Saves or updates a user's latest viability analysis in Firestore.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param analysisData - The analysis data to save.
+ * Guarda/actualiza el último análisis de viabilidad del usuario.
+ * El primer parámetro existe por compatibilidad con la firma anterior (Firestore);
+ * Supabase usa su propio cliente.
  */
 export function saveViabilityAnalysis(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   analysisData: ViabilityAnalysis,
   type: 'new-venture' | 'existing-venture'
-): void { 
+): void {
   if (!userId) return;
-  
-  const analysisDocRef = doc(firestore, `users/${userId}/viabilityAnalysis`, 'latest');
-  const dataToSave = {
-    analysis: analysisData,
-    type,
-    savedAt: serverTimestamp(),
-  };
+  const supabase = createClient();
 
-  // Do not await the mutation to allow instant cache updates
-  setDoc(analysisDocRef, dataToSave).catch(async (error) => {
-    const permissionError = new FirestorePermissionError({
-        path: analysisDocRef.path,
-        operation: 'write', 
-        requestResourceData: dataToSave,
-    } satisfies SecurityRuleContext);
-    errorEmitter.emit('permission-error', permissionError);
-  });
+  // Eliminamos análisis anteriores y guardamos el nuevo (siempre 1 vigente).
+  void (async () => {
+    await supabase.from('viability_analyses').delete().eq('user_id', userId);
+    const { error } = await supabase.from('viability_analyses').insert({
+      user_id: userId,
+      type,
+      analysis: analysisData as unknown as never,
+    });
+    if (error) console.error('saveViabilityAnalysis:', error.message);
+  })();
 }
 
 /**
- * Retrieves the latest saved viability analysis for a user in real-time.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param onUpdate - Callback function called with the saved analysis.
- * @returns An unsubscribe function for the real-time listener.
+ * Suscripción al último análisis de viabilidad. Devuelve una función para
+ * desuscribirse del canal de Realtime.
  */
 export function getViabilityAnalysis(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   onUpdate: (savedAnalysis: SavedAnalysis | null) => void
 ): () => void {
   if (!userId) {
-      onUpdate(null);
-      return () => {};
-  }
-  const analysisDocRef = doc(firestore, `users/${userId}/viabilityAnalysis`, 'latest');
-
-  const unsubscribe = onSnapshot(analysisDocRef, (docSnapshot) => {
-    if (docSnapshot.exists()) {
-      const data = docSnapshot.data();
-      const savedAt = data.savedAt instanceof Timestamp ? data.savedAt.toDate() : new Date();
-      onUpdate({ ...data, id: 'latest', savedAt } as SavedAnalysis);
-    } else {
-      onUpdate(null);
-    }
-  }, async (error) => {
-    const permissionError = new FirestorePermissionError({
-      path: analysisDocRef.path,
-      operation: 'get',
-    } satisfies SecurityRuleContext);
-    errorEmitter.emit('permission-error', permissionError);
     onUpdate(null);
-  });
+    return () => {};
+  }
 
-  return unsubscribe;
+  const supabase = createClient();
+
+  // 1) Fetch inicial
+  const fetchLatest = async () => {
+    const { data, error } = await supabase
+      .from('viability_analyses')
+      .select('analysis, type, saved_at')
+      .eq('user_id', userId)
+      .order('saved_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('getViabilityAnalysis:', error.message);
+      onUpdate(null);
+      return;
+    }
+    if (!data) {
+      onUpdate(null);
+      return;
+    }
+    onUpdate({
+      id: 'latest',
+      analysis: data.analysis as ViabilityAnalysis,
+      type: data.type,
+      savedAt: new Date(data.saved_at),
+    });
+  };
+
+  fetchLatest();
+
+  // 2) Realtime: cualquier cambio en filas del usuario → re-fetch
+  const channel = supabase
+    .channel(`viability_analyses:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'viability_analyses',
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        fetchLatest();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

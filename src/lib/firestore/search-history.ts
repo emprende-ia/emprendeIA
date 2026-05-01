@@ -1,9 +1,6 @@
-
 'use client';
 
-import { Firestore, collection, addDoc, query, orderBy, limit, serverTimestamp, Timestamp, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { createClient } from '@/lib/supabase/client';
 
 export interface SearchHistory {
   id?: string;
@@ -12,101 +9,98 @@ export interface SearchHistory {
   resultingKeywords?: string[];
 }
 
-/**
- * Saves a search history record for a specific user.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param searchData - The search data to save.
- */
 export function saveSearchHistory(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   searchData: Omit<SearchHistory, 'id' | 'timestamp'>
 ): void {
   if (!userId) return;
-  const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
-  const dataToSave = {
-    ...searchData,
-    timestamp: serverTimestamp()
-  };
-
-  addDoc(historyCollection, dataToSave)
-    .catch((error) => {
-      console.error("Error saving search history: ", error);
-      const permissionError = new FirestorePermissionError({
-        path: historyCollection.path,
-        operation: 'create',
-        requestResourceData: dataToSave,
-      });
-      errorEmitter.emit('permission-error', permissionError);
+  const supabase = createClient();
+  void supabase
+    .from('search_history')
+    .insert({
+      user_id: userId,
+      term: searchData.term,
+      resulting_keywords: searchData.resultingKeywords ?? [],
+    })
+    .then(({ error }) => {
+      if (error) console.error('saveSearchHistory:', error.message);
     });
 }
 
-/**
- * Deletes a search history record for a specific user.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param searchId - The ID of the search record to delete.
- */
 export function deleteSearchHistory(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
-  searchId: string,
+  searchId: string
 ): void {
   if (!userId || !searchId) return;
-  const searchDoc = doc(firestore, `users/${userId}/searchHistory`, searchId);
-  
-  deleteDoc(searchDoc)
-    .catch((error) => {
-      console.error("Error deleting search history: ", error);
-      const permissionError = new FirestorePermissionError({
-        path: searchDoc.path,
-        operation: 'delete',
-      });
-      errorEmitter.emit('permission-error', permissionError);
+  const supabase = createClient();
+  void supabase
+    .from('search_history')
+    .delete()
+    .eq('id', searchId)
+    .eq('user_id', userId)
+    .then(({ error }) => {
+      if (error) console.error('deleteSearchHistory:', error.message);
     });
 }
 
-/**
- * Retrieves the search history for a specific user in real-time.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param count - The number of recent searches to retrieve.
- * @param onUpdate - Callback function to be called with the new history data.
- * @returns An unsubscribe function for the real-time listener.
- */
 export function getSearchHistory(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   count: number = 10,
   onUpdate: (history: SearchHistory[]) => void
 ): () => void {
-  const historyCollection = collection(firestore, `users/${userId}/searchHistory`);
-  const q = query(historyCollection, orderBy('timestamp', 'desc'), limit(count));
+  if (!userId) {
+    onUpdate([]);
+    return () => {};
+  }
 
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const history = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      // Safely convert Firestore Timestamp to JS Date
-      const timestamp = data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date();
-      return {
-        id: doc.id,
-        term: data.term,
-        timestamp: timestamp,
-        resultingKeywords: data.resultingKeywords || [],
-      };
-    });
-    onUpdate(history);
-  }, (error) => {
-    const historyCollectionPath = `users/${userId}/searchHistory`;
-    const permissionError = new FirestorePermissionError({
-      path: historyCollectionPath,
-      operation: 'list',
-    });
-    errorEmitter.emit('permission-error', permissionError);
-    console.error("Error getting search history:", error);
-    onUpdate([]); // Return empty array on error
-  });
+  const supabase = createClient();
 
-  return unsubscribe;
+  const fetchAll = async () => {
+    const { data, error } = await supabase
+      .from('search_history')
+      .select('id, term, resulting_keywords, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(count);
+
+    if (error) {
+      console.error('getSearchHistory:', error.message);
+      onUpdate([]);
+      return;
+    }
+
+    onUpdate(
+      (data ?? []).map((row) => ({
+        id: row.id,
+        term: row.term,
+        timestamp: new Date(row.created_at),
+        resultingKeywords: row.resulting_keywords ?? [],
+      }))
+    );
+  };
+
+  fetchAll();
+
+  const channel = supabase
+    .channel(`search_history:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'search_history',
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        fetchAll();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

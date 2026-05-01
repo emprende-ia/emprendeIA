@@ -1,61 +1,37 @@
-
 'use client';
 
-import { Firestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { User } from 'firebase/auth';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { createClient } from '@/lib/supabase/client';
+import type { Database } from '@/lib/supabase/database.types';
+
+type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
 /**
- * Checks if a user profile exists in Firestore. If not, it creates one.
- * This ensures every user has a corresponding document in the 'users' collection.
- *
- * @param firestore - The Firestore instance.
- * @param user - The Firebase Auth User object.
- * @param additionalData - Optional additional data to merge into the profile, typically on registration.
+ * En Supabase el profile se crea automáticamente vía trigger SQL
+ * `handle_new_user` cuando se inserta una fila en `auth.users`. Esta función
+ * se mantiene por compatibilidad con los callers existentes — solo asegura
+ * que los datos de `additionalData` (full_name, age, etc.) se mergen al
+ * profile recién creado.
  */
 export async function getOrCreateUserProfile(
-  firestore: Firestore,
-  user: User,
-  additionalData: Record<string, any> = {}
+  _firestore: unknown,
+  user: { id?: string; uid?: string; email?: string | null; displayName?: string | null } | null,
+  additionalData: Record<string, unknown> = {}
 ): Promise<void> {
-  if (!user) return;
+  const userId = user?.id ?? user?.uid;
+  if (!userId) return;
 
-  const userDocRef = doc(firestore, 'users', user.uid);
+  const supabase = createClient();
 
-  try {
-    const docSnap = await getDoc(userDocRef);
+  // Mapeo flexible: aceptamos camelCase del frontend y lo convertimos a snake_case
+  const updates: ProfileUpdate = {};
+  if (additionalData.fullName) updates.full_name = additionalData.fullName as string;
+  if (additionalData.full_name) updates.full_name = additionalData.full_name as string;
+  if (additionalData.username) updates.username = additionalData.username as string;
+  if (additionalData.age !== undefined) updates.age = additionalData.age as number;
+  if (user?.displayName && !updates.full_name) updates.full_name = user.displayName;
 
-    if (!docSnap.exists()) {
-      // Document doesn't exist, so create it.
-      const { displayName, email, photoURL } = user;
-      const dataToSet = {
-        displayName: displayName || email?.split('@')[0],
-        email,
-        photoURL,
-        createdAt: serverTimestamp(),
-        plan: 'básico',
-        planStatus: 'inactive',
-        ...additionalData,
-      };
+  if (Object.keys(updates).length === 0) return;
 
-      // Mutation without direct await to use optimistic UI and cache
-      setDoc(userDocRef, dataToSet).catch(async (writeError) => {
-        const permissionError = new FirestorePermissionError({
-          path: userDocRef.path,
-          operation: 'create',
-          requestResourceData: dataToSet,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      });
-    }
-  } catch (error) {
-    if (!(error instanceof FirestorePermissionError)) {
-      const permissionError = new FirestorePermissionError({
-        path: userDocRef.path,
-        operation: 'get',
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
-    }
-  }
+  const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+  if (error) console.error('getOrCreateUserProfile update:', error.message);
 }

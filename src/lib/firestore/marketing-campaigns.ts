@@ -1,28 +1,18 @@
 'use client';
 
-import { Firestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, query, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL, type FirebaseStorage } from 'firebase/storage';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { z } from 'zod';
+import { createClient } from '@/lib/supabase/client';
 import { generateCampaignPlan, type CampaignPlan } from '@/ai/flows/generate-campaign-plan';
+import type { TaskAudio } from '@/lib/supabase/database.types';
 
 export const CampaignIdeaSchema = z.object({
-    title: z.string().describe('A catchy title for the campaign idea.'),
-    channel: z.string().describe('The recommended marketing channel (e.g., Instagram, Email Marketing, Google Ads).'),
-    keyMessage: z.string().describe('The core message of the campaign.'),
-    targetAudience: z.string().describe('The specific audience this campaign should target.'),
+  title: z.string().describe('A catchy title for the campaign idea.'),
+  channel: z
+    .string()
+    .describe('The recommended marketing channel (e.g., Instagram, Email Marketing, Google Ads).'),
+  keyMessage: z.string().describe('The core message of the campaign.'),
+  targetAudience: z.string().describe('The specific audience this campaign should target.'),
 });
-
-// The schema definition is now primarily in the flow file.
-// We can re-create the schema here for type safety in this file without exporting it.
-const CampaignPlanSchema = z.object({
-    strategy: z.string(),
-    contentSuggestions: z.array(z.string()),
-    actionableTasks: z.array(z.string()),
-    kpis: z.array(z.string()),
-});
-
 
 export type CampaignIdea = z.infer<typeof CampaignIdeaSchema>;
 
@@ -32,184 +22,204 @@ export interface MarketingCampaign {
   campaignIdea: CampaignIdea;
   campaignPlan: CampaignPlan;
   completedTasks: string[];
-  taskAudios?: { taskKey: string, audioUrl: string }[];
+  taskAudios?: TaskAudio[];
 }
 
 /**
- * Saves a new marketing campaign and generates its detailed action plan.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param campaignIdea - The initial campaign idea to save and expand.
+ * Genera un plan detallado a partir de la idea y guarda la campaña completa.
  */
 export async function saveCampaign(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   campaignIdea: CampaignIdea
 ): Promise<void> {
-  if (!userId) {
-    throw new Error("User ID is required to save a campaign.");
-  }
+  if (!userId) throw new Error('User ID is required to save a campaign.');
 
-  // Step 1: Generate the detailed campaign plan from the idea.
+  // 1) Generar plan detallado vía IA
   const campaignPlan = await generateCampaignPlan({
-      campaignTitle: campaignIdea.title,
-      campaignChannel: campaignIdea.channel,
-      campaignMessage: campaignIdea.keyMessage,
-      campaignAudience: campaignIdea.targetAudience,
+    campaignTitle: campaignIdea.title,
+    campaignChannel: campaignIdea.channel,
+    campaignMessage: campaignIdea.keyMessage,
+    campaignAudience: campaignIdea.targetAudience,
   });
 
-  if (!campaignPlan) {
-    throw new Error("Failed to generate a campaign plan from the AI service.");
-  }
+  if (!campaignPlan) throw new Error('Failed to generate a campaign plan from the AI service.');
 
-  // Step 2: Save the complete campaign data to Firestore.
-  const campaignsCollection = collection(firestore, `users/${userId}/marketingCampaigns`);
-  const dataToSave = {
-    createdAt: serverTimestamp(),
-    campaignIdea,
-    campaignPlan,
-    completedTasks: [],
-    taskAudios: [],
-  };
+  const supabase = createClient();
+  const { error } = await supabase.from('marketing_campaigns').insert({
+    user_id: userId,
+    campaign_idea: campaignIdea as unknown as never,
+    campaign_plan: campaignPlan as unknown as never,
+    completed_tasks: [],
+    task_audios: [],
+  });
 
-  try {
-    await addDoc(campaignsCollection, dataToSave);
-  } catch (error) {
-    const permissionError = new FirestorePermissionError({
-      path: campaignsCollection.path,
-      operation: 'create',
-      requestResourceData: dataToSave,
-    });
-    errorEmitter.emit('permission-error', permissionError);
-    // Re-throw the original error to be caught by the caller
+  if (error) {
+    console.error('saveCampaign:', error.message);
     throw error;
   }
 }
 
-/**
- * Uploads a base64 audio string to Firebase Storage and saves the download URL in Firestore.
- * @param storage - The Firebase Storage instance.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param campaignId - The ID of the marketing campaign.
- * @param taskKey - The unique identifier for the task.
- * @param audioDataUrl - The data URL of the generated audio (e.g., 'data:audio/wav;base64,...').
- */
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, base64] = dataUrl.split(',');
+  const mime = /data:([^;]+)/.exec(meta)?.[1] ?? 'audio/wav';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 export async function saveTaskAudioForCampaign(
-  storage: FirebaseStorage,
-  firestore: Firestore,
+  _storage: unknown,
+  _firestore: unknown,
   userId: string,
   campaignId: string,
   taskKey: string,
   audioDataUrl: string
 ): Promise<void> {
-  if (!userId || !campaignId) throw new Error("User ID and Campaign ID are required.");
+  if (!userId || !campaignId) throw new Error('User ID and Campaign ID are required.');
 
-  // 1. Upload to Storage
-  const audioId = `${taskKey.replace(/\s+/g, '-')}-${Date.now()}.wav`;
-  const storageRef = ref(storage, `users/${userId}/audios/${audioId}`);
-  
-  // The 'data_url' string format is used for base64-encoded strings with a data URL prefix
-  const metadata = { contentType: 'audio/wav' };
-  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url');
-  
-  // 2. Get Download URL
-  const downloadURL = await getDownloadURL(uploadResult.ref);
+  const supabase = createClient();
+  const safeKey = taskKey.replace(/\s+/g, '-');
+  const path = `${userId}/audios/${safeKey}-${Date.now()}.wav`;
 
-  // 3. Save URL to Firestore
-  const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
-  const audioData = { taskKey, audioUrl: downloadURL };
-  const updateData = {
-    taskAudios: arrayUnion(audioData),
-  };
-
-  try {
-    await updateDoc(campaignDoc, updateData);
-  } catch (error) {
-    const permissionError = new FirestorePermissionError({
-      path: campaignDoc.path,
-      operation: 'update',
-      requestResourceData: updateData,
+  const { error: upErr } = await supabase.storage
+    .from('audios')
+    .upload(path, dataUrlToBlob(audioDataUrl), {
+      contentType: 'audio/wav',
+      upsert: false,
     });
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
+  if (upErr) {
+    console.error('saveTaskAudioForCampaign upload:', upErr.message);
+    throw upErr;
+  }
+
+  const { data: signed, error: signErr } = await supabase.storage
+    .from('audios')
+    .createSignedUrl(path, 60 * 60 * 24 * 365);
+
+  if (signErr || !signed) {
+    console.error('saveTaskAudioForCampaign signedUrl:', signErr?.message);
+    throw signErr ?? new Error('Could not create signed URL.');
+  }
+
+  const { data: row, error: getErr } = await supabase
+    .from('marketing_campaigns')
+    .select('task_audios')
+    .eq('id', campaignId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (getErr || !row) {
+    console.error('saveTaskAudioForCampaign read:', getErr?.message);
+    throw getErr ?? new Error('Campaign not found.');
+  }
+
+  const next: TaskAudio[] = [...(row.task_audios ?? []), { taskKey, audioUrl: signed.signedUrl }];
+
+  const { error: updErr } = await supabase
+    .from('marketing_campaigns')
+    .update({ task_audios: next })
+    .eq('id', campaignId)
+    .eq('user_id', userId);
+
+  if (updErr) {
+    console.error('saveTaskAudioForCampaign update:', updErr.message);
+    throw updErr;
   }
 }
 
-
-/**
- * Toggles the completion status of a task within a specific campaign.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param campaignId - The ID of the campaign.
- * @param taskDescription - The description of the task to toggle.
- * @param isCompleted - The new completion status.
- */
-export function toggleCampaignTaskCompletion(
-  firestore: Firestore,
+export async function toggleCampaignTaskCompletion(
+  _firestore: unknown,
   userId: string,
   campaignId: string,
   taskDescription: string,
   isCompleted: boolean
-): void {
+): Promise<void> {
   if (!userId || !campaignId) return;
-  const campaignDoc = doc(firestore, `users/${userId}/marketingCampaigns`, campaignId);
-  const updateData = {
-    completedTasks: isCompleted ? arrayUnion(taskDescription) : arrayRemove(taskDescription),
-  };
+  const supabase = createClient();
 
-  updateDoc(campaignDoc, updateData)
-    .catch((error) => {
-      const permissionError = new FirestorePermissionError({
-        path: campaignDoc.path,
-        operation: 'update',
-        requestResourceData: updateData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
+  const { data: row, error } = await supabase
+    .from('marketing_campaigns')
+    .select('completed_tasks')
+    .eq('id', campaignId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !row) {
+    if (error) console.error('toggleCampaignTaskCompletion read:', error.message);
+    return;
+  }
+
+  const set = new Set(row.completed_tasks ?? []);
+  if (isCompleted) set.add(taskDescription);
+  else set.delete(taskDescription);
+
+  const { error: updErr } = await supabase
+    .from('marketing_campaigns')
+    .update({ completed_tasks: Array.from(set) })
+    .eq('id', campaignId)
+    .eq('user_id', userId);
+
+  if (updErr) console.error('toggleCampaignTaskCompletion update:', updErr.message);
 }
 
-/**
- * Retrieves all saved marketing campaigns for a user in real-time.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param onUpdate - Callback function called with the updated list of campaigns.
- * @returns An unsubscribe function for the real-time listener.
- */
 export function getMarketingCampaigns(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   onUpdate: (campaigns: MarketingCampaign[]) => void
 ): () => void {
   if (!userId) {
-      onUpdate([]);
-      return () => {};
-  }
-  const campaignsCollection = collection(firestore, `users/${userId}/marketingCampaigns`);
-  const q = query(campaignsCollection, orderBy('createdAt', 'desc'));
-
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const campaigns = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date();
-      return {
-        id: doc.id,
-        createdAt,
-        campaignIdea: data.campaignIdea,
-        campaignPlan: data.campaignPlan,
-        completedTasks: data.completedTasks || [],
-        taskAudios: data.taskAudios || [],
-      } as MarketingCampaign;
-    });
-    onUpdate(campaigns);
-  }, (error) => {
-    const permissionError = new FirestorePermissionError({
-      path: `users/${userId}/marketingCampaigns`,
-      operation: 'list',
-    });
-    errorEmitter.emit('permission-error', permissionError);
     onUpdate([]);
-  });
+    return () => {};
+  }
 
-  return unsubscribe;
+  const supabase = createClient();
+
+  const fetchAll = async () => {
+    const { data, error } = await supabase
+      .from('marketing_campaigns')
+      .select('id, campaign_idea, campaign_plan, completed_tasks, task_audios, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('getMarketingCampaigns:', error.message);
+      onUpdate([]);
+      return;
+    }
+
+    onUpdate(
+      (data ?? []).map((row) => ({
+        id: row.id,
+        createdAt: new Date(row.created_at),
+        campaignIdea: row.campaign_idea as CampaignIdea,
+        campaignPlan: row.campaign_plan as CampaignPlan,
+        completedTasks: row.completed_tasks ?? [],
+        taskAudios: row.task_audios ?? [],
+      }))
+    );
+  };
+
+  fetchAll();
+
+  const channel = supabase
+    .channel(`marketing_campaigns:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'marketing_campaigns',
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        fetchAll();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

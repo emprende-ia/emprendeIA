@@ -21,54 +21,9 @@
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ],
       "source": "functions"
-    },
-    {
-      "codebase": "functions",
-      "disallowLegacyRuntimeConfig": true,
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ],
-      "source": "gemkit-functions"
-    },
-    {
-      "source": "new",
-      "codebase": "new",
-      "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
     }
   ],
   "apphosting": [
-    {
-      "backendId": "studio",
-      "rootDir": "/",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "studio",
-      "rootDir": "/",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
     {
       "backendId": "studio",
       "rootDir": "/",
@@ -116,8 +71,8 @@
     "providers": {
       "emailPassword": true,
       "googleSignIn": {
-        "oAuthBrandDisplayName": "My App",
-        "supportEmail": "support@undefined.firebaseapp.com"
+        "oAuthBrandDisplayName": "EmprendeIA",
+        "supportEmail": "team@emprendeia.app"
       }
     }
   }

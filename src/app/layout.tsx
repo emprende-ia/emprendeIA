@@ -1,9 +1,49 @@
-
 import './globals.css';
+import type { Metadata, Viewport } from 'next';
+import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import React from 'react';
-import Script from 'next/script';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+});
+
+export const metadata: Metadata = {
+  title: {
+    default: 'EmprendeIA — Convierte tus ideas en negocios reales',
+    template: '%s · EmprendeIA',
+  },
+  description:
+    'EmprendeIA usa inteligencia artificial para validar tu idea, lanzarla y mantenerla viva. Para emprendedores que empiezan y para los que necesitan rescatar su negocio.',
+  metadataBase: new URL('https://emprendeia.app'),
+  openGraph: {
+    type: 'website',
+    locale: 'es_MX',
+    siteName: 'EmprendeIA',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FAFBFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B0F1A' },
+  ],
+};
 
 export default function RootLayout({
   children,
@@ -11,37 +51,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
-       <head>
-        <title>EmprendeIA</title>
-        <meta name="description" content="Convierte tus ideas en negocios reales." />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
-        
-        <script id="theme-loader" dangerouslySetInnerHTML={{ __html: `
-            (function() {
-              try {
-                const theme = localStorage.getItem('theme');
-                if (theme) {
-                  // The settings-menu component will apply the theme from local storage
-                } else {
-                  // By default, we set a default theme if none is found.
-                  localStorage.setItem('theme', 'vibrant-sunset');
-                }
-              } catch (e) {
-                console.error('Failed to access localStorage for theme', e);
-              }
-            })();
-          `}} />
-        
-        {/* Google reCAPTCHA Enterprise */}
-        <Script 
-          src="https://www.google.com/recaptcha/enterprise.js?render=6LdHSYcsAAAAAJopvgzVYd6J6jC-nlSFMvxZtETj" 
-          strategy="afterInteractive"
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+    >
+      <head>
+        <script
+          id="theme-loader"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme')||'aurora-light';if(t==='aurora-light'){document.documentElement.classList.add('light');}else{document.documentElement.classList.remove('light');}localStorage.setItem('theme',t);}catch(e){}})();`,
+          }}
         />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased min-h-screen scrollbar-aurora">
         <FirebaseClientProvider>
           {children}
           <Toaster />

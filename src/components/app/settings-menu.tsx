@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -11,48 +10,45 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Settings, Zap, Wind, Palette as PaletteIcon } from "lucide-react";
-import { themes, type Theme } from '@/lib/themes';
+} from '@/components/ui/dropdown-menu';
+import { Settings, Moon, Sun } from 'lucide-react';
+import { themes, DEFAULT_THEME, type ThemeName } from '@/lib/themes';
 
-const themeIcons: Record<Theme['name'], React.ReactNode> = {
-    'vibrant-sunset': <Zap className="mr-2 h-4 w-4" />,
-    'pastel-warm': <Wind className="mr-2 h-4 w-4" />,
-    'default-dark': <PaletteIcon className="mr-2 h-4 w-4" />,
+const themeIcons: Record<ThemeName, React.ReactNode> = {
+  'aurora-dark': <Moon className="mr-2 h-4 w-4" />,
+  'aurora-light': <Sun className="mr-2 h-4 w-4" />,
+};
+
+function applyTheme(name: ThemeName) {
+  const root = document.documentElement;
+  if (name === 'aurora-light') {
+    root.classList.add('light');
+  } else {
+    root.classList.remove('light');
+  }
+  localStorage.setItem('theme', name);
 }
 
 export function SettingsMenu() {
-  const [currentTheme, setCurrentTheme] = useState<Theme['name']>('default-dark');
+  const [currentTheme, setCurrentTheme] = useState<ThemeName>(DEFAULT_THEME);
 
   useEffect(() => {
-    const savedThemeName = localStorage.getItem('theme') as Theme['name'] | null;
-    const theme = themes.find(t => t.name === savedThemeName) ?? themes.find(t => t.name === 'vibrant-sunset')!;
-    
-    setCurrentTheme(theme.name);
-    applyTheme(theme);
-
+    const saved = localStorage.getItem('theme') as ThemeName | null;
+    const valid = saved && themes.some((t) => t.name === saved) ? saved : DEFAULT_THEME;
+    setCurrentTheme(valid);
+    applyTheme(valid);
   }, []);
 
-  const applyTheme = (theme: Theme) => {
-    const root = document.documentElement; // Use documentElement for global scope
-    Object.entries(theme.colors).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
-    });
-    localStorage.setItem('theme', theme.name);
-  };
-
-  const handleThemeChange = (themeName: string) => {
-    const theme = themes.find(t => t.name === themeName);
-    if(theme){
-        setCurrentTheme(theme.name);
-        applyTheme(theme);
-    }
+  const handleThemeChange = (value: string) => {
+    const next = value as ThemeName;
+    setCurrentTheme(next);
+    applyTheme(next);
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className="rounded-full">
           <Settings className="h-4 w-4" />
           <span className="sr-only">Ajustes</span>
         </Button>
@@ -62,7 +58,11 @@ export function SettingsMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value={currentTheme} onValueChange={handleThemeChange}>
           {themes.map((theme) => (
-            <DropdownMenuRadioItem key={theme.name} value={theme.name} className="cursor-pointer">
+            <DropdownMenuRadioItem
+              key={theme.name}
+              value={theme.name}
+              className="cursor-pointer"
+            >
               {themeIcons[theme.name]}
               <span>{theme.displayName}</span>
             </DropdownMenuRadioItem>

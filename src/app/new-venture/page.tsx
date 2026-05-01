@@ -161,8 +161,10 @@ export default function NewVenturePage() {
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-secondary/30 p-4 sm:p-8">
-        <Card className="w-full max-w-3xl shadow-2xl">
+    <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden p-4 sm:p-8">
+        <div className="aurora-orb aurora-orb-primary -top-32 -left-32 h-[380px] w-[380px]" />
+        <div className="aurora-orb aurora-orb-accent -bottom-32 -right-32 h-[360px] w-[360px]" />
+        <Card className="relative z-10 w-full max-w-3xl shadow-aurora-lg bg-card/90 backdrop-blur-md border-border/60">
             <CardHeader className="text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Sparkles className="h-8 w-8" />

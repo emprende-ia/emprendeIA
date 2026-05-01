@@ -4,7 +4,7 @@
 import { Sparkles, LogOut, User as UserIcon, Gem, Bot, StickyNote, EllipsisVertical, FileText, BookOpen, Target, Lightbulb, RefreshCw, Workflow } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { signOut } from 'firebase/auth';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -112,14 +112,14 @@ export function AppHeader() {
   };
 
   const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-      // Clear all guest/session data on logout
-      localStorage.removeItem('viabilityAnalysis');
-      localStorage.removeItem('brandIdentity');
-      localStorage.removeItem('businessProfile');
-      router.push('/');
-    }
+    const supabase = createSupabaseClient();
+    await supabase.auth.signOut();
+    // Limpiar datos de invitado/sesión
+    localStorage.removeItem('viabilityAnalysis');
+    localStorage.removeItem('brandIdentity');
+    localStorage.removeItem('businessProfile');
+    router.push('/');
+    router.refresh();
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -150,10 +150,10 @@ export function AppHeader() {
             onChange={handleLogoUpload}
         />
         <div>
-            <h1 className="font-headline text-2xl font-bold tracking-tighter text-foreground sm:text-3xl">
-            {brandName}
+            <h1 className="font-headline text-2xl font-bold tracking-tighter sm:text-3xl">
+              <span className="text-aurora">{brandName}</span>
             </h1>
-            <p className="text-sm text-foreground/80 hidden sm:block">
+            <p className="text-sm text-muted-foreground hidden sm:block">
                 Convierte tus ideas en negocios reales.
             </p>
         </div>

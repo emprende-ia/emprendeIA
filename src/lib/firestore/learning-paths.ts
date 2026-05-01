@@ -1,176 +1,202 @@
 'use client';
 
-import { Firestore, collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, query, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL, type FirebaseStorage } from 'firebase/storage';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { createClient } from '@/lib/supabase/client';
 import type { GenerateActionPlanOutput } from '@/ai/flows/generate-action-plan';
+import type { TaskAudio } from '@/lib/supabase/database.types';
 
 export interface LearningPath {
   id: string;
   createdAt: Date;
   pathData: GenerateActionPlanOutput;
   completedTasks: string[];
-  taskAudios?: { taskKey: string, audioUrl: string }[];
+  taskAudios?: TaskAudio[];
 }
 
-/**
- * Saves a new learning path for a specific user.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param pathData - The generated learning path data to save.
- */
 export function saveLearningPath(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   pathData: GenerateActionPlanOutput
 ): void {
-  if (!userId) {
-    console.error("User ID is required to save a learning path.");
-    return;
-  }
-  const pathsCollection = collection(firestore, `users/${userId}/learningPaths`);
-  const dataToSave = {
-    createdAt: serverTimestamp(),
-    pathData: pathData,
-    completedTasks: [],
-    taskAudios: [],
-  };
-
-  addDoc(pathsCollection, dataToSave)
-    .catch((error) => {
-      const permissionError = new FirestorePermissionError({
-        path: pathsCollection.path,
-        operation: 'create',
-        requestResourceData: dataToSave,
-      });
-      errorEmitter.emit('permission-error', permissionError);
+  if (!userId) return;
+  const supabase = createClient();
+  void supabase
+    .from('learning_paths')
+    .insert({
+      user_id: userId,
+      path_data: pathData as unknown as never,
+      completed_tasks: [],
+      task_audios: [],
+    })
+    .then(({ error }) => {
+      if (error) console.error('saveLearningPath:', error.message);
     });
 }
 
 /**
- * Uploads a base64 audio string to Firebase Storage and saves the download URL in Firestore.
- * @param storage - The Firebase Storage instance.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param pathId - The ID of the learning path.
- * @param taskKey - The unique identifier for the task.
- * @param audioDataUrl - The data URL of the generated audio (e.g., 'data:audio/wav;base64,...').
+ * Convierte un data URL (base64) a Blob.
  */
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, base64] = dataUrl.split(',');
+  const mime = /data:([^;]+)/.exec(meta)?.[1] ?? 'audio/wav';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 export async function saveTaskAudioForPath(
-  storage: FirebaseStorage,
-  firestore: Firestore,
+  _storage: unknown,
+  _firestore: unknown,
   userId: string,
   pathId: string,
   taskKey: string,
   audioDataUrl: string
 ): Promise<void> {
-  if (!userId || !pathId) throw new Error("User ID and Path ID are required.");
+  if (!userId || !pathId) throw new Error('User ID and Path ID are required.');
 
-  // 1. Upload to Storage
-  const audioId = `${taskKey.replace(/\s+/g, '-')}-${Date.now()}.wav`;
-  const storageRef = ref(storage, `users/${userId}/audios/${audioId}`);
-  
-  // The 'data_url' string format is used for base64-encoded strings with a data URL prefix
-  const metadata = { contentType: 'audio/wav' };
-  const uploadResult = await uploadString(storageRef, audioDataUrl, 'data_url', metadata);
-  
-  // 2. Get Download URL
-  const downloadURL = await getDownloadURL(uploadResult.ref);
+  const supabase = createClient();
+  const safeKey = taskKey.replace(/\s+/g, '-');
+  const path = `${userId}/audios/${safeKey}-${Date.now()}.wav`;
 
-  // 3. Save URL to Firestore
-  const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
-  const audioData = { taskKey, audioUrl: downloadURL };
-  const updateData = {
-    taskAudios: arrayUnion(audioData),
-  };
+  // 1) Subir a Storage
+  const { error: upErr } = await supabase.storage
+    .from('audios')
+    .upload(path, dataUrlToBlob(audioDataUrl), {
+      contentType: 'audio/wav',
+      upsert: false,
+    });
+  if (upErr) {
+    console.error('saveTaskAudioForPath upload:', upErr.message);
+    throw upErr;
+  }
 
-  try {
-    await updateDoc(pathDoc, updateData);
-  } catch (error) {
-     const permissionError = new FirestorePermissionError({
-        path: pathDoc.path,
-        operation: 'update',
-        requestResourceData: updateData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      // Re-throw if you want the caller to handle it as well
-      throw permissionError;
+  // 2) Signed URL (bucket privado)
+  const { data: signed, error: signErr } = await supabase.storage
+    .from('audios')
+    .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 año
+
+  if (signErr || !signed) {
+    console.error('saveTaskAudioForPath signedUrl:', signErr?.message);
+    throw signErr ?? new Error('Could not create signed URL.');
+  }
+
+  // 3) Append al jsonb task_audios
+  const { data: row, error: getErr } = await supabase
+    .from('learning_paths')
+    .select('task_audios')
+    .eq('id', pathId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (getErr || !row) {
+    console.error('saveTaskAudioForPath read:', getErr?.message);
+    throw getErr ?? new Error('Path not found.');
+  }
+
+  const next: TaskAudio[] = [...(row.task_audios ?? []), { taskKey, audioUrl: signed.signedUrl }];
+
+  const { error: updErr } = await supabase
+    .from('learning_paths')
+    .update({ task_audios: next })
+    .eq('id', pathId)
+    .eq('user_id', userId);
+
+  if (updErr) {
+    console.error('saveTaskAudioForPath update:', updErr.message);
+    throw updErr;
   }
 }
 
-/**
- * Toggles the completion status of a task within a specific learning path.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param pathId - The ID of the learning path.
- * @param taskTitle - The title of the task to toggle.
- * @param isCompleted - The new completion status.
- */
-export function toggleTaskCompletion(
-  firestore: Firestore,
+export async function toggleTaskCompletion(
+  _firestore: unknown,
   userId: string,
   pathId: string,
   taskTitle: string,
   isCompleted: boolean
-): void {
+): Promise<void> {
   if (!userId || !pathId) return;
-  const pathDoc = doc(firestore, `users/${userId}/learningPaths`, pathId);
-  const updateData = {
-    completedTasks: isCompleted ? arrayUnion(taskTitle) : arrayRemove(taskTitle),
-  };
+  const supabase = createClient();
 
-  updateDoc(pathDoc, updateData)
-    .catch((error) => {
-      const permissionError = new FirestorePermissionError({
-        path: pathDoc.path,
-        operation: 'update',
-        requestResourceData: updateData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
+  const { data: row, error } = await supabase
+    .from('learning_paths')
+    .select('completed_tasks')
+    .eq('id', pathId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !row) {
+    if (error) console.error('toggleTaskCompletion read:', error.message);
+    return;
+  }
+
+  const set = new Set(row.completed_tasks ?? []);
+  if (isCompleted) set.add(taskTitle);
+  else set.delete(taskTitle);
+
+  const { error: updErr } = await supabase
+    .from('learning_paths')
+    .update({ completed_tasks: Array.from(set) })
+    .eq('id', pathId)
+    .eq('user_id', userId);
+
+  if (updErr) console.error('toggleTaskCompletion update:', updErr.message);
 }
 
-/**
- * Retrieves all saved learning paths for a user in real-time.
- * @param firestore - The Firestore instance.
- * @param userId - The ID of the user.
- * @param onUpdate - Callback function called with the updated list of paths.
- * @returns An unsubscribe function for the real-time listener.
- */
 export function getLearningPaths(
-  firestore: Firestore,
+  _firestore: unknown,
   userId: string,
   onUpdate: (paths: LearningPath[]) => void
 ): () => void {
   if (!userId) {
-      onUpdate([]);
-      return () => {};
-  }
-  const pathsCollection = collection(firestore, `users/${userId}/learningPaths`);
-  const q = query(pathsCollection, orderBy('createdAt', 'desc'));
-
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const paths = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date();
-      return {
-        id: doc.id,
-        createdAt: createdAt,
-        pathData: data.pathData,
-        completedTasks: data.completedTasks || [],
-        taskAudios: data.taskAudios || [],
-      } as LearningPath;
-    });
-    onUpdate(paths);
-  }, (error) => {
-    const permissionError = new FirestorePermissionError({
-      path: `users/${userId}/learningPaths`,
-      operation: 'list',
-    });
-    errorEmitter.emit('permission-error', permissionError);
     onUpdate([]);
-  });
+    return () => {};
+  }
 
-  return unsubscribe;
+  const supabase = createClient();
+
+  const fetchAll = async () => {
+    const { data, error } = await supabase
+      .from('learning_paths')
+      .select('id, path_data, completed_tasks, task_audios, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('getLearningPaths:', error.message);
+      onUpdate([]);
+      return;
+    }
+
+    onUpdate(
+      (data ?? []).map((row) => ({
+        id: row.id,
+        createdAt: new Date(row.created_at),
+        pathData: row.path_data as GenerateActionPlanOutput,
+        completedTasks: row.completed_tasks ?? [],
+        taskAudios: row.task_audios ?? [],
+      }))
+    );
+  };
+
+  fetchAll();
+
+  const channel = supabase
+    .channel(`learning_paths:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'learning_paths',
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        fetchAll();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

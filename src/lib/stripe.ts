@@ -29,10 +29,9 @@ export function getStripe(): Stripe {
   }
 
   // Create the new Stripe instance.
-  stripeInstance = new Stripe(stripeSecretKey, {
-    apiVersion: '2024-06-20',
-    // Add any other default configuration for Stripe here.
-  });
+  // Permitimos a Stripe usar la versión por defecto del SDK instalado
+  // (evita romper cuando actualizamos el paquete).
+  stripeInstance = new Stripe(stripeSecretKey);
 
   return stripeInstance;
 }

@@ -35,9 +35,13 @@ export default function LandingPage() {
 
   // If loading is finished and there's no user, show the landing page.
   return (
-      <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-secondary/10 p-4">
-        
-        <div className="absolute top-4 right-4 flex items-center gap-4">
+      <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden p-4">
+        {/* Aurora ambient orbs */}
+        <div className="aurora-orb aurora-orb-primary -top-20 -left-20 h-[420px] w-[420px] animate-aurora-shift" />
+        <div className="aurora-orb aurora-orb-accent top-1/2 -right-32 h-[360px] w-[360px] animate-aurora-shift" style={{ animationDelay: '4s' }} />
+        <div className="aurora-orb aurora-orb-secondary -bottom-32 left-1/3 h-[400px] w-[400px] animate-aurora-shift" style={{ animationDelay: '8s' }} />
+
+        <div className="absolute top-4 right-4 flex items-center gap-3 z-10">
           <SettingsMenu />
           <Button asChild variant="outline" size="sm">
               <Link href="/pricing">
@@ -47,37 +51,37 @@ export default function LandingPage() {
           </Button>
         </div>
 
-        <div className="flex flex-col items-center space-y-8 text-center">
-          
-          <Image src="https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png" alt="EmprendeIA Logo" width={128} height={128} className="rounded-full object-cover border-4 border-primary/50 drop-shadow-[0_5px_15px_rgba(99,102,241,0.5)]" />
+        <div className="relative z-10 flex flex-col items-center space-y-8 text-center animate-fade-in-up">
+
+          <Image src="https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png" alt="EmprendeIA Logo" width={128} height={128} className="rounded-full object-cover border-4 border-primary/40 shadow-aurora-lg animate-float" />
 
           <div className="space-y-2">
-              <h1 className="font-headline text-6xl font-bold tracking-tighter text-foreground sm:text-7xl">
-                  EmprendeIA
+              <h1 className="font-headline text-6xl font-bold tracking-tighter sm:text-7xl">
+                  <span className="text-aurora">EmprendeIA</span>
               </h1>
-              <p className="text-xl text-foreground/90">
+              <p className="text-xl text-foreground/90 font-medium">
                   Convierte tus ideas en negocios reales.
               </p>
           </div>
-          
-          <p className="max-w-xl text-lg text-foreground/80">
+
+          <p className="max-w-xl text-lg text-muted-foreground">
             Transforma tu visión en un negocio exitoso con el poder de la inteligencia artificial.
           </p>
 
-          <div className="flex w-full max-w-sm flex-col gap-4 pt-4">
-            <Button asChild size="lg" className="w-full text-lg font-bold">
+          <div className="flex w-full max-w-sm flex-col gap-3 pt-4">
+            <Button asChild size="lg" className="w-full text-lg font-bold shadow-aurora hover:shadow-aurora-lg transition-shadow">
               <Link href="/register">
                   <User className="mr-2 h-5 w-5" />
-                  Registrarme
+                  Registrarme gratis
               </Link>
             </Button>
-            <Button asChild size="lg" className="w-full text-lg font-bold">
+            <Button asChild size="lg" variant="outline" className="w-full text-lg font-semibold">
               <Link href="/login">
                   <LogIn className="mr-2 h-5 w-5" />
                   Iniciar Sesión
               </Link>
             </Button>
-            <Button asChild variant="ghost" size="lg" className="w-full text-lg">
+            <Button asChild variant="ghost" size="lg" className="w-full text-base text-muted-foreground hover:text-foreground">
                 <Link href="/dashboard">
                     <UserCircle className="mr-2 h-5 w-5" />
                     Continuar como invitado

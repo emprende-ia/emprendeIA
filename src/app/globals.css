@@ -3,49 +3,75 @@
 @tailwind utilities;
 
 @layer base {
+  /* Aurora Dark — tema por defecto */
   :root {
-    --background: 180 100% 94%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 180 100% 50%;
-    --primary-foreground: 180 100% 5%;
-    --secondary: 180 20% 90%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 180 20% 90%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 120 61% 50%;
-    --accent-foreground: 120 100% 98%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 224 41% 7%;
+    --foreground: 210 40% 98%;
+    --card: 224 35% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 38% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 258 90% 76%;
+    --secondary-foreground: 224 41% 7%;
+    --muted: 224 28% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 188 86% 53%;
+    --accent-foreground: 224 41% 7%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 180 20% 85%;
-    --input: 180 20% 85%;
-    --ring: 180 100% 50%;
+    --success: 152 76% 53%;
+    --success-foreground: 224 41% 7%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 224 41% 7%;
+    --border: 224 24% 18%;
+    --input: 224 24% 18%;
+    --ring: 239 84% 67%;
     --radius: 0.75rem;
+    --chart-1: 239 84% 67%;
+    --chart-2: 188 86% 53%;
+    --chart-3: 330 86% 70%;
+    --chart-4: 258 90% 76%;
+    --chart-5: 38 92% 60%;
+    --background-gradient-start: #0B0F1A;
+    --background-gradient-end: #1E1B4B;
+    --aurora-glow: 99 102 241;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 180 100% 50%;
-    --primary-foreground: 180 100% 5%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 120 61% 50%;
-    --accent-foreground: 120 100% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 180 100% 50%;
+  /* Aurora Light — opt-in con clase .light en el <html> */
+  .light {
+    --background: 220 40% 99%;
+    --foreground: 224 47% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 47% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 47% 12%;
+    --primary: 239 78% 60%;
+    --primary-foreground: 210 40% 99%;
+    --secondary: 258 80% 68%;
+    --secondary-foreground: 210 40% 99%;
+    --muted: 220 22% 96%;
+    --muted-foreground: 224 14% 42%;
+    --accent: 188 82% 44%;
+    --accent-foreground: 210 40% 99%;
+    --destructive: 0 75% 53%;
+    --destructive-foreground: 210 40% 99%;
+    --success: 152 65% 38%;
+    --success-foreground: 210 40% 99%;
+    --warning: 32 96% 50%;
+    --warning-foreground: 224 47% 12%;
+    --border: 220 18% 90%;
+    --input: 220 18% 92%;
+    --ring: 239 78% 60%;
+    --chart-1: 239 78% 60%;
+    --chart-2: 188 82% 44%;
+    --chart-3: 330 78% 58%;
+    --chart-4: 258 80% 68%;
+    --chart-5: 32 96% 50%;
+    --background-gradient-start: #F8FAFF;
+    --background-gradient-end: #EEF1FF;
+    --aurora-glow: 99 102 241;
   }
 }
 
@@ -53,11 +79,148 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
   body {
     @apply bg-background text-foreground font-body;
     background-attachment: fixed;
+    background-image:
+      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.10) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, hsl(var(--secondary) / 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(var(--accent) / 0.08) 0px, transparent 55%);
+  }
+  .light body {
+    background-image:
+      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.12) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, hsl(var(--secondary) / 0.10) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(var(--accent) / 0.10) 0px, transparent 55%);
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
+    @apply font-headline tracking-tight;
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+    color: hsl(var(--foreground));
+  }
+}
+
+/* ===== Aurora — utilidades visuales ===== */
+@layer utilities {
+  /* Texto con degradado aurora */
+  .text-aurora {
+    background: linear-gradient(
+      120deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--accent)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Fondo con degradado aurora suave */
+  .bg-aurora {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.15) 0%,
+      hsl(var(--secondary) / 0.1) 50%,
+      hsl(var(--accent) / 0.15) 100%
+    );
+  }
+
+  /* Borde con glow índigo */
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.3),
+      0 0 24px -4px hsl(var(--primary) / 0.4);
+  }
+
+  .glow-accent {
+    box-shadow:
+      0 0 0 1px hsl(var(--accent) / 0.3),
+      0 0 24px -4px hsl(var(--accent) / 0.4);
+  }
+
+  /* Glass effect (cards translucidas) */
+  .glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  /* Aurora ambient glow (decoración hero) */
+  .aurora-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .aurora-orb-primary  { background: hsl(var(--primary)); }
+  .aurora-orb-accent   { background: hsl(var(--accent)); }
+  .aurora-orb-secondary{ background: hsl(var(--secondary)); }
+
+  /* Animaciones */
+  @keyframes aurora-shift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+  }
+  .animate-aurora-shift {
+    animation: aurora-shift 20s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  /* Scrollbar Aurora */
+  .scrollbar-aurora::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .scrollbar-aurora::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 8px;
+  }
+  .scrollbar-aurora::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.6),
+      hsl(var(--accent) / 0.6)
+    );
+    border-radius: 8px;
+  }
+  .scrollbar-aurora::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary)),
+      hsl(var(--accent))
+    );
   }
 }

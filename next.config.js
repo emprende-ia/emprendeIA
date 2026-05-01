@@ -19,6 +19,11 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
       { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
       { protocol: 'https', hostname: 'i.postimg.cc', pathname: '/**' },
+      // Supabase Storage (logos, audios cuando se migren de dataURL).
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/**' },
+      // Avatares de Google OAuth (login con Google).
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com', pathname: '/**' },
+      // Legado — fotos subidas a Firebase Storage antes de la migración.
       { protocol: 'https', hostname: 'firebasestorage.googleapis.com', pathname: '/**' },
     ],
   },

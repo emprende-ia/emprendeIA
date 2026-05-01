@@ -29,11 +29,7 @@ export default function DashboardPage() {
   const brandName = brandIdentity?.brandName || "EmprendeIA";
 
   useEffect(() => {
-    // Apply theme from localStorage on client-side
-    const theme = localStorage.getItem('theme');
-    if (!theme) {
-      localStorage.setItem('theme', 'vibrant-sunset');
-    }
+    // El tema lo gestiona el theme-loader del root layout y SettingsMenu.
 
     if (user && firestore) {
       setIsIdentityLoading(true);
@@ -72,17 +68,19 @@ export default function DashboardPage() {
         <Separator className="my-8" />
         
         <div className="text-center">
-          <h1 className="font-headline text-4xl font-bold">Panel de {brandName}</h1>
+          <h1 className="font-headline text-4xl font-bold">
+            Panel de <span className="text-aurora">{brandName}</span>
+          </h1>
           <p className="text-muted-foreground mt-2 text-lg">Tus herramientas de IA para lanzar y crecer tu negocio.</p>
         </div>
 
         <div className="pt-6">
-            <h2 className="text-2xl font-bold mb-4 text-center">Todas las Herramientas</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">Todas las Herramientas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
                     <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                        <Image src="https://i.postimg.cc/3NSYtR4d/identidad-digital.jpg" alt="Identidad Digital" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
@@ -98,10 +96,10 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
                      <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                        <Image src="https://i.postimg.cc/76R2jx2b/asistente-financiero.jpg" alt="Asistente Financiero" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
@@ -117,10 +115,10 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
                      <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                        <Image src="https://i.postimg.cc/QtzfSZNj/disenador-de-camp.jpg" alt="Generador de Campañas" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
@@ -136,10 +134,10 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
                     <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" alt="Proveedores" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                        <Image src="https://i.postimg.cc/LXtDpg2w/proveedores.jpg" alt="Proveedores" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                     <CardHeader className="flex-grow p-0">
@@ -155,10 +153,10 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                <Card className="flex flex-col hover:border-primary transition-colors relative bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden group">
+                <Card className="flex flex-col hover:border-primary/60 hover:shadow-aurora transition-all duration-300 relative bg-card/80 backdrop-blur-md border border-border/60 overflow-hidden group">
                     <div className="relative h-40 w-full">
-                        <Image src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" alt="Guía Paso a Paso" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                        <Image src="https://i.postimg.cc/hv3pyWSQ/guias-paso-apaso.jpg" alt="Guía Paso a Paso" fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-card/10" />
                     </div>
                     <div className="relative z-10 flex flex-col h-full p-6 pt-2">
                         <CardHeader className="flex-grow p-0">
