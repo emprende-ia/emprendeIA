@@ -115,7 +115,7 @@ export function ProveedoresModule() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Buscar Proveedores</Button>
+        <Button className="w-full bg-gradient-to-r from-amber-600 to-orange-600 font-semibold text-white shadow-md hover:from-amber-700 hover:to-orange-700 hover:shadow-lg"><Sparkles className="mr-2 h-4 w-4" /> Buscar proveedores</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>

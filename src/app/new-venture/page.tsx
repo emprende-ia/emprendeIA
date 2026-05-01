@@ -161,16 +161,17 @@ export default function NewVenturePage() {
   }
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden p-4 sm:p-8">
-        <div className="aurora-orb aurora-orb-primary -top-32 -left-32 h-[380px] w-[380px]" />
-        <div className="aurora-orb aurora-orb-accent -bottom-32 -right-32 h-[360px] w-[360px]" />
-        <Card className="relative z-10 w-full max-w-3xl shadow-aurora-lg bg-card/90 backdrop-blur-md border-border/60">
-            <CardHeader className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Sparkles className="h-8 w-8" />
+    <main className="relative flex min-h-screen w-full flex-col items-center overflow-hidden p-4 py-10 sm:p-8">
+        <div className="aurora-orb aurora-orb-primary -left-32 -top-32 h-[420px] w-[420px] animate-aurora-shift" />
+        <div className="aurora-orb aurora-orb-accent -bottom-32 -right-32 h-[400px] w-[400px] animate-aurora-shift" style={{ animationDelay: '8s' }} />
+        <Card className="relative z-10 w-full max-w-3xl overflow-hidden border bg-card shadow-aurora-lg">
+            <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 opacity-80" />
+            <CardHeader className="space-y-3 pt-8 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-aurora">
+                    <Sparkles className="h-7 w-7" />
                 </div>
-                <CardTitle className="font-headline text-3xl">Empecemos tu Nuevo Emprendimiento</CardTitle>
-                <CardDescription className="pt-2 text-base">Responde estas preguntas para que la IA entienda tu visión.</CardDescription>
+                <CardTitle className="font-headline text-2xl tracking-tight sm:text-3xl">Empecemos tu nuevo emprendimiento</CardTitle>
+                <CardDescription className="text-base">Responde estas preguntas para que la IA entienda tu visión.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>

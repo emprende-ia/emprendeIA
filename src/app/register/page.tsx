@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -177,159 +178,181 @@ function RegisterPageContent() {
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-aurora-lg glass">
-        <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl font-bold">
-            <span className="text-aurora">Únete a EmprendeIA</span>
-          </CardTitle>
-          <CardDescription className="pt-2">
-            Comienza a transformar tu visión hoy
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-4">
-          {errorBanner && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Hubo un problema</AlertTitle>
-              <AlertDescription className="text-xs">{errorBanner}</AlertDescription>
-            </Alert>
-          )}
+    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden p-4 py-10">
+      <div className="aurora-orb aurora-orb-secondary -left-32 -top-32 h-[420px] w-[420px] animate-aurora-shift" />
+      <div className="aurora-orb aurora-orb-accent -bottom-32 -right-32 h-[400px] w-[400px] animate-aurora-shift" style={{ animationDelay: '8s' }} />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  name="fullName"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Juan P." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="username"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Usuario</FormLabel>
-                      <FormControl>
-                        <Input placeholder="juanp" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <div className="relative z-10 w-full max-w-md animate-fade-in-up">
+        <Link href="/" className="group mb-6 flex items-center justify-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <Image
+            src="https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png"
+            alt="EmprendeIA Logo"
+            width={28}
+            height={28}
+            className="rounded-full border border-primary/30"
+          />
+          <span className="font-headline font-semibold">EmprendeIA</span>
+        </Link>
+
+        <Card className="relative overflow-hidden border bg-card shadow-aurora-lg">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-primary via-secondary to-accent opacity-80" />
+
+          <CardHeader className="space-y-2 pt-7 text-center">
+            <CardTitle className="font-headline text-2xl font-bold tracking-tight sm:text-3xl">
+              Crea tu <span className="text-aurora">cuenta</span>
+            </CardTitle>
+            <CardDescription>
+              Comienza a transformar tu visión hoy.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-5 pt-2">
+            {errorBanner && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Hubo un problema</AlertTitle>
+                <AlertDescription className="text-xs">{errorBanner}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full font-semibold"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleSigningIn || isRegistering}
+            >
+              {isGoogleSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              Continuar con Google
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
               </div>
-              <FormField
-                name="age"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Edad</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="25" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="email"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="tu@ejemplo.com"
-                        autoComplete="email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  name="password"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contraseña</FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="confirmPassword"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirmar</FormLabel>
-                      <FormControl>
-                        <Input type="password" autoComplete="new-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-widest">
+                <span className="bg-card px-3 text-muted-foreground">o con tu correo</span>
               </div>
-
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full font-bold !mt-6"
-                disabled={isRegistering || isGoogleSigningIn}
-              >
-                {isRegistering ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                  <ShieldCheck className="mr-2 h-5 w-5" />
-                )}
-                Registrarme Ahora
-              </Button>
-            </form>
-          </Form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">O usa</span>
-            </div>
-          </div>
 
-          <Button
-            variant="outline"
-            className="w-full py-6"
-            onClick={handleGoogleSignIn}
-            disabled={isGoogleSigningIn || isRegistering}
-          >
-            {isGoogleSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-            Registrarme con Google
-          </Button>
-        </CardContent>
-        <CardFooter className="justify-center border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            ¿Ya tienes una cuenta?{' '}
-            <Link href="/login" className="font-semibold text-primary hover:underline">
-              Inicia sesión
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    name="fullName"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nombre</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Juan P." className="h-11" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="username"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Usuario</FormLabel>
+                        <FormControl>
+                          <Input placeholder="juanp" className="h-11" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  name="age"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Edad</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="25" className="h-11" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="email"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Correo</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="tu@ejemplo.com"
+                          className="h-11"
+                          autoComplete="email"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    name="password"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contraseña</FormLabel>
+                        <FormControl>
+                          <Input type="password" className="h-11" autoComplete="new-password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="confirmPassword"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmar</FormLabel>
+                        <FormControl>
+                          <Input type="password" className="h-11" autoComplete="new-password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="!mt-6 w-full font-bold shadow-aurora hover:shadow-aurora-lg"
+                  disabled={isRegistering || isGoogleSigningIn}
+                >
+                  {isRegistering ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                  )}
+                  Crear mi cuenta
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+
+          <CardFooter className="border-t bg-muted/30 py-4">
+            <p className="w-full text-center text-sm text-muted-foreground">
+              ¿Ya tienes cuenta?{' '}
+              <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
+                Inicia sesión
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     </main>
   );
 }

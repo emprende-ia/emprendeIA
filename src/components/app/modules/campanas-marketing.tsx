@@ -123,7 +123,7 @@ export function CampanasMarketingModule() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Generar Campañas</Button>
+        <Button className="w-full bg-gradient-to-r from-rose-600 to-pink-600 font-semibold text-white shadow-md hover:from-rose-700 hover:to-pink-700 hover:shadow-lg"><Sparkles className="mr-2 h-4 w-4" /> Generar campañas</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>

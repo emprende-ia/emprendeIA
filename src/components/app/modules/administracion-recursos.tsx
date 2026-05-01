@@ -564,7 +564,7 @@ export function AdministracionRecursosModule() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Asistente Financiero</Button>
+        <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 font-semibold text-white shadow-md hover:from-emerald-700 hover:to-teal-700 hover:shadow-lg"><Sparkles className="mr-2 h-4 w-4" /> Asistente financiero</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>

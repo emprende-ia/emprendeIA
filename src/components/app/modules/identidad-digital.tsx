@@ -317,7 +317,7 @@ export function IdentidadDigitalModule() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Crear Identidad</Button>
+        <Button className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 font-semibold text-white shadow-md hover:from-violet-700 hover:to-fuchsia-700 hover:shadow-lg"><Sparkles className="mr-2 h-4 w-4" /> Crear identidad</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>

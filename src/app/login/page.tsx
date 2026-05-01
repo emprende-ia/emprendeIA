@@ -152,125 +152,136 @@ function LoginPageContent() {
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-aurora-lg glass">
-        <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl font-bold">
-            <span className="text-aurora">Bienvenido</span>
-          </CardTitle>
-          <CardDescription className="pt-2">Ingresa a tu cuenta de EmprendeIA</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-4">
-          {errorBanner && (
-            <Alert variant="destructive" className="animate-fade-in">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Hubo un problema</AlertTitle>
-              <AlertDescription className="text-xs">{errorBanner}</AlertDescription>
-            </Alert>
-          )}
+    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden p-4">
+      <div className="aurora-orb aurora-orb-primary -left-32 -top-32 h-[420px] w-[420px] animate-aurora-shift" />
+      <div className="aurora-orb aurora-orb-accent -bottom-32 -right-32 h-[400px] w-[400px] animate-aurora-shift" style={{ animationDelay: '8s' }} />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo Electrónico</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="email"
-                          placeholder="tu@ejemplo.com"
-                          {...field}
-                          className="pl-10"
-                          autoComplete="email"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="password"
-                          placeholder="••••••••"
-                          {...field}
-                          className="pl-10"
-                          autoComplete="current-password"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full font-bold"
-                disabled={isSigningIn || isGoogleSigningIn}
-              >
-                {isSigningIn ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                  <ShieldCheck className="mr-2 h-5 w-5" />
-                )}
-                Iniciar Sesión
-              </Button>
-            </form>
-          </Form>
+      <div className="relative z-10 w-full max-w-md animate-fade-in-up">
+        <Link href="/" className="group mb-6 flex items-center justify-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <Image
+            src="https://i.postimg.cc/wxVbJF5r/Gemini-Generated-Image-19a6sy19a6sy19a6.png"
+            alt="EmprendeIA Logo"
+            width={28}
+            height={28}
+            className="rounded-full border border-primary/30"
+          />
+          <span className="font-headline font-semibold">EmprendeIA</span>
+        </Link>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+        <Card className="relative overflow-hidden border bg-card shadow-aurora-lg">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-primary via-secondary to-accent opacity-80" />
+
+          <CardHeader className="space-y-2 pt-7 text-center">
+            <CardTitle className="font-headline text-2xl font-bold tracking-tight sm:text-3xl">
+              Bienvenido de <span className="text-aurora">vuelta</span>
+            </CardTitle>
+            <CardDescription>
+              Ingresa a tu cuenta para continuar.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-5 pt-2">
+            {errorBanner && (
+              <Alert variant="destructive" className="animate-fade-in">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Hubo un problema</AlertTitle>
+                <AlertDescription className="text-xs">{errorBanner}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full font-semibold"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleSigningIn || isSigningIn}
+            >
+              {isGoogleSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              Continuar con Google
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-widest">
+                <span className="bg-card px-3 text-muted-foreground">o con tu correo</span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">O continúa con</span>
-            </div>
-          </div>
 
-          <Button
-            variant="outline"
-            className="w-full py-6 text-base"
-            onClick={handleGoogleSignIn}
-            disabled={isGoogleSigningIn || isSigningIn}
-          >
-            {isGoogleSigningIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-            Continuar con Google
-          </Button>
-        </CardContent>
-        <CardFooter className="flex-col gap-4 border-t pt-6">
-          <p className="text-sm text-muted-foreground text-center">
-            ¿No tienes una cuenta?{' '}
-            <Link href="/register" className="font-semibold text-primary hover:underline">
-              Regístrate aquí
-            </Link>
-          </p>
-          <Link
-            href="/"
-            className="flex flex-col items-center gap-2 opacity-80 hover:opacity-100 transition-opacity"
-          >
-            <Image
-              src="https://i.postimg.cc/nhbtm52x/Emprende.png"
-              alt="EmprendeIA Logo"
-              width={48}
-              height={48}
-            />
-            <span className="font-headline text-lg font-semibold">EmprendeIA</span>
-          </Link>
-        </CardFooter>
-      </Card>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Correo electrónico</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type="email"
+                            placeholder="tu@ejemplo.com"
+                            {...field}
+                            className="h-11 pl-10"
+                            autoComplete="email"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contraseña</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                            className="h-11 pl-10"
+                            autoComplete="current-password"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full font-bold shadow-aurora hover:shadow-aurora-lg"
+                  disabled={isSigningIn || isGoogleSigningIn}
+                >
+                  {isSigningIn ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                  )}
+                  Iniciar sesión
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+
+          <CardFooter className="border-t bg-muted/30 py-4">
+            <p className="w-full text-center text-sm text-muted-foreground">
+              ¿No tienes cuenta?{' '}
+              <Link href="/register" className="font-semibold text-primary underline-offset-4 hover:underline">
+                Regístrate gratis
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     </main>
   );
 }

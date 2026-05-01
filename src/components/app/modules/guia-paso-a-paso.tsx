@@ -161,7 +161,7 @@ export function GuiaPasoAPasoModule() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full font-bold"><Sparkles className="mr-2 h-4 w-4" /> Generar Guía</Button>
+        <Button className="w-full bg-gradient-to-r from-sky-600 to-cyan-600 font-semibold text-white shadow-md hover:from-sky-700 hover:to-cyan-700 hover:shadow-lg"><Sparkles className="mr-2 h-4 w-4" /> Generar guía</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
