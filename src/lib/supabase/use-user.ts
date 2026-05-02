@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { createClient } from './client';
+import { createClient, hasSupabaseEnv } from './client';
 import type { Database, PlanTier, PlanStatus } from './database.types';
 
 export interface AppUser extends User {
@@ -41,6 +41,12 @@ export function useUser(): UseUserResult {
   const [userError, setUserError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // Sin envs no hay auth posible: caer a modo invitado sin tocar la red.
+    if (!hasSupabaseEnv()) {
+      setIsUserLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     let mounted = true;
     let currentUserId: string | null = null;
