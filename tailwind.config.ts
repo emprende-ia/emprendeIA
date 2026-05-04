@@ -18,7 +18,7 @@ export default {
     extend: {
       fontFamily: {
         body: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        headline: ['var(--font-space-grotesk)', 'var(--font-inter)', 'sans-serif'],
+        headline: ['var(--font-chivo)', 'var(--font-inter)', 'sans-serif'],
         mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'monospace'],
         code: ['var(--font-jetbrains-mono)', 'monospace'],
       },
