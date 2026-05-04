@@ -66,6 +66,7 @@ export * from './client-provider';
 // email, plan, planStatus) para que los 20+ componentes que ya consumen
 // `useUser` desde `@/firebase` no se tengan que tocar todavía.
 
+import { useMemo } from 'react';
 import { useUser as useSupabaseUser, type AppUser as SupabaseAppUser } from '@/lib/supabase/use-user';
 import type { PlanTier, PlanStatus } from '@/lib/supabase/database.types';
 
@@ -108,5 +109,8 @@ function adapt(supaUser: SupabaseAppUser | null): AppUser | null {
 
 export function useUser(): UseUserResult {
   const { user, isUserLoading, userError } = useSupabaseUser();
-  return { user: adapt(user), isUserLoading, userError };
+  // Memoizar: sin esto, adapt() devuelve un objeto nuevo en cada render y los
+  // consumers que pongan `user` en deps de useEffect entran en loop infinito.
+  const adapted = useMemo(() => adapt(user), [user]);
+  return { user: adapted, isUserLoading, userError };
 }

@@ -10,7 +10,8 @@
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gen:illustrations": "npx tsx scripts/generate-illustrations.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.65",

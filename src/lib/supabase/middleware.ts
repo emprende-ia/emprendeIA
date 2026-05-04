@@ -3,15 +3,21 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './database.types';
 
 /**
- * Refresca la sesión de Supabase en cada navegación y redirige a /start si
- * el usuario ya está logueado y entra a /login o /register.
+ * Refresca la sesión de Supabase en cada navegación, protege las rutas de
+ * la app (requieren login) y redirige a /start si el usuario logueado entra
+ * a /login o /register.
  *
- * NOTA: la app permite "continuar como invitado" desde el landing, así que
- * /dashboard, /start, /new-venture, etc. son PÚBLICAS (los datos viven en
- * localStorage para invitados, en Supabase para autenticados). Si quieres
- * forzar login en alguna ruta, agrégala a PROTECTED_PREFIXES.
+ * Públicas: /, /login, /register, /pricing, /privacidad, /terminos, /auth/*,
+ * /api/* (cada endpoint protege lo suyo).
  */
-const PROTECTED_PREFIXES: string[] = [];
+const PROTECTED_PREFIXES: string[] = [
+  '/dashboard',
+  '/start',
+  '/new-venture',
+  '/existing-venture',
+  '/analysis',
+  '/existing-analysis',
+];
 
 const AUTH_ROUTES = ['/login', '/register'];
 

@@ -19,7 +19,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { useUser, useFirestore } from '@/firebase';
-import { saveBrandIdentity, getBrandIdentity, deleteBrandIdentity, BrandIdentity } from '@/lib/firestore/identity';
+import {
+  saveBrandIdentity,
+  getBrandIdentity,
+  deleteBrandIdentity,
+  BRAND_IDENTITY_UPDATED_EVENT,
+  BrandIdentity,
+} from '@/lib/firestore/identity';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -211,6 +217,7 @@ export function IdentidadDigitalModule() {
           ...identityResult,
           updatedAt: new Date().toISOString()
       }));
+      window.dispatchEvent(new Event(BRAND_IDENTITY_UPDATED_EVENT));
       toast({
           title: '¡Identidad Aplicada!',
           description: 'Tu marca se ha aplicado localmente. Inicia sesión para guardarla permanentemente.',
@@ -279,9 +286,10 @@ export function IdentidadDigitalModule() {
 
   const handleDelete = () => {
       if (user && firestore) {
-          deleteBrandIdentity(firestore, user.uid);
+          void deleteBrandIdentity(firestore, user.uid);
       }
       localStorage.removeItem('brandIdentity');
+      window.dispatchEvent(new Event(BRAND_IDENTITY_UPDATED_EVENT));
       resetIdentityState();
       toast({
           title: "Identidad eliminada",

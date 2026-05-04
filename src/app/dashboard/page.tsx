@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { BookOpen, Palette, Megaphone, DollarSign, Search, Sparkles, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { ProveedoresModule } from "@/components/app/modules/proveedores";
 import { GuiaPasoAPasoModule } from "@/components/app/modules/guia-paso-a-paso";
 import { IdentidadDigitalModule } from "@/components/app/modules/identidad-digital";
@@ -11,7 +12,7 @@ import { AdministracionRecursosModule } from "@/components/app/modules/administr
 import { useUser, useFirestore } from "@/firebase";
 import { AppHeader } from "@/components/app/header";
 import { Separator } from "@/components/ui/separator";
-import { getBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import { getBrandIdentity, BRAND_IDENTITY_UPDATED_EVENT, type BrandIdentity } from '@/lib/firestore/identity';
 import { useRouter } from "next/navigation";
 
 type ModuleAccent = 'violet' | 'emerald' | 'rose' | 'amber' | 'sky';
@@ -60,15 +61,27 @@ interface ModuleCardProps {
   category: string;
   title: string;
   description: string;
+  illustration: string;
+  illustrationAlt: string;
+  illustrationBg: string;
   children: React.ReactNode;
 }
 
-function ModuleCard({ accent, icon, category, title, description, children }: ModuleCardProps) {
+function ModuleCard({ accent, icon, category, title, description, illustration, illustrationAlt, illustrationBg, children }: ModuleCardProps) {
   const a = accentClasses[accent];
   return (
-    <Card className={`group relative overflow-hidden border bg-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-aurora ${a.hoverBorder}`}>
-      <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${a.stripe} opacity-70 transition-opacity duration-300 group-hover:opacity-100`} />
-      <CardHeader className="space-y-4 pt-7">
+    <Card className={`group relative flex flex-col overflow-hidden border bg-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-aurora ${a.hoverBorder}`}>
+      <div className={`absolute inset-x-0 top-0 z-10 h-[3px] bg-gradient-to-r ${a.stripe} opacity-70 transition-opacity duration-300 group-hover:opacity-100`} />
+      <div className={`relative aspect-[5/3] w-full overflow-hidden ${illustrationBg}`}>
+        <Image
+          src={illustration}
+          alt={illustrationAlt}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      </div>
+      <CardHeader className="space-y-4 pt-5">
         <div className="flex items-start justify-between gap-3">
           <div className={`flex h-11 w-11 items-center justify-center rounded-xl ring-1 ${a.tile}`}>
             {icon}
@@ -84,7 +97,7 @@ function ModuleCard({ accent, icon, category, title, description, children }: Mo
           </CardDescription>
         </div>
       </CardHeader>
-      <CardFooter className="pt-2">
+      <CardFooter className="mt-auto pt-2">
         {children}
       </CardFooter>
     </Card>
@@ -110,15 +123,26 @@ export default function DashboardPage() {
       });
       return () => unsubscribe();
     } else {
-      const savedIdentity = localStorage.getItem('brandIdentity');
-      if (savedIdentity) {
-        try {
-          setBrandIdentity(JSON.parse(savedIdentity));
-        } catch (e) {
-          console.error("Failed to parse brand identity from localStorage", e);
+      const loadFromLocalStorage = () => {
+        const savedIdentity = localStorage.getItem('brandIdentity');
+        if (savedIdentity) {
+          try {
+            setBrandIdentity(JSON.parse(savedIdentity));
+          } catch (e) {
+            console.error("Failed to parse brand identity from localStorage", e);
+            setBrandIdentity(null);
+          }
+        } else {
+          setBrandIdentity(null);
         }
-      }
+      };
+      loadFromLocalStorage();
       setIsIdentityLoading(false);
+
+      window.addEventListener(BRAND_IDENTITY_UPDATED_EVENT, loadFromLocalStorage);
+      return () => {
+        window.removeEventListener(BRAND_IDENTITY_UPDATED_EVENT, loadFromLocalStorage);
+      };
     }
   }, [user, firestore]);
 
@@ -173,6 +197,9 @@ export default function DashboardPage() {
                 category="Marca"
                 title="Identidad Digital"
                 description="Crea un nombre, eslogan, paleta de colores y un logo profesional para tu marca."
+                illustration="/illustrations/identidad-digital.png"
+                illustrationAlt="Paleta de colores y pincel flotando"
+                illustrationBg="bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950/40 dark:to-fuchsia-950/40"
               >
                 <IdentidadDigitalModule />
               </ModuleCard>
@@ -183,6 +210,9 @@ export default function DashboardPage() {
                 category="Finanzas"
                 title="Asistente Financiero"
                 description="Obtén un presupuesto, registra ingresos y gastos, y analiza tu punto de equilibrio."
+                illustration="/illustrations/finanzas.png"
+                illustrationAlt="Monedas y gráfica financiera ascendente"
+                illustrationBg="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40"
               >
                 <AdministracionRecursosModule />
               </ModuleCard>
@@ -193,6 +223,9 @@ export default function DashboardPage() {
                 category="Marketing"
                 title="Generador de Campañas"
                 description="Genera ideas de campañas y planes de acción concretos para conseguir clientes."
+                illustration="/illustrations/marketing.png"
+                illustrationAlt="Megáfono y burbujas de notificaciones"
+                illustrationBg="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40"
               >
                 <CampanasMarketingModule />
               </ModuleCard>
@@ -203,6 +236,9 @@ export default function DashboardPage() {
                 category="Operaciones"
                 title="Proveedores"
                 description="Encuentra los mejores proveedores para tu negocio con búsqueda asistida por IA."
+                illustration="/illustrations/proveedores.png"
+                illustrationAlt="Cajas de envío conectadas en red"
+                illustrationBg="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40"
               >
                 <ProveedoresModule />
               </ModuleCard>
@@ -213,6 +249,9 @@ export default function DashboardPage() {
                 category="Estrategia"
                 title="Guía Paso a Paso"
                 description="Genera un plan de acción detallado y tareas claras para hacer realidad tu idea."
+                illustration="/illustrations/guia-paso-a-paso.png"
+                illustrationAlt="Mapa con ruta y checklist"
+                illustrationBg="bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-950/40 dark:to-cyan-950/40"
               >
                 <GuiaPasoAPasoModule />
               </ModuleCard>

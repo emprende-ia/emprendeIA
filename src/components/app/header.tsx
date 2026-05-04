@@ -19,7 +19,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import Image from 'next/image';
 import { SettingsMenu } from './settings-menu';
-import { getBrandIdentity, saveBrandIdentity, type BrandIdentity } from '@/lib/firestore/identity';
+import {
+  getBrandIdentity,
+  saveBrandIdentity,
+  BRAND_IDENTITY_UPDATED_EVENT,
+  type BrandIdentity,
+} from '@/lib/firestore/identity';
 import { ViabilityAnalysisViewer } from './modules/viability-analysis-viewer';
 import { useToast } from '@/hooks/use-toast';
 import { MisRutasModule } from './modules/mis-rutas';
@@ -56,15 +61,28 @@ export function AppHeader() {
       });
       return () => unsubscribe();
     } else {
-      const savedIdentity = localStorage.getItem('brandIdentity');
-      if (savedIdentity) {
-        try {
-          setBrandIdentity(JSON.parse(savedIdentity));
-        } catch (e) {
-          console.error("Failed to parse brand identity from localStorage", e);
+      const loadFromLocalStorage = () => {
+        const savedIdentity = localStorage.getItem('brandIdentity');
+        if (savedIdentity) {
+          try {
+            setBrandIdentity(JSON.parse(savedIdentity));
+          } catch (e) {
+            console.error("Failed to parse brand identity from localStorage", e);
+            setBrandIdentity(null);
+          }
+        } else {
+          setBrandIdentity(null);
         }
-      }
+      };
+      loadFromLocalStorage();
       setIsIdentityLoading(false);
+
+      // Modo invitado: escuchar cuando el módulo guarda en localStorage para
+      // refrescar el header sin recargar la página.
+      window.addEventListener(BRAND_IDENTITY_UPDATED_EVENT, loadFromLocalStorage);
+      return () => {
+        window.removeEventListener(BRAND_IDENTITY_UPDATED_EVENT, loadFromLocalStorage);
+      };
     }
   }, [user, firestore]);
 

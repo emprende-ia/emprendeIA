@@ -86,7 +86,12 @@ export function useUser(): UseUserResult {
       clearChannel();
       currentUserId = userId;
 
-      const channel = supabase.channel(`realtime:profile:${userId}`);
+      // Sufijo único por instancia del hook: useUser se llama desde muchos
+      // componentes, sin sufijo todos comparten el mismo channel y el segundo
+      // .on() falla con "cannot add postgres_changes callbacks after subscribe()".
+      const channel = supabase.channel(
+        `realtime:profile:${userId}:${Math.random().toString(36).slice(2)}`
+      );
       channel.on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },

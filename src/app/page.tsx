@@ -1,12 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { User, LogIn, PlayCircle, Gem, UserCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { User, LogIn, PlayCircle, Gem, Sparkles, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { getDefaultPostAuthRoute } from '@/lib/supabase/onboarding';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SettingsMenu } from '@/components/app/settings-menu';
@@ -18,9 +20,16 @@ export default function LandingPage() {
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    if (user && !isUserLoading) {
-      router.push('/start');
-    }
+    if (!user || isUserLoading) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const route = await getDefaultPostAuthRoute(supabase, user.uid);
+      if (!cancelled) router.push(route);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, isUserLoading, router]);
 
   if (isUserLoading || user) {
@@ -95,12 +104,6 @@ export default function LandingPage() {
             <Link href="/login">
               <LogIn className="mr-2 h-4 w-4" />
               Iniciar sesión
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="w-full text-sm text-muted-foreground hover:text-foreground">
-            <Link href="/dashboard">
-              <UserCircle className="mr-2 h-4 w-4" />
-              Continuar como invitado
             </Link>
           </Button>
         </div>

@@ -11,6 +11,7 @@ import { Loader2, Mail, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-reac
 
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/supabase/use-user';
+import { getDefaultPostAuthRoute } from '@/lib/supabase/onboarding';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -81,12 +82,24 @@ function LoginPageContent() {
     if (err) setErrorBanner(decodeURIComponent(err));
   }, [searchParams]);
 
-  // Si ya estás logueado, fuera de aquí
+  // Si ya estás logueado, fuera de aquí. Respetamos `?next=` si vino redirigido
+  // desde una ruta protegida; si no, decidimos según onboarding.
   useEffect(() => {
-    if (!isUserLoading && user) {
-      const next = searchParams.get('next') ?? '/start';
-      router.push(next);
-    }
+    if (isUserLoading || !user) return;
+    let cancelled = false;
+    (async () => {
+      const next = searchParams.get('next');
+      if (next && next.startsWith('/')) {
+        if (!cancelled) router.push(next);
+        return;
+      }
+      const supabase = createClient();
+      const route = await getDefaultPostAuthRoute(supabase, user.id);
+      if (!cancelled) router.push(route);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, isUserLoading, router, searchParams]);
 
   const handleSignIn = async (values: LoginFormValues) => {
@@ -112,8 +125,17 @@ function LoginPageContent() {
     }
 
     toast({ title: '¡Bienvenido de nuevo!', description: 'Has iniciado sesión correctamente.' });
-    const next = searchParams.get('next') ?? '/start';
-    router.push(next);
+    const explicitNext = searchParams.get('next');
+    let target: string;
+    if (explicitNext && explicitNext.startsWith('/')) {
+      target = explicitNext;
+    } else {
+      const { data: { user: signedInUser } } = await supabase.auth.getUser();
+      target = signedInUser
+        ? await getDefaultPostAuthRoute(supabase, signedInUser.id)
+        : '/start';
+    }
+    router.push(target);
     router.refresh();
   };
 
